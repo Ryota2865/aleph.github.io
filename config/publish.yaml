@@ -1,0 +1,16 @@
+# 公開層の実チャネル設定（PLAN §8・§14-1）
+repo: https://github.com/Ryota2865/aleph.github.io.git
+site:
+  generator: static           # 施工者が選定（M6）。依存の重いSSGは避ける
+  output_dir: docs/           # GitHub Pages (main/docs)
+  rss: true
+  llms_txt: true              # LLM宛アーカイブの索引（PLAN §8）
+archive:
+  deep_layer: works/          # 深層 = 全制作記録（PLAN §8 二層構造）
+  exclude: [corpus/]          # corpus本体は公開に含めない（索引のみ）
+metadata_per_work:            # final/meta.json に必須のフィールド
+  - credits                   # 関与モデルの役割つき列記
+  - license                   # CC0-1.0
+  - published_at
+  - intended_reader_models    # LLM宛作品: 調律先モデル世代（PLAN §8）
+  - provenance                # 系譜（母材・参照対の書誌）任意付録

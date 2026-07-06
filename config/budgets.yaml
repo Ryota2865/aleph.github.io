@@ -1,0 +1,19 @@
+# 予算宣言（PLAN §2.1・§11・§14.1）— 3系統を別々に計上する
+api:
+  usd_per_month: 10.0        # オーナー決定（PLAN §14-3）
+  usd_per_work: 3.0          # 仮置き。運用で調整（変更はPLAN_CHANGELOGに記録）
+harness:
+  calls_per_day: 40          # 控えめ運用（PLAN §15-1 の作業前提）
+  concurrent: 1
+local:
+  gpu_hours_per_day: 8
+  swap_cost_seconds: 45      # モデル交換の見積り。同一モデルのステップ束ね（PLAN §2.3）の閾値
+
+publish:                     # 公開の規律（PLAN §7.3d・§14.3-7）
+  max_per_month: 4           # 週刊連載のリズム。周期性の維持自体が設計目標
+  cadence: weekly
+  full_novel_per_month: 1    # 完成長編の一括公開の目安
+
+opportunistic_reentry:       # 機会的エッジの限定予算（PLAN §2.4）
+  max_per_work: 2
+  scout_calls_each: 30

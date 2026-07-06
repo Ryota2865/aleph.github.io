@@ -1,0 +1,36 @@
+# ALEPH モデルルーティング宣言（PLAN §2.1・§14.1）
+# 不変条件: コードはモデル名を直接書かない。役割名のみを参照する。
+# 秘密情報はここに書かない。api_key_env で .env の変数名を指す（PLAN §14.2）。
+
+providers:
+  anthropic:
+    kind: api                 # 従量API。budgets.yaml の api_usd_per_month に計上
+    api_key_env: ANTHROPIC_API_KEY
+  openai:
+    kind: api
+    api_key_env: OPENAI_API_KEY
+  llamacpp:
+    kind: local               # llama-server (OpenAI互換)。llama-swap でモデル交換（PLAN §2.3）
+    base_url: http://127.0.0.1:8080/v1
+    model_dir: ~/models/gguf
+    swap: llama-swap
+  harness:
+    kind: harness             # OAuthサブスクCLIの非対話モード（PLAN §14.1）
+    # 控えめ運用が規約適合の作業前提（PLAN §15-1）: 低頻度・人間起動のバッチ・無人デーモン化しない
+
+roles:
+  author_primary:  { provider: anthropic, model: claude-fable-5, temperature: 1.0 }
+  author_alt:      { provider: openai,    model: gpt-5.5,        temperature: 1.0 }
+  author_local:    { provider: llamacpp,  model: gemma-4-31B-it-qat-UD-Q4_K_XL }
+  author_harness:  { provider: harness,   cli: claude-code }   # 重い知性・低頻度の役割用
+  critic_harness:  { provider: harness,   cli: codex }
+  critic_jury:                                      # 複数指定 = 陪審（PLAN §7.1）
+    - { provider: anthropic, model: claude-opus-4-8 }
+    - { provider: openai,    model: gpt-5.5 }
+    - { provider: llamacpp,  model: Qwen3.6-27B-Q4_K_M }   # ローカル陪審員（時分割）
+  reader_model:    { provider: llamacpp, model: Qwen3.6-27B-Q4_K_M, logprobs: true }
+  reader_small:    { provider: llamacpp, model: Qwen3-8B, logprobs: true }
+  scout:           { provider: llamacpp, model: gemma-4-26B-A4B-it-qat-UD-Q4_K_XL }  # MoE=高速
+  scout_api:       { provider: anthropic, model: claude-haiku-4-5 }  # ローカル飽和時のみ
+  embedder:        { provider: local, model: bge-m3, path: ~/models/embeddings/bge-m3 }
+  reranker:        { provider: local, model: Qwen3-Reranker-0.6B, path: ~/models/embeddings/Qwen3-Reranker-0.6B }
