@@ -230,3 +230,29 @@ CLOSEDとしてよいか、それとも `audits/M0_audit.md`（Codexによる正
 5回のクロス監査サイクル（audit → fix → re-audit）を回し、実質的な指摘は
 毎回1〜2件に減少・収束してきている。これ以上の反復はコスト対効果が薄いと
 判断し、次の一手はユーザーへの報告とする（続けて監査するかはユーザー判断）。
+
+## 2026-07-08 — `audits/M0_audit.md` 正式記録（Codex）
+
+ユーザーの判断: (1) `audits/M0_audit.md` はCodex（監査者役割。PLAN §12）が書く、
+(2) harness既定オフ設計（PLAN_CHANGELOG 0.7）の審査はClaude Fable 5（設計権限者。
+PLAN §12.1）に依頼する予定——ただしFable5は明日昼までレート制限中、かつ
+2026-07-12以降ユーザーはFable5にAPI経由でしかアクセスできなくなるため、
+明日以降に別途依頼する。今日は(1)のみ実施。
+
+`codex-audit --base 3e1603c --run-tests -o audits/M0_audit.md` で、PLAN §10 M0
+受入基準のチェックリスト形式での正式監査を依頼（過去5回の`reports/CODEX_AUDIT_*.md`
+とPROGRESS.mdの修正履歴を読ませた上で、それらを踏まえた最終判定として）。
+
+結果: **VERDICT: PASS WITH NITS**（`audits/M0_audit.md`）。
+- M0受入基準6項目中5項目が「Met」、1項目（ローカルRTX 3090実機でのswap起動）が
+  「Not verified in this environment」（監査環境にGPU実機がないための検証未了。
+  コード上の新規欠陥ではない）。
+- 新規のcorrectness/invariant/security/data-loss findingはゼロ。
+- `uv run pytest -m 'not local'` → 38 passed（Codex自身の再実行でも一致）。
+
+### 次の一手
+- M0マイルストーンは実質的にクローズ。残るのは (a) 実機RTX 3090環境での
+  `ALEPH_LOCAL=1 uv run pytest -m local` の実行、(b) harness既定オフ設計の
+  Fable5審査（2026-07-12までに完了させたいとのオーナー希望）。
+- (b) が完了し次第、PLAN_CHANGELOG 0.7に審査結果（承認/差し戻し）を追記する。
+- M1（探索層）着手はこれらの後、あるいはユーザーの指示があり次第。
