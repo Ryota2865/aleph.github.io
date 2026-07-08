@@ -9,8 +9,12 @@
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
+from typing import Callable
 
 
 class State(str, Enum):
@@ -66,11 +70,25 @@ class Checkpoint:
     payload: dict = field(default_factory=dict)
 
     def save(self, work_dir) -> None:
-        raise NotImplementedError("M0: 施工対象")
+        path = Path(work_dir) / "checkpoint.json"
+        payload = {
+            "work_id": self.work_id,
+            "state": self.state.value,
+            "step": self.step,
+            "payload": self.payload,
+        }
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     @classmethod
     def load(cls, work_dir) -> "Checkpoint":
-        raise NotImplementedError("M0: 施工対象")
+        path = Path(work_dir) / "checkpoint.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return cls(
+            work_id=data["work_id"],
+            state=State(data["state"]),
+            step=data["step"],
+            payload=data.get("payload", {}),
+        )
 
 
 class Loop:
@@ -87,9 +105,38 @@ class Loop:
         self.router = router
         self.budget = budget
         self.policies = policies
+        # 状態ごとの実処理。接続はM3以降（各L2〜L8層の施工時）。未登録の状態に
+        # 到達したら run() はそこで停止する（クラッシュではなく正常な一時停止）。
+        self.handlers: dict[State, Callable[["Loop"], State]] = {}
+        self._step = 0
+
+    def current_state(self) -> State:
+        try:
+            return Checkpoint.load(self.work.dir).state
+        except FileNotFoundError:
+            return State.SEEDED
 
     def transition(self, nxt: State, reason: str, decided_by: str) -> None:
-        raise NotImplementedError("M0: 施工対象")
+        current = self.current_state()
+        if not validate_transition(current, nxt):
+            raise ValueError(f"invalid transition: {current} -> {nxt}")
+        self._step += 1
+        Checkpoint(work_id=self.work.work_id, state=nxt, step=self._step, payload={}).save(self.work.dir)
+        self.work.append_decision(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "layer": "L0",
+                "decision": f"{current.value}->{nxt.value}",
+                "reason": reason,
+                "decided_by": decided_by,
+            }
+        )
 
     def run(self) -> State:
-        raise NotImplementedError("M0: 施工対象")
+        state = self.current_state()
+        while state not in TERMINAL_STATES:
+            handler = self.handlers.get(state)
+            if handler is None:
+                break
+            state = handler(self)
+        return state

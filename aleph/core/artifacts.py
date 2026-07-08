@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 # 正典のレイアウト（PLAN §2.2）
@@ -86,11 +87,28 @@ class Work:
     # --- 施工対象（M0） ---------------------------------------------------
     def create(self, seed: dict) -> None:
         """レイアウトを作成し seed.json を書く."""
-        raise NotImplementedError("M0: 施工対象")
+        self.dir.mkdir(parents=True, exist_ok=True)
+        for d in (self.niche, self.materials, self.compositions, self.drafts, self.reviews, self.final):
+            d.mkdir(parents=True, exist_ok=True)
+        self.seed.write_text(json.dumps(seed, ensure_ascii=False, indent=2), encoding="utf-8")
+        for f in (self.decisions, self.calls):
+            f.touch(exist_ok=True)
 
     def append_decision(self, record: dict) -> None:
         """decisions.jsonl への追記。ts と decided_by の欠落は拒否する."""
-        raise NotImplementedError("M0: 施工対象")
+        if "ts" not in record or "decided_by" not in record:
+            raise ValueError("decisions.jsonl record requires 'ts' and 'decided_by'")
+        self.decisions.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.decisions, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     def latest_draft_version(self) -> int:
-        raise NotImplementedError("M0: 施工対象")
+        if not self.drafts.is_dir():
+            return 0
+        versions = []
+        for p in self.drafts.glob("v*.md"):
+            try:
+                versions.append(int(p.stem[1:]))
+            except ValueError:
+                continue
+        return max(versions, default=0)

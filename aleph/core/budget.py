@@ -11,9 +11,28 @@
 """
 from __future__ import annotations
 
+import json
+import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 LEDGERS = ("api", "harness", "local")
+
+# 各台帳の上限をどのbudgets.yamlキーから読むか、およびリセット周期。
+_LEDGER_LIMIT_KEY = {
+    "api": ("usd_per_month", "month"),
+    "harness": ("calls_per_day", "day"),
+    "local": ("gpu_hours_per_day", "day"),
+}
+
+
+def _period_key(period: str) -> str:
+    now = time.gmtime()
+    if period == "day":
+        return time.strftime("%Y-%m-%d", now)
+    if period == "month":
+        return time.strftime("%Y-%m", now)
+    return "always"
 
 
 class BudgetExceeded(Exception):
@@ -45,16 +64,81 @@ class Budget:
     作品別の内訳は calls.jsonl から導出する。
     """
 
-    def __init__(self, config) -> None:
+    def __init__(self, config, state_path: Path | None = None) -> None:
+        """state_path を指定すると台帳をJSONとして永続化・復元する（PLAN §2.1）.
+
+        未指定（既定）ではプロセス内メモリのみの台帳になる。CLI本体からは
+        `state/budget.json` 等、works/ 外のシステム領域を渡すこと。
+        """
         self.config = config
+        self.state_path = Path(state_path) if state_path else None
+        self._ledgers: dict[str, Ledger] = {}
+        self._period_keys: dict[str, str] = {}
+        for name in LEDGERS:
+            key, period = _LEDGER_LIMIT_KEY[name]
+            limit = config.budgets[name][key]
+            self._ledgers[name] = Ledger(name=name, limit=limit, period=period)
+            self._period_keys[name] = _period_key(period)
+        # 作品ごとの上限（PLAN §2.1: 作品ごと・日ごとの上限）。api のみ宣言されている。
+        self._work_limit = config.budgets.get("api", {}).get("usd_per_work")
+        self._work_spent: dict[str, float] = {}
+        if self.state_path and self.state_path.exists():
+            self._load()
 
-    def precheck(self, ledger: str, amount: float) -> None:
+    def _roll_if_needed(self, name: str) -> None:
+        ledger = self._ledgers[name]
+        current = _period_key(ledger.period)
+        if current != self._period_keys.get(name):
+            ledger.spent = 0.0
+            ledger.events.clear()
+            self._period_keys[name] = current
+
+    def precheck(self, ledger: str, amount: float, work_id: str | None = None) -> None:
         """消費前の照会。超過が予見されれば BudgetExceeded を送出し、消費しない."""
-        raise NotImplementedError("M0: 施工対象")
+        self._roll_if_needed(ledger)
+        l = self._ledgers[ledger]
+        if l.spent + amount > l.limit:
+            raise BudgetExceeded(ledger, l.limit, l.spent, amount)
+        if ledger == "api" and work_id and self._work_limit is not None:
+            spent = self._work_spent.get(work_id, 0.0)
+            if spent + amount > self._work_limit:
+                raise BudgetExceeded(f"api:{work_id}", self._work_limit, spent, amount)
 
-    def charge(self, ledger: str, amount: float, meta: dict | None = None) -> None:
-        raise NotImplementedError("M0: 施工対象")
+    def charge(self, ledger: str, amount: float, meta: dict | None = None, work_id: str | None = None) -> None:
+        self._roll_if_needed(ledger)
+        l = self._ledgers[ledger]
+        l.spent += amount
+        l.events.append({"ts": _period_key("day"), "amount": amount, "meta": meta or {}})
+        if ledger == "api" and work_id:
+            self._work_spent[work_id] = self._work_spent.get(work_id, 0.0) + amount
+        if self.state_path:
+            self._save()
 
     def status(self) -> dict:
         """`aleph status` の表示元。3系統の残量を返す."""
-        raise NotImplementedError("M0: 施工対象")
+        out: dict[str, dict] = {}
+        for name in LEDGERS:
+            self._roll_if_needed(name)
+            l = self._ledgers[name]
+            out[name] = {"spent": l.spent, "limit": l.limit, "period": l.period}
+        return out
+
+    def _save(self) -> None:
+        assert self.state_path is not None
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            name: {"spent": l.spent, "period_key": self._period_keys[name]}
+            for name, l in self._ledgers.items()
+        }
+        self.state_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    def _load(self) -> None:
+        assert self.state_path is not None
+        try:
+            payload = json.loads(self.state_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return
+        for name, data in payload.items():
+            if name in self._ledgers:
+                self._ledgers[name].spent = data.get("spent", 0.0)
+                self._period_keys[name] = data.get("period_key", self._period_keys[name])
