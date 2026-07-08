@@ -173,19 +173,30 @@ class Router:
             return 1.0  # calls_per_day 単位。GPU時間はLocalRuntimeが別途計上
         return 0.0
 
+    @staticmethod
+    def _precheck_amount(ledger: str, provider_name: str, messages: Sequence[Message], kwargs: dict) -> float:
+        """呼び出し前に予見できる消費見積り（PLAN §2.1: 超過が予見される呼び出しは実行前に拒否）.
+
+        api は実費が応答後にしか確定しないため、プロンプト長と max_tokens から
+        概算する（実費との差は charge() 時点で真値に置き換わる）。harness は
+        1呼び出し=1件で確定しているので厳密。local はGPU時間をRouterでは計上しない。
+        """
+        if ledger == "harness":
+            return 1.0
+        if ledger == "api":
+            prompt_chars = sum(len(m.content) for m in messages)
+            est_prompt_tokens = max(1, prompt_chars // 4)
+            est_completion_tokens = kwargs.get("max_tokens") or 1024
+            usage = Usage(prompt_tokens=est_prompt_tokens, completion_tokens=est_completion_tokens)
+            return _estimate_cost(provider_name, usage)
+        return 0.0
+
     # -- 呼び出し ------------------------------------------------------------
     def _invoke(self, role: str, decl: dict, messages: Sequence[Message], **overrides) -> LLMResponse:
         provider_name = decl["provider"]
         model = decl.get("model") or decl.get("cli") or provider_name
         ledger = self._ledger_for(provider_name)
 
-        self.budget.precheck(ledger, 0.0)
-
-        using_fake = getattr(self, "_provider_for_test", None) is not None
-        if not using_fake and ledger == "local" and self.local_runtime is not None:
-            self.local_runtime.ensure_model(model)  # swap要求（PLAN §2.3）
-
-        provider = self._provider_instance(decl)
         kwargs = {
             "temperature": overrides.pop("temperature", decl.get("temperature", 1.0)),
             "max_tokens": overrides.pop("max_tokens", decl.get("max_tokens")),
@@ -193,6 +204,14 @@ class Router:
             "seed": overrides.pop("seed", None),
         }
         kwargs.update(overrides)
+
+        self.budget.precheck(ledger, self._precheck_amount(ledger, provider_name, messages, kwargs))
+
+        using_fake = getattr(self, "_provider_for_test", None) is not None
+        if not using_fake and ledger == "local" and self.local_runtime is not None:
+            self.local_runtime.ensure_model(model)  # swap要求（PLAN §2.3）
+
+        provider = self._provider_instance(decl)
 
         lock = self._harness_sem if ledger == "harness" else nullcontext()
         last_err: Exception | None = None

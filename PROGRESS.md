@@ -58,3 +58,38 @@
   経由（Windows Git Bash）でファイル操作はできるが、`uv`はWSL内にしかPATHが
   通っていない。テスト・pythonコマンド実行は `wsl.exe -d ubuntu -- bash -lc "cd ~/llm_literature && ..."`
   を経由する必要がある。
+
+## 2026-07-08 — Codexクロス監査 → 指摘3件を修正（Claude Code / Claude Sonnet 5）
+
+コミット `72fc803` を対象に `codex-audit --commit 72fc803 --run-tests` を実行。
+結果: `reports/CODEX_AUDIT_20260708_094819.md`（VERDICT: FAIL、指摘4件）。
+うち3件（実装バグ）を修正。1件（harness利用規約適合）はサブエージェントに調査を委任（後述）。
+
+### 修正した指摘
+1. **finding 1（最重大）**: `Router._invoke` が `budget.precheck(ledger, 0.0)` と
+   amount固定だったため、台帳が上限到達済みでも次の呼び出しがブロックされなかった
+   （harness=40/40消費済みでも1件通ってしまい41/40になる、と監査が実再現）。
+   → `Router._precheck_amount()` を新設。harnessは1件確定値、apiはプロンプト長と
+   max_tokensからの概算コストで事前照会するよう修正（`aleph/core/llm.py`）。
+2. **finding 3**: `Loop.__init__` が `self._step = 0` 固定だったため、
+   `checkpoint.json`（例: step=7）から新しい `Loop` を作って `transition()` すると
+   保存後のstepが1に巻き戻っていた（監査ログ順序が壊れる）。
+   → `Loop._load_last_step()` で既存checkpointがあればそこから再開するよう修正
+   （`aleph/core/loop.py`）。
+3. **finding 4**: `Budget._save/_load` が `_work_spent`（作品別サブ台帳）を
+   永続化対象に含めておらず、プロセス再起動後に作品ごとの `usd_per_work` 上限が
+   検出できなくなっていた。
+   → 永続化JSONに `work_spent` キーを追加（`aleph/core/budget.py`）。
+
+3件とも `tests/test_m0_regressions.py`（新規）に再現テストを先に書いて赤を確認
+→ 修正 → 緑、の順で検証。既存の `test_m0_acceptance.py` / `test_design_invariants.py`
+（初代設計者の契約。PLAN §12により無断変更不可）は一切変更していない。
+`uv run pytest -m 'not local'` → 27 passed（design invariants 17 + m0 acceptance 7 +
+regressions 3）で退行なし。
+
+### 未対応（サブエージェントへ委任中）
+- **finding 2（harness利用規約適合）**: PLAN §15-1が残置監査項目として明記していた
+  論点そのもの。Anthropic/OpenAIの利用規約上、`claude -p`/`codex exec` の自動化バッチ
+  実行が許容されるかの一次判定と、必要なら `HarnessProvider`/`build_provider` への
+  ガード実装案を、Web調査担当のサブエージェントに依頼中（結果待ち）。結果が出次第
+  本ファイルと `audits/M0_audit.md` に反映する。

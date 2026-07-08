@@ -127,8 +127,11 @@ class Budget:
         assert self.state_path is not None
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
-            name: {"spent": l.spent, "period_key": self._period_keys[name]}
-            for name, l in self._ledgers.items()
+            "ledgers": {
+                name: {"spent": l.spent, "period_key": self._period_keys[name]}
+                for name, l in self._ledgers.items()
+            },
+            "work_spent": self._work_spent,  # 作品ごとの上限（Codex監査 finding 4）
         }
         self.state_path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -138,7 +141,8 @@ class Budget:
             payload = json.loads(self.state_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             return
-        for name, data in payload.items():
+        for name, data in payload.get("ledgers", {}).items():
             if name in self._ledgers:
                 self._ledgers[name].spent = data.get("spent", 0.0)
                 self._period_keys[name] = data.get("period_key", self._period_keys[name])
+        self._work_spent.update(payload.get("work_spent", {}))

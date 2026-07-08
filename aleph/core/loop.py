@@ -108,7 +108,15 @@ class Loop:
         # 状態ごとの実処理。接続はM3以降（各L2〜L8層の施工時）。未登録の状態に
         # 到達したら run() はそこで停止する（クラッシュではなく正常な一時停止）。
         self.handlers: dict[State, Callable[["Loop"], State]] = {}
-        self._step = 0
+        # 既存checkpointがあれば再開後もstepを単調増加させる（クラッシュ再開時の
+        # 監査ログ順序保全。Codex監査 finding 3）。新規作品では0から開始する。
+        self._step = self._load_last_step()
+
+    def _load_last_step(self) -> int:
+        try:
+            return Checkpoint.load(self.work.dir).step
+        except FileNotFoundError:
+            return 0
 
     def current_state(self) -> State:
         try:
