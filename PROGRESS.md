@@ -256,3 +256,33 @@ PLAN §12.1）に依頼する予定——ただしFable5は明日昼までレー
   Fable5審査（2026-07-12までに完了させたいとのオーナー希望）。
 - (b) が完了し次第、PLAN_CHANGELOG 0.7に審査結果（承認/差し戻し）を追記する。
 - M1（探索層）着手はこれらの後、あるいはユーザーの指示があり次第。
+
+## 2026-07-09 — Claude=司令塔／Codex=実装 のワークフロー確立 + `aleph status` 配線
+
+ユーザー依頼: Claude Code をオーケストレーター、Codex(GPT-5.5) を実装担当にできるか
+検証し（A）、`codex-audit` を雛形に実装用スキルを作る（B）。
+
+### (A) オーケストレーション疎通 + 実弾1周
+- 配線確認: `codex exec`（codex-cli 0.142.5 / gpt-5.5 / approval never）が
+  llm_literature でも疎通。勘所——`codex` は nvm 配下のため非対話 `bash -lc` では
+  PATH に載らない／`bash -ilc` は stdin 待ちでハングするので `</dev/null` 必須／
+  PowerShell→wsl→bash の多重引用符は壊れるので `.sh` に書いてログへ流す。
+- 題材: `aleph/cli.py` の `status` 配線（`Budget.status()` は実装済みで §11「aleph
+  statusで常時可視」の未接続部分。マイルストーン封じの `NotImplementedError` スタブ
+  には該当しない実在のM0仕上げ）。Codex が実装 → **Claude が独立検証**
+  （`uv run pytest -m 'not local'` → 38 passed、`aleph status` → 3系統表示・exit 0、
+  他コマンドは exit 2 スタブ維持）。
+
+### (B) `~/bin/codex-implement` 作成
+- `~/bin/codex-audit` を雛形に、実装専用の対のラッパーを作成（リポジトリ外なので
+  公開リポジトリを汚さない）。`--sandbox workspace-write` 既定、git変更は既定禁止
+  （`--allow-commit`で解禁）、`--files` で編集対象を強制限定、dirty-tree警告、
+  「検証は司令塔の責務」をプロンプトに明記。`-t/--task-stdin/-- inline`、`--run-checks`、
+  `--network`、`-o` 対応。
+- 自己ドッグフーディング: cli.py をリバートして `codex-implement -t task --files
+  "aleph/cli.py"` で再実装 → allowlist 遵守・手動実行とバイト同一パッチを生成。
+  Claude 側で再度 38 passed を確認。
+
+### 次の一手
+- 上記 (a) 実機RTX 3090 / (b) Fable5審査 は据え置き（変更なし）。
+- 以後の実装は `codex-implement` に投げて Claude が検証する運用が可能。
