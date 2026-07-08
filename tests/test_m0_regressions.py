@@ -133,3 +133,23 @@ def test_harness_provider_does_not_leak_prompt_into_argv(monkeypatch):
 
     assert secret_text not in captured["cmd"]
     assert secret_text in captured["input"]
+
+
+def test_work_create_scrubs_secrets_from_seed(tmp_path):
+    """4回目のCodex監査 finding: Work.create/append_decisionがscrub_secretsを
+    経由しておらず、秘密値が成果物へ平文で書かれていた（seed.json）."""
+    secret = "sk-test-secret-0123456789"
+    work = Work(tmp_path, "w0008", secrets=[secret])
+    work.create({"intent_hint": "test", "leaked": secret})
+    assert secret not in work.seed.read_text(encoding="utf-8")
+
+
+def test_work_append_decision_scrubs_secrets(tmp_path):
+    """同上（decisions.jsonl）."""
+    secret = "sk-test-secret-0123456789"
+    work = Work(tmp_path, "w0009", secrets=[secret])
+    work.create({})
+    work.append_decision(
+        {"ts": "2026-01-01T00:00:00Z", "decision": "x", "reason": f"leaky {secret}", "decided_by": "test"}
+    )
+    assert secret not in work.decisions.read_text(encoding="utf-8")

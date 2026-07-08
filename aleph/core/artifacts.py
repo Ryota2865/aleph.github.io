@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Iterable
+
+from aleph.core.llm import scrub_secrets
 
 # 正典のレイアウト（PLAN §2.2）
 WORK_LAYOUT = (
@@ -29,9 +32,10 @@ WORK_LAYOUT = (
 class Work:
     """作品ディレクトリへの型付きアクセス。パス計算は純粋関数として実装済み."""
 
-    def __init__(self, root: Path, work_id: str) -> None:
+    def __init__(self, root: Path, work_id: str, secrets: Iterable[str] = ()) -> None:
         self.work_id = work_id
         self.dir = Path(root) / work_id
+        self._secrets = tuple(secrets)
 
     # --- パス（実装済み・変更不可） -------------------------------------
     @property
@@ -90,7 +94,8 @@ class Work:
         self.dir.mkdir(parents=True, exist_ok=True)
         for d in (self.niche, self.materials, self.compositions, self.drafts, self.reviews, self.final):
             d.mkdir(parents=True, exist_ok=True)
-        self.seed.write_text(json.dumps(seed, ensure_ascii=False, indent=2), encoding="utf-8")
+        seed_text = scrub_secrets(json.dumps(seed, ensure_ascii=False, indent=2), self._secrets)
+        self.seed.write_text(seed_text, encoding="utf-8")
         for f in (self.decisions, self.calls):
             f.touch(exist_ok=True)
 
@@ -99,8 +104,9 @@ class Work:
         if "ts" not in record or "decided_by" not in record:
             raise ValueError("decisions.jsonl record requires 'ts' and 'decided_by'")
         self.decisions.parent.mkdir(parents=True, exist_ok=True)
+        text = scrub_secrets(json.dumps(record, ensure_ascii=False), self._secrets)
         with open(self.decisions, "a", encoding="utf-8") as f:
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+            f.write(text + "\n")
 
     def latest_draft_version(self) -> int:
         if not self.drafts.is_dir():

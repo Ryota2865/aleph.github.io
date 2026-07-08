@@ -177,7 +177,27 @@ CLOSEDとしてよいか、それとも `audits/M0_audit.md`（Codexによる正
   `git stash` で一時的に戻して赤を確認 → 修正後に緑を確認。
 - `uv run pytest -m 'not local'` → 35 passed、退行なし。
 
+## 2026-07-08 — M0マイルストーン単位のCodex監査（4回目）→ finding修正
+
+コミット `45dc193` までを反映した状態で再度 `codex-audit --base 3e1603c --run-tests`
+を実行。結果: `reports/CODEX_AUDIT_20260708_110310.md`（VERDICT: FAIL、指摘1件）。
+
+### 指摘と修正
+- **成果物書き出しが `scrub_secrets` を経由していない**（`aleph/core/artifacts.py`）。
+  `Work.create()`/`Work.append_decision()` が受け取った辞書をそのままJSON書き込み
+  しており、`aleph/core/artifacts.py:7` の「秘密情報を書き込まないこと（scrub_secrets
+  経由で書く）」・PLAN §14.2に反していた。Codexがスモークで実証:
+  `seed_contains_secret=True` / `decisions_contains_secret=True`。
+  → `Work.__init__` に `secrets: Iterable[str] = ()` を追加（既存呼び出し
+  `Work(root, work_id)` は互換）し、`create()`/`append_decision()` の書き込み前に
+  `scrub_secrets()` を通すよう修正。
+- `tests/test_m0_regressions.py` に2件追加
+  （`test_work_create_scrubs_secrets_from_seed`, `test_work_append_decision_scrubs_secrets`）。
+  修正前に `git stash` で戻し赤（`TypeError: unexpected keyword argument 'secrets'`）
+  を確認 → 修正後に緑を確認。
+- `uv run pytest -m 'not local'` → 37 passed、退行なし。
+
 ### 次の一手
-- 3回のクロス監査サイクル（audit → fix → re-audit）を経て、指摘は全て解消。
+- 4回のクロス監査サイクル（audit → fix → re-audit）を経て、指摘は全て解消。
   次はさらにもう一度 `codex-audit` を実行してPASS判定を得るか、PLAN §12の
   正式な合否記録（`audits/M0_audit.md`）をCodex側に依頼するかの判断。
