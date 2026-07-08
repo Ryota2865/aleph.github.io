@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -150,6 +151,29 @@ def test_work_append_decision_scrubs_secrets(tmp_path):
     work = Work(tmp_path, "w0009", secrets=[secret])
     work.create({})
     work.append_decision(
-        {"ts": "2026-01-01T00:00:00Z", "decision": "x", "reason": f"leaky {secret}", "decided_by": "test"}
+        {
+            "ts": "2026-01-01T00:00:00Z",
+            "layer": "L0",
+            "decision": "x",
+            "reason": f"leaky {secret}",
+            "decided_by": "test",
+        }
     )
     assert secret not in work.decisions.read_text(encoding="utf-8")
+
+
+def test_append_decision_requires_full_schema(tmp_path):
+    """5回目のCodex監査 finding: append_decisionがts/decided_byしか検査しておらず、
+    layer/decision/reasonを欠いた不完全な行を書き込めてしまっていた。
+    refsのみ省略可（自動的に空リストが補われる）."""
+    work = Work(tmp_path, "w0010")
+    work.create({})
+
+    with pytest.raises(ValueError):
+        work.append_decision({"ts": "2026-01-01T00:00:00Z", "decided_by": "audit"})
+
+    work.append_decision(
+        {"ts": "2026-01-01T00:00:00Z", "layer": "L0", "decision": "x", "reason": "y", "decided_by": "test"}
+    )
+    last_line = work.decisions.read_text(encoding="utf-8").splitlines()[-1]
+    assert json.loads(last_line)["refs"] == []

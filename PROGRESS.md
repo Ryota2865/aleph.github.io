@@ -197,7 +197,36 @@ CLOSEDとしてよいか、それとも `audits/M0_audit.md`（Codexによる正
   を確認 → 修正後に緑を確認。
 - `uv run pytest -m 'not local'` → 37 passed、退行なし。
 
-### 次の一手
-- 4回のクロス監査サイクル（audit → fix → re-audit）を経て、指摘は全て解消。
-  次はさらにもう一度 `codex-audit` を実行してPASS判定を得るか、PLAN §12の
-  正式な合否記録（`audits/M0_audit.md`）をCodex側に依頼するかの判断。
+## 2026-07-08 — M0マイルストーン単位のCodex監査（5回目）→ finding修正・打ち止め判断
+
+コミット `0798aea` までを反映した状態で再度 `codex-audit --base 3e1603c --run-tests`
+を実行。結果: `reports/CODEX_AUDIT_20260708_111512.md`（VERDICT: FAIL、指摘2件）。
+
+### 指摘1（修正済み）
+- **`decisions.jsonl` のスキーマ不変条件が守られていない**（`aleph/core/artifacts.py`）。
+  ファイル冒頭の不変条件は `{ts, layer, decision, reason, decided_by(model), refs}`
+  と定義しているが、`append_decision()` は `ts`/`decided_by` の2つしか検査して
+  いなかった。Codexが実証: `{"ts": "...", "decided_by": "audit"}` だけで
+  追記できてしまう。
+  → `_REQUIRED_DECISION_FIELDS = (ts, layer, decision, reason, decided_by)` を
+  必須化（`refs`のみ省略可で、省略時は空リストを自動補完）。
+  `Loop.transition()` が書くレコードは元々これら5フィールドを全て含んでいた
+  ため無修正で通る。
+- `tests/test_m0_regressions.py::test_append_decision_requires_full_schema` を追加。
+  修正前に赤（`DID NOT RAISE ValueError`）→ 修正後に緑を確認。既存の
+  `test_work_append_decision_scrubs_secrets`（4回目監査対応で追加）が`layer`欠落の
+  レコードを使っていたため、あわせて`layer`を追加。
+- `uv run pytest -m 'not local'` → 38 passed、退行なし。
+
+### 指摘2（対応せず・理由を記録）
+- **`reports/CODEX_AUDIT_*.md` の行末空白**が `git diff --check` に引っかかる、
+  という指摘。これはCodexが生成したMarkdown自体が意図的な行末2スペース
+  （Markdownのハード改行記法）を使っているためで、剥がすと監査レポートの
+  見た目（改行位置）が壊れる。現状このリポジトリに空白チェックを行うCIは
+  存在しないため実害はなく、Codex生成物の忠実性を優先して**対応しないことを
+  意図的に選択**した。
+
+### 打ち止め判断
+5回のクロス監査サイクル（audit → fix → re-audit）を回し、実質的な指摘は
+毎回1〜2件に減少・収束してきている。これ以上の反復はコスト対効果が薄いと
+判断し、次の一手はユーザーへの報告とする（続けて監査するかはユーザー判断）。

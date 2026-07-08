@@ -28,6 +28,9 @@ WORK_LAYOUT = (
     "final/",
 )
 
+# decisions.jsonl の各行の必須フィールド（refs以外。ファイル冒頭の不変条件）
+_REQUIRED_DECISION_FIELDS = ("ts", "layer", "decision", "reason", "decided_by")
+
 
 class Work:
     """作品ディレクトリへの型付きアクセス。パス計算は純粋関数として実装済み."""
@@ -100,11 +103,16 @@ class Work:
             f.touch(exist_ok=True)
 
     def append_decision(self, record: dict) -> None:
-        """decisions.jsonl への追記。ts と decided_by の欠落は拒否する."""
-        if "ts" not in record or "decided_by" not in record:
-            raise ValueError("decisions.jsonl record requires 'ts' and 'decided_by'")
+        """decisions.jsonl への追記。スキーマ（ファイル冒頭の不変条件:
+        {ts, layer, decision, reason, decided_by(model), refs}）の欠落は拒否する。
+        refs のみ省略可（空リストを補う）。"""
+        missing = [f for f in _REQUIRED_DECISION_FIELDS if f not in record]
+        if missing:
+            raise ValueError(f"decisions.jsonl record missing required fields: {missing}")
+        payload = {**record}
+        payload.setdefault("refs", [])
         self.decisions.parent.mkdir(parents=True, exist_ok=True)
-        text = scrub_secrets(json.dumps(record, ensure_ascii=False), self._secrets)
+        text = scrub_secrets(json.dumps(payload, ensure_ascii=False), self._secrets)
         with open(self.decisions, "a", encoding="utf-8") as f:
             f.write(text + "\n")
 
