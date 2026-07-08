@@ -148,6 +148,36 @@ CLOSEDとしてよいか、それとも `audits/M0_audit.md`（Codexによる正
   伝播し、既に上限に達した作品への次の呼び出しはブロックされる」ことのみを
   保証している。
 
+## 2026-07-08 — M0マイルストーン単位のCodex監査（3回目）→ finding修正
+
+コミット `bc86188` までを反映した状態で、再度 `codex-audit --base 3e1603c --run-tests`
+を実行。結果: `reports/CODEX_AUDIT_20260708_105528.md`（VERDICT: FAIL、指摘2件）。
+
+### 指摘と修正
+1. **local台帳がRouter経由で実質機能していない**（`aleph/core/llm.py`の
+   `_charge_amount`/`_precheck_amount`）。localは常に`amount=0.0`を返す設計だった
+   ため、`budget.charge("local", limit)` で上限まで消費済みにしても
+   `router.call("scout", ...)` がブロックされなかった（Codexが実再現:
+   `NO_EXCEPTION provider_calls=1 status={'spent': 8.0, 'limit': 8, ...}`）。
+   → `_LOCAL_CALL_HOURS_ESTIMATE = 1/60`（1呼び出し=1分相当の控えめな概算）を
+   新設し、precheck・chargeの両方でlocal台帳にも計上するよう変更。厳密なGPU時間
+   計測は将来 `LocalRuntime` 側での精密化課題として明記。
+2. **harnessの本文がコマンドライン引数(argv)経由で漏洩しうる**
+   （`aleph/core/llm.py` `HarnessProvider._build_command`）。
+   `subprocess.run(["claude", "-p", prompt])` / `["codex", "exec", prompt]` は
+   本文全体をargvに載せており、同一ホストの他プロセス/他ユーザーが`ps`等で
+   読める状態だった。Claude Code公式ドキュメント（`code.claude.com/docs/en/headless`
+   「Pipe data through Claude」）が示す `cat x | claude -p '短い指示'` の
+   公式パターンに倣い、argvには秘密を含まない固定の短い指示のみを置き、
+   本文（messages由来のprompt）は `subprocess.run(..., input=prompt, ...)` で
+   stdin経由にのみ渡すよう変更。
+- `tests/test_m0_regressions.py` に2件追加（
+  `test_router_blocks_call_that_would_exceed_local_budget`,
+  `test_harness_provider_does_not_leak_prompt_into_argv`）。両方とも修正前に
+  `git stash` で一時的に戻して赤を確認 → 修正後に緑を確認。
+- `uv run pytest -m 'not local'` → 35 passed、退行なし。
+
 ### 次の一手
-- この2回目の監査サイクルで指摘は解消。次はPLAN §12の正式な合否記録
-  （`audits/M0_audit.md`）をCodex側に依頼するか判断待ち。
+- 3回のクロス監査サイクル（audit → fix → re-audit）を経て、指摘は全て解消。
+  次はさらにもう一度 `codex-audit` を実行してPASS判定を得るか、PLAN §12の
+  正式な合否記録（`audits/M0_audit.md`）をCodex側に依頼するかの判断。

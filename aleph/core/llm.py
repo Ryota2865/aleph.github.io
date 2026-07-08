@@ -170,7 +170,9 @@ class Router:
         if ledger == "api":
             return resp.cost_usd
         if ledger == "harness":
-            return 1.0  # calls_per_day 単位。GPU時間はLocalRuntimeが別途計上
+            return 1.0  # calls_per_day 単位
+        if ledger == "local":
+            return _LOCAL_CALL_HOURS_ESTIMATE  # 概算。precheckと同じ見積りで一貫させる
         return 0.0
 
     @staticmethod
@@ -179,7 +181,10 @@ class Router:
 
         api は実費が応答後にしか確定しないため、プロンプト長と max_tokens から
         概算する（実費との差は charge() 時点で真値に置き換わる）。harness は
-        1呼び出し=1件で確定しているので厳密。local はGPU時間をRouterでは計上しない。
+        1呼び出し=1件で確定しているので厳密。local は常に0だとRouterが台帳を一切
+        参照しなくなる（上限到達済みでも通してしまう。Codex監査2巡目 finding 1）ため、
+        1呼び出しあたりのGPU占有時間の控えめな概算を計上する（正確な計測は
+        LocalRuntimeのswap管理側の将来課題）。
         """
         if ledger == "harness":
             return 1.0
@@ -189,6 +194,8 @@ class Router:
             est_completion_tokens = kwargs.get("max_tokens") or 1024
             usage = Usage(prompt_tokens=est_prompt_tokens, completion_tokens=est_completion_tokens)
             return _estimate_cost(provider_name, usage)
+        if ledger == "local":
+            return _LOCAL_CALL_HOURS_ESTIMATE
         return 0.0
 
     # -- 呼び出し ------------------------------------------------------------
@@ -287,6 +294,12 @@ def _estimate_cost(provider_name: str, usage: Usage) -> float:
         return 0.0
     total_tokens = usage.prompt_tokens + usage.completion_tokens
     return round(total_tokens / 1000 * rate, 6)
+
+
+# 1呼び出しあたりのGPU占有時間の控えめな概算（local台帳。PLAN §2.1・§2.3）。
+# 0だとRouterがlocal台帳の上限到達を検出できなくなるため、精密な計測が
+# LocalRuntime側に実装されるまでの暫定値として使う。
+_LOCAL_CALL_HOURS_ESTIMATE = 1 / 60  # 1分/呼び出し相当
 
 
 def _parse_openai_logprobs(raw: dict | None) -> tuple[TokenLogprob, ...] | None:
@@ -424,18 +437,26 @@ class HarnessProvider:
 
     控えめ運用（低頻度・人間起動のバッチ、無人常駐デーモン化しない。PLAN §15-1）を
     前提とし、Router側の harness セマフォ・低頻度ロールへの限定でレートを抑える。
+
+    本文（messages）はコマンドライン引数に載せない（Codex監査2巡目 finding 2）:
+    argvはOS上の他プロセスから `ps` 等で読める。CLIの非対話モードは
+    stdinパイプでの本文供給をサポートしているため（`cat x | claude -p '短い指示'` /
+    `codex exec '短い指示' < diff` の公式パターン）、argvには秘密を含まない
+    固定の短い指示のみを置き、本文はすべてstdin経由で渡す。
     """
+
+    _STDIN_INSTRUCTION = "Respond to the request provided via standard input below."
 
     def __init__(self, cli: str, timeout: float = 300.0) -> None:
         self.name = "harness"
         self._cli = cli
         self._timeout = timeout
 
-    def _build_command(self, prompt: str) -> list[str]:
+    def _build_command(self) -> list[str]:
         if self._cli == "claude-code":
-            return ["claude", "-p", prompt]
+            return ["claude", "-p", self._STDIN_INSTRUCTION]
         if self._cli == "codex":
-            return ["codex", "exec", prompt]
+            return ["codex", "exec", self._STDIN_INSTRUCTION]
         raise RouterError(f"unknown harness cli: {self._cli}")
 
     def complete(
@@ -451,8 +472,8 @@ class HarnessProvider:
         **_ignored,
     ) -> LLMResponse:
         prompt = "\n\n".join(f"[{m.role}] {m.content}" for m in messages)
-        cmd = self._build_command(prompt)
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=self._timeout)
+        cmd = self._build_command()
+        proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=self._timeout)
         if proc.returncode != 0:
             raise RuntimeError(f"harness {self._cli} failed: {proc.stderr.strip()[:500]}")
         text = proc.stdout.strip()

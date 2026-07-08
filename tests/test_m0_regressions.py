@@ -13,7 +13,7 @@ import pytest
 from aleph.core.artifacts import Work
 from aleph.core.budget import Budget, BudgetExceeded
 from aleph.core.config import load_config
-from aleph.core.llm import CallLogger, LLMResponse, Message, Router, Usage
+from aleph.core.llm import CallLogger, HarnessProvider, LLMResponse, Message, Router, Usage
 from aleph.core.loop import Checkpoint, Loop, State
 
 pytestmark = pytest.mark.m0
@@ -92,3 +92,44 @@ def test_router_propagates_work_id_to_budget(cfg, tmp_path):
 
     with pytest.raises(BudgetExceeded):
         router.call("author_primary", [Message("user", "hello")], work_id="w0006")
+
+
+def test_router_blocks_call_that_would_exceed_local_budget(cfg, tmp_path):
+    """3回目のCodex監査 finding 1: local台帳が常にamount=0扱いで、上限到達済みでも
+    router.call('scout', ...) がブロックされなかった（local台帳がRouter経由では
+    事実上機能していなかった）."""
+    budget = Budget(cfg)
+    limit = cfg.budgets["local"]["gpu_hours_per_day"]
+    budget.charge("local", limit)  # 上限まで消費済みにする
+
+    logger = CallLogger(tmp_path / "calls.jsonl", secrets=cfg.secrets.values())
+    router = Router(cfg, logger, budget)
+    router._provider_for_test = FakeProvider()
+
+    with pytest.raises(BudgetExceeded):
+        router.call("scout", [Message("user", "hello")])
+
+
+def test_harness_provider_does_not_leak_prompt_into_argv(monkeypatch):
+    """3回目のCodex監査 finding 2: harnessの本文がコマンドライン引数(argv)に載り、
+    同一ホストの他プロセスから `ps` 等で読める状態だった。本文はstdin経由に限定する."""
+    captured = {}
+
+    class FakeCompletedProcess:
+        returncode = 0
+        stdout = "ok"
+        stderr = ""
+
+    def fake_run(cmd, input=None, **kw):
+        captured["cmd"] = cmd
+        captured["input"] = input
+        return FakeCompletedProcess()
+
+    monkeypatch.setattr("aleph.core.llm.subprocess.run", fake_run)
+
+    provider = HarnessProvider(cli="claude-code")
+    secret_text = "SUPER-SECRET-DRAFT-CONTENT-0007"
+    provider.complete("claude-code", [Message("user", secret_text)])
+
+    assert secret_text not in captured["cmd"]
+    assert secret_text in captured["input"]
