@@ -1,5 +1,34 @@
 # PLAN 変更履歴
 
+## 0.7 (2026-07-08) — 施工者提案・設計者審査待ち
+harness利用規約適合ガード（PLAN §15-1の残置項目への対応）。施工者（Claude Code /
+Claude Sonnet 5）が config/policies.yaml に `harness:` セクションを追加する。
+
+- 背景: PLAN §15-1「唯一の残置事項」として明記されていたharness（claude-code /
+  codex の非対話CLI自動実行）の規約適合について、Codexクロス監査
+  （commit 72fc803 → `reports/CODEX_AUDIT_20260708_094819.md`）が「M0監査項目が
+  未対応」と指摘。サブエージェントにWeb一次情報調査を依頼した結果:
+  - Anthropic: Claude Code公式ドキュメント（code.claude.com/docs/en/headless）が
+    `claude -p` をスクリプト/cron/CI向け公式機能と明記。ただし「ordinary,
+    individual usage」の閾値は非公開。→ 判定: CONDITIONAL（実質PASSに近い）。
+  - OpenAI: Codex CLI公式ガイド（developers.openai.com/codex/auth/ci-cd-auth）が
+    ChatGPT加入者認証での自動化を「advanced/enterprise向けの例外的手段」と位置づけ、
+    「公開・OSSリポジトリでの使用は避けよ」と明記。本リポジトリは公開リモート
+    （aleph.github.io）を持つため要注意。→ 判定: CONDITIONAL（Anthropicより慎重に）。
+- 変更内容: `config/policies.yaml` に `harness.enabled`（既定 `false`）と
+  CLI別 `harness.cli_tos_ack.{claude-code,codex}`（既定 `false`）を新設。
+  `aleph/core/llm.py::build_provider()` は、この2条件が満たされない限り harness
+  プロバイダの構築を拒否する（`RouterError`）。つまり harness 経由の呼び出しは
+  **人間が規約を確認し明示的に有効化するまで既定で無効**になる。
+- 審査事項（設計権限者へ）: (1) 既定オフというデフォルトの妥当性、(2) codex側に
+  より慎重な扱い（cli別フラグ分離）を設けたことの妥当性、(3) PLAN §15-1の
+  「残置事項」を本変更をもってCLOSEDとしてよいか、それとも `audits/M0_audit.md`
+  への正式記録（Codexによる監査）を待つべきか。
+- 未確定のまま残す事項: 「ordinary, individual usage」の定量閾値がAnthropic非公開
+  であるため、コード側のレート制御（budgets.yaml: harness.calls_per_day=40,
+  concurrent=1）を規約適合の実効的根拠とする、という前提は施工者の判断であり、
+  設計者による追認が望ましい。
+
 ## 0.6 (2026-07-07)
 設計権限の継承規定（§12.1新設）。
 

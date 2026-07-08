@@ -87,9 +87,32 @@
 `uv run pytest -m 'not local'` → 27 passed（design invariants 17 + m0 acceptance 7 +
 regressions 3）で退行なし。
 
-### 未対応（サブエージェントへ委任中）
-- **finding 2（harness利用規約適合）**: PLAN §15-1が残置監査項目として明記していた
-  論点そのもの。Anthropic/OpenAIの利用規約上、`claude -p`/`codex exec` の自動化バッチ
-  実行が許容されるかの一次判定と、必要なら `HarnessProvider`/`build_provider` への
-  ガード実装案を、Web調査担当のサブエージェントに依頼中（結果待ち）。結果が出次第
-  本ファイルと `audits/M0_audit.md` に反映する。
+### finding 2（harness利用規約適合）— サブエージェント調査 → ガード実装完了
+サブエージェントがWeb一次情報（Anthropic Consumer ToS、Claude Code公式ドキュメント
+`code.claude.com/docs/en/headless`、OpenAI Codex CLI公式ガイド
+`developers.openai.com/codex/auth/ci-cd-auth`）を調査。結論:
+- Anthropic: `claude -p` はscript/cron/CI向け公式機能と明記されており CONDITIONAL
+  （実質PASSに近い）。ただし「ordinary, individual usage」の閾値は非公開。
+- OpenAI: ChatGPT加入者認証での`codex exec`自動化は「advanced/enterprise向けの
+  例外的手段」「公開リポジトリでの使用は避けよ」と公式ガイドが明記。本リポジトリは
+  公開リモート（aleph.github.io）を持つため CONDITIONAL（Anthropicより慎重に）。
+- Brave Search APIは不要だった（WebSearch/WebFetchで一次情報に到達できた）。
+
+ユーザーの意思決定によりガード実装まで実施:
+- `PLAN_CHANGELOG.md` に 0.7 として変更提案を記録（config/policies.yaml は
+  「変更にはPLAN_CHANGELOGへの記録と設計者の審査が必要」な契約ファイルのため）。
+- `config/policies.yaml` に `harness.enabled`（既定false）と CLI別
+  `harness.cli_tos_ack.{claude-code,codex}`（既定false）を新設。
+- `aleph/core/llm.py::build_provider()` が、この2条件が満たされない限り
+  harnessプロバイダの構築を `RouterError` で拒否するよう変更。
+- `tests/test_harness_policy.py`（新規）: 既定拒否・全体有効化のみでは拒否・
+  CLI別ackも揃って初めて許可・認証情報らしきファイルがリポジトリに追跡されて
+  いないこと、の5テストを追加。
+- `uv run pytest -m 'not local'` → 32 passed（既存27 + harness policy 5）、退行なし。
+
+**要設計者審査**（PLAN_CHANGELOG 0.7に詳細）: (1) 既定オフの妥当性、
+(2) codex側をより慎重に扱う設計の妥当性、(3) 本変更をもってPLAN §15-1の残置事項を
+CLOSEDとしてよいか、それとも `audits/M0_audit.md`（Codexによる正式監査記録）を
+待つべきか。`audits/M0_audit.md` は監査者（Codex）が書くものであり、施工者
+（Claude Code）が自ら書くのは PLAN §12 の施工者/監査者分離原則に反するため、
+今回は書いていない。

@@ -464,7 +464,18 @@ class HarnessProvider:
 def build_provider(provider_name: str, decl: dict, config) -> "Provider":
     """役割宣言からプロバイダインスタンスを組み立てる（PLAN §2.1 3プロバイダ + harness）."""
     if provider_name == "harness":
-        return HarnessProvider(cli=decl["cli"])
+        cli = decl["cli"]
+        harness_policy = config.policies.get("harness", {})
+        if not harness_policy.get("enabled", False):
+            raise RouterError(
+                "harness is disabled by policy (config/policies.yaml: harness.enabled=false). "
+                "PLAN §15-1: 利用規約適合を人間が確認し明示的に有効化するまで拒否する。"
+            )
+        if not harness_policy.get("cli_tos_ack", {}).get(cli, False):
+            raise RouterError(
+                f"harness cli {cli!r} not acknowledged (config/policies.yaml: harness.cli_tos_ack.{cli}=false)"
+            )
+        return HarnessProvider(cli=cli)
     if provider_name == "local":
         raise RouterError("provider 'local' (embedder/reranker) はRouter.call経由の対象外")
 
