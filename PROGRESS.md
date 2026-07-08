@@ -116,3 +116,38 @@ CLOSEDとしてよいか、それとも `audits/M0_audit.md`（Codexによる正
 待つべきか。`audits/M0_audit.md` は監査者（Codex）が書くものであり、施工者
 （Claude Code）が自ら書くのは PLAN §12 の施工者/監査者分離原則に反するため、
 今回は書いていない。
+
+## 2026-07-08 — M0マイルストーン単位のCodex監査（2回目）→ finding修正
+
+コミット `53a2ffa`・`d3c3e9d` を含めたM0全体を対象に、設計者施工の骨格コミット
+`3e1603c` を基準として `codex-audit --base 3e1603c --run-tests` を再実行
+（PLAN §12「監査単位はマイルストーン」に合わせたスコープ）。
+結果: `reports/CODEX_AUDIT_20260708_105020.md`（VERDICT: FAIL、指摘1件）。
+
+### 指摘と修正
+- **Router経由のAPI呼び出しで作品別予算(usd_per_work)が一切効かない**
+  （`aleph/core/llm.py:208`/`:231`）。`Budget.precheck/charge` は `work_id` を
+  受け取れるが、`Router._invoke()` がそれを渡す手段を持たず、常にグローバルAPI
+  台帳だけを更新していた。Codexが実再現: `usd_per_work=3.0` に対しFakeProviderが
+  $2.0を返す条件で `router.call()` を2回実行しても `BudgetExceeded` が出ず
+  `api.spent=4.0` まで進む。
+  → `Router.call()`/`call_jury()` の `**overrides` から `work_id` を取り出し、
+  `budget.precheck()`/`budget.charge()` へ伝播するよう `_invoke()` を修正。
+  `tests/test_m0_regressions.py::test_router_propagates_work_id_to_budget` を
+  追加し、修正前に赤（`DID NOT RAISE BudgetExceeded`）→ 修正後に緑を確認。
+- `uv run pytest -m 'not local'` → 33 passed、退行なし。
+
+### 既知の限界（今回は対応せず、設計判断として残す）
+- api台帳の事前照会（`Router._precheck_amount`）はプロンプト長と`max_tokens`からの
+  概算であり、実際のプロバイダ課金額はレスポンス後にしか確定しない。したがって
+  「この1回の呼び出しが単独で作品別上限を超過する」ケースを事前に完全に防げる
+  わけではない（概算が小さければ通過し、実費が高ければ`charge()`後に台帳が
+  超過状態になり、**次の**呼び出しの`precheck`で検出される、という事後的検出に
+  留まる）。真の事前防止には応答前のコスト確定が必要で、現実のAPI課金モデル
+  上は原理的に難しい。現状のテストはこの限界の範囲内で「work_idが実際に
+  伝播し、既に上限に達した作品への次の呼び出しはブロックされる」ことのみを
+  保証している。
+
+### 次の一手
+- この2回目の監査サイクルで指摘は解消。次はPLAN §12の正式な合否記録
+  （`audits/M0_audit.md`）をCodex側に依頼するか判断待ち。

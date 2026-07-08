@@ -193,6 +193,10 @@ class Router:
 
     # -- 呼び出し ------------------------------------------------------------
     def _invoke(self, role: str, decl: dict, messages: Sequence[Message], **overrides) -> LLMResponse:
+        # work_id はBudgetの作品別サブ台帳（usd_per_work）を通す経路。プロバイダへは渡さない
+        # （Codex監査 finding: Router.callがwork_idを一切伝播しておらず、作品別上限が
+        # 事実上機能していなかった）。
+        work_id = overrides.pop("work_id", None)
         provider_name = decl["provider"]
         model = decl.get("model") or decl.get("cli") or provider_name
         ledger = self._ledger_for(provider_name)
@@ -205,7 +209,9 @@ class Router:
         }
         kwargs.update(overrides)
 
-        self.budget.precheck(ledger, self._precheck_amount(ledger, provider_name, messages, kwargs))
+        self.budget.precheck(
+            ledger, self._precheck_amount(ledger, provider_name, messages, kwargs), work_id=work_id
+        )
 
         using_fake = getattr(self, "_provider_for_test", None) is not None
         if not using_fake and ledger == "local" and self.local_runtime is not None:
@@ -228,7 +234,7 @@ class Router:
                     time.sleep(min(2**attempt, 5))
         assert resp is not None  # ループは break か raise のいずれかで抜ける
 
-        self.budget.charge(ledger, self._charge_amount(ledger, resp))
+        self.budget.charge(ledger, self._charge_amount(ledger, resp), work_id=work_id)
 
         prompt_text = "\n".join(f"{m.role}:{m.content}" for m in messages)
         response_hash = resp.response_hash or sha256_text(resp.text)

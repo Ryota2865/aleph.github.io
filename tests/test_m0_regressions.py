@@ -77,3 +77,18 @@ def test_budget_work_scoped_spend_survives_persistence(cfg, tmp_path):
     b2 = Budget(cfg, state_path=state_path)
     with pytest.raises(BudgetExceeded):
         b2.precheck("api", 0.10, work_id="w0005")
+
+
+def test_router_propagates_work_id_to_budget(cfg, tmp_path):
+    """2回目のCodex監査 finding: Router.callがwork_idをBudgetへ渡しておらず、
+    作品別上限(usd_per_work)がRouter経由の呼び出しで一切機能していなかった."""
+    budget = Budget(cfg)
+    work_limit = cfg.budgets["api"]["usd_per_work"]
+    budget.charge("api", work_limit, work_id="w0006")  # この作品の上限まで消費済み
+
+    logger = CallLogger(tmp_path / "calls.jsonl", secrets=cfg.secrets.values())
+    router = Router(cfg, logger, budget)
+    router._provider_for_test = FakeProvider()
+
+    with pytest.raises(BudgetExceeded):
+        router.call("author_primary", [Message("user", "hello")], work_id="w0006")
