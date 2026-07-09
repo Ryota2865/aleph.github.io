@@ -16,7 +16,7 @@ import subprocess
 import threading
 import time
 from contextlib import nullcontext
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Iterable, Protocol, Sequence
 
@@ -242,6 +242,16 @@ class Router:
                     time.sleep(min(2**attempt, 5))
         assert resp is not None  # ループは break か raise のいずれかで抜ける
 
+        # 役割宣言 pricing による正確なコスト計上（PLAN_CHANGELOG 0.7.4-4）。
+        # モデル名をコードに直書きしない不変条件を保ちながらモデル別価格を反映する唯一の経路。
+        pricing = decl.get("pricing")
+        if pricing:
+            cost = (
+                resp.usage.prompt_tokens * pricing["input_per_mtok"] / 1e6
+                + resp.usage.completion_tokens * pricing["output_per_mtok"] / 1e6
+            )
+            resp = replace(resp, cost_usd=round(cost, 6))
+
         self.budget.charge(ledger, self._charge_amount(ledger, resp), work_id=work_id)
 
         prompt_text = "\n".join(f"{m.role}:{m.content}" for m in messages)
@@ -283,8 +293,9 @@ class RouterError(Exception):
 _PROVIDER_USD_PER_1K_TOKENS = {
     # 実額はモデルごとに異なるが、モデル名をコードに直書きしないため（設計不変条件）
     # プロバイダ単位の概算レートで代用する。厳密なコスト集計はプロバイダのAPI応答
-    # (該当すれば)や請求実績で校正すること。
-    "anthropic": 0.006,
+    # (該当すれば)や請求実績で校正すること。役割宣言に pricing があれば
+    # Router._invoke がそちらを正として使う（PLAN_CHANGELOG 0.7.4-4）。
+    "anthropic": 0.03,  # fable価格に対し保守的な事前見積り（実計上はpricing宣言側が正）
     "openai": 0.006,
 }
 
@@ -336,13 +347,15 @@ class AnthropicProvider:
         stream: bool = False,
         **_ignored,
     ) -> LLMResponse:
+        # temperature はpayloadに含めない（一部のAnthropicモデルはAPI仕様上
+        # temperature を受け付けず送ると400になる。PLAN_CHANGELOG 0.7.4-3）。
+        # 引数は互換のため残すが未使用。
         system = "\n".join(m.content for m in messages if m.role == "system") or None
         turns = [{"role": m.role, "content": m.content} for m in messages if m.role != "system"]
         payload: dict = {
             "model": model,
             "messages": turns,
             "max_tokens": max_tokens or 1024,
-            "temperature": temperature,
         }
         if system:
             payload["system"] = system
@@ -354,6 +367,8 @@ class AnthropicProvider:
         resp = self._client.post(self.api_url, json=payload, headers=headers)
         resp.raise_for_status()
         data = resp.json()
+        if data.get("stop_reason") == "refusal":
+            raise RuntimeError("anthropic refusal: " + str(data.get("stop_details")))
         text = "".join(block.get("text", "") for block in data.get("content", []))
         usage_raw = data.get("usage", {})
         usage = Usage(
