@@ -166,8 +166,20 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print("explore: existing index found; skipping ingest", file=sys.stderr)
 
-        print("explore: building atlas", file=sys.stderr)
-        atlas = build_atlas(out_dir)
+        # アトラス成果物が揃っていれば再構築せず読み込む（HDBSCANは90kチャンクで
+        # 長時間かかるため。--reingest 時のみ作り直す）
+        atlas_ready = all(
+            (out_dir / name).exists()
+            for name in ("labels.npy", "density.npy", "style.npy", "atlas_meta.json")
+        )
+        if atlas_ready and not args.reingest:
+            from aleph.explore.atlas import Atlas
+
+            print("explore: loading existing atlas", file=sys.stderr)
+            atlas = Atlas.load(out_dir)
+        else:
+            print("explore: building atlas", file=sys.stderr)
+            atlas = build_atlas(out_dir)
         web_checker = None
         api_key = cfg.secrets.get("BRAVE_API_KEY")
         if api_key and not args.skip_web:
