@@ -19,18 +19,21 @@ providers:
     # 控えめ運用が規約適合の作業前提（PLAN §15-1）: 低頻度・人間起動のバッチ・無人デーモン化しない
 
 roles:
-  author_primary:  { provider: anthropic, model: claude-fable-5, temperature: 1.0 }
+  # pricing: {input_per_mtok, output_per_mtok} USD。宣言があればRouterが実usageから正確に計上する
+  # （PLAN_CHANGELOG 0.7.4-4。モデル名をコードに書かず価格だけ宣言で持つ）。
+  # 注: claude-fable-5 / claude-opus-4-8 はAPI仕様上 temperature を受け付けない（送ると400）。
+  author_primary:  { provider: anthropic, model: claude-fable-5, pricing: { input_per_mtok: 10.0, output_per_mtok: 50.0 } }
   author_alt:      { provider: openai,    model: gpt-5.5,        temperature: 1.0 }
   author_local:    { provider: llamacpp,  model: gemma-4-31B-it-qat-UD-Q4_K_XL }
   author_harness:  { provider: harness,   cli: claude-code }   # 重い知性・低頻度の役割用
   critic_harness:  { provider: harness,   cli: codex }
   critic_jury:                                      # 複数指定 = 陪審（PLAN §7.1）
-    - { provider: anthropic, model: claude-opus-4-8 }
+    - { provider: anthropic, model: claude-opus-4-8, pricing: { input_per_mtok: 5.0, output_per_mtok: 25.0 } }
     - { provider: openai,    model: gpt-5.5 }
     - { provider: llamacpp,  model: Qwen3.6-27B-Q4_K_M }   # ローカル陪審員（時分割）
   reader_model:    { provider: llamacpp, model: Qwen3.6-27B-Q4_K_M, logprobs: true }
   reader_small:    { provider: llamacpp, model: Qwen3-8B, logprobs: true }
   scout:           { provider: llamacpp, model: gemma-4-26B-A4B-it-qat-UD-Q4_K_XL }  # MoE=高速
-  scout_api:       { provider: anthropic, model: claude-haiku-4-5 }  # ローカル飽和時のみ
+  scout_api:       { provider: anthropic, model: claude-haiku-4-5, pricing: { input_per_mtok: 1.0, output_per_mtok: 5.0 } }  # ローカル飽和時のみ
   embedder:        { provider: local, model: bge-m3, path: ~/models/embeddings/bge-m3 }
   reranker:        { provider: local, model: Qwen3-Reranker-0.6B, path: ~/models/embeddings/Qwen3-Reranker-0.6B }

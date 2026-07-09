@@ -101,6 +101,32 @@ M1（探索層）施工開始にあたっての設計決定。いずれも初代
    設計者が施工。「上位50対・非自明7/10」の質的判定はM1同様、実ラン+監査
    （PLAN §12）で行う。
 
+## 0.7.4 (2026-07-09) — ルーティング確定・harness有効化（設計者: Claude Fable 5）
+
+オーナーが .env に ANTHROPIC_API_KEY / OPENAI_API_KEY（各$10課金）/ ZAI_API_KEY を
+追加し、「harness、ggufも自由に使ってください。品質と予算のバランスは設計者に一任」
+と明示的に許可した（2026-07-09）。これを受けた設計決定:
+
+1. **harness有効化**: `config/policies.yaml` の `harness.enabled: true`、
+   `cli_tos_ack.claude-code: true` に変更。0.7の設計（人間の明示的有効化まで拒否）
+   の発動条件——オーナーの明示的許可——が満たされたため。**codex は 0.7.1 の
+   条件（公開リポジトリではack=false推奨既定）に従い false のまま**。
+2. **作者役の一次ルーティング**: `author_primary` = anthropic API `claude-fable-5`
+   （$10/$50 per MTok。1呼び出し≈$0.15、$10予算で約60呼、usd_per_work=3.0の
+   作品別上限が効く）。設計者自身が初代作者を務めることになるが、これは
+   施工者/監査者分離（§12）とは別軸であり、PLAN §3 の author 役の宣言変更に
+   すぎない。予算逼迫時は author_harness（claude-code CLI）→ author_local
+   （gemma-4-31B）の順でフォールバック（§14.1 の優先順位の範囲内）。
+3. **AnthropicProvider の修正が必要（施工課題）**: claude-fable-5 / claude-opus-4-8
+   はAPI仕様上 `temperature` パラメータを受け付けない（400）。AnthropicProvider は
+   temperature を送信しないよう修正する。思考は常時オン（パラメータ不要）。
+   `stop_reason: "refusal"` の検査を追加する。
+4. **コスト計上の精密化（施工課題）**: models.yaml の役割宣言に任意の
+   `pricing: {input_per_mtok, output_per_mtok}` を追加し、宣言があれば実 usage から
+   正確な cost_usd を計上する（モデル名のコード直書き禁止の不変条件を保ちながら
+   モデル別価格を実現する唯一の経路）。宣言がない場合は既存のプロバイダ概算に
+   フォールバック。
+
 ## 0.6 (2026-07-07)
 設計権限の継承規定（§12.1新設）。
 

@@ -24,13 +24,17 @@ def cfg():
     return load_config(ROOT)
 
 
-def test_harness_disabled_by_default(cfg):
-    assert cfg.policies["harness"]["enabled"] is False
-    assert cfg.policies["harness"]["cli_tos_ack"]["claude-code"] is False
+def test_harness_flags_match_design_decisions(cfg):
+    """PLAN_CHANGELOG 0.7.4: オーナーの明示的許可（2026-07-09）により claude-code のみ有効。
+    **codex は公開リポジトリである限り false を維持**（0.7.1の条件。これは不変条件）."""
+    assert cfg.policies["harness"]["enabled"] is True
+    assert cfg.policies["harness"]["cli_tos_ack"]["claude-code"] is True
     assert cfg.policies["harness"]["cli_tos_ack"]["codex"] is False
 
 
 def test_harness_provider_rejected_when_disabled(cfg):
+    """無効化時の拒否メカニズム自体は設定値と独立に維持される（PLAN_CHANGELOG 0.7）."""
+    cfg.policies["harness"]["enabled"] = False
     with pytest.raises(RouterError):
         build_provider("harness", {"provider": "harness", "cli": "claude-code"}, cfg)
 

@@ -42,9 +42,10 @@ corpus:                       # PLAN §4.1・§11
   protected_text_policy: excerpt_and_citation_only
   self_output_ingestion: labeled_only   # model-collapse対策: 自作は明示ラベルつきでのみ参照
 
-harness:                       # OAuthサブスクCLI自動化の規約適合（PLAN §15-1。PLAN_CHANGELOG 0.7）
-  enabled: false                # 既定オフ。人間が規約を確認し明示的に有効化するまでharness経由呼び出しを拒否する
+harness:                       # OAuthサブスクCLI自動化の規約適合（PLAN §15-1。PLAN_CHANGELOG 0.7/0.7.4）
+  enabled: true                 # オーナーが明示的に有効化（2026-07-09「harness自由に使ってよい」。0.7.4）
   cli_tos_ack:
-    claude-code: false          # Anthropic: 公式にscript/cron/CI向け機能と明記（ordinary usage前提）
-    codex: false                 # OpenAI: 公式ガイドが「advanced/enterprise向けの例外的手段」
-                                  # 「公開リポジトリでの使用は避けよ」と明記。本リポジトリは公開リモートを持つため要注意
+    claude-code: true           # Anthropic: 公式にscript/cron/CI向け機能と明記。オーナーack済み（0.7.4）
+    codex: false                 # OpenAI: 公式ガイドが「公開リポジトリでの使用は避けよ」と明記。
+                                  # 0.7.1の条件により公開リポジトリである限り false を維持（開発ツールとしての
+                                  # codex-audit/codex-implement はランタイム外でありこの制限の対象外）
