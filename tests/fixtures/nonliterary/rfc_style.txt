@@ -1,0 +1,26 @@
+1. Introduction
+
+   This document specifies the requirements for message exchange between
+   conforming implementations. The key words MUST, MUST NOT, SHOULD, and
+   MAY are to be interpreted as described below.
+
+2. Terminology
+
+   sender:   the party that initiates a message.
+   receiver: the party that accepts or rejects a message.
+
+3. Requirements
+
+   3.1. A sender MUST NOT transmit a message longer than 512 octets.
+
+   3.2. A receiver SHOULD acknowledge every well-formed message within
+        30 seconds. If no acknowledgement is received, the sender MAY
+        retransmit at most three times.
+
+   3.3. Implementations MUST treat an empty message as a protocol error
+        and close the connection.
+
+4. Security Considerations
+
+   Messages are transmitted in cleartext. Implementations SHOULD NOT
+   include secrets in any message field.

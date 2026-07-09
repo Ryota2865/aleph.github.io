@@ -33,8 +33,9 @@ testpaths = ["tests"]
 markers = [
     "m0: M0受入基準。施工対象であり、施工完了時に緑になる（監査の照合表）。",
     "m1: M1受入基準（ロジック契約）。実ランはaleph exploreと監査で検証。",
+    "m2: M2受入基準（ロジック契約）。質的判定は実ラン+監査で検証。",
     "local: RTX 3090上のローカル推論が必要。ALEPH_LOCAL=1 で有効化。",
 ]
 # 既定では設計不変条件テストのみ実行（現時点で緑であるべきもの）。
-# 施工者・監査者は `pytest -m m0` / `pytest -m m1` で各受入基準を実行する。
-addopts = "-m 'not m0 and not m1 and not local'"
+# 施工者・監査者は `pytest -m m0` / `pytest -m m1` 等で各受入基準を実行する。
+addopts = "-m 'not m0 and not m1 and not m2 and not local'"

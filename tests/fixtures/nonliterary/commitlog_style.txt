@@ -1,0 +1,18 @@
+commit 9f3e2a1 2025-11-03 09:12
+    fix: stop the fountain overflowing at night
+
+commit 8c1d044 2025-11-02 23:47
+    revert "experiment: let the vines climb the north wall"
+    The vines reached the window. This was a mistake.
+
+commit 77aa310 2025-11-01 06:30
+    feat: plant winter bulbs along the east path
+
+commit 5b9cc82 2025-10-28 18:05
+    chore: sweep fallen leaves, again
+
+commit 41f0e77 2025-10-25 12:00
+    experiment: let the vines climb the north wall
+
+commit 30ddc19 2025-10-20 07:44
+    docs: label every tree with its name and year
