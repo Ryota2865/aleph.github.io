@@ -17,11 +17,75 @@ from aleph.explore.niche import find_niches, report
 from aleph.explore.webresearch import search, web_check
 
 
+def _next_work_id(works_root: Path) -> str:
+    """works/ 直下の連番id（w0001 形式）の次を算出する."""
+    works_root = Path(works_root)
+    highest = 0
+    if works_root.exists():
+        for entry in works_root.iterdir():
+            if not entry.is_dir() or not entry.name.startswith("w"):
+                continue
+            try:
+                highest = max(highest, int(entry.name[1:]))
+            except ValueError:
+                continue
+    return f"w{highest + 1:04d}"
+
+
+def _cmd_run(root: Path, args) -> int:
+    """aleph run: 実LLM依存を組み立てて pipeline.run_work を呼ぶ（M6 配線）."""
+    from aleph.core.artifacts import Work
+    from aleph.explore.corpus import LlamaServerEmbedder
+    from aleph.pipeline import RealDeps, run_work
+
+    config = load_config(root)
+    work = Work(root / "works", args.work)
+    if not work.dir.exists():
+        print(f"run: work not found: {work.dir}", file=sys.stderr)
+        return 1
+
+    logger = CallLogger(work.calls, secrets=config.secrets.values())
+    budget = Budget(config)
+    router = Router(config, logger, budget)
+
+    embedder = None
+    embedder_role = config.models.get("roles", {}).get("embedder")
+    llamacpp = config.models.get("providers", {}).get("llamacpp")
+    if embedder_role and llamacpp:
+        try:
+            embedder = LlamaServerEmbedder(
+                base_url=llamacpp["base_url"], model=embedder_role["model"],
+            )
+        except Exception as exc:  # 埋め込み取得失敗は空リストで凌ぐ（M6 最小配線）
+            print(f"run: embedder unavailable ({exc}); continuing without", file=sys.stderr)
+
+    api_key = config.secrets.get("BRAVE_API_KEY")
+
+    def search_fn(query, count=5):
+        if not api_key:
+            return []
+        try:
+            return search(query, api_key=api_key, count=count)
+        except Exception:
+            return []
+
+    deps = RealDeps(
+        work, router, config=config, index_dir=root / args.index,
+        search_fn=search_fn, embedder=embedder,
+    )
+    final = run_work(work, deps, decided_by="cli-run")
+    print(f"run: {args.work} -> {final.value}", file=sys.stderr)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="aleph", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("new", help="種(seed)から新しい作品を開始する")
-    sub.add_parser("run", help="閉ループを実行する（チェックポイントから継続）")
+    new_p = sub.add_parser("new", help="種(seed)から新しい作品を開始する")
+    new_p.add_argument("--hint", default="", help="種となる着想のテキスト")
+    run_p = sub.add_parser("run", help="閉ループを実行する（チェックポイントから継続）")
+    run_p.add_argument("--work", required=True, help="作品id（works/<id>）")
+    run_p.add_argument("--index", default="state/atlas", help="探索・素材索引のディレクトリ")
     sub.add_parser("status", help="予算3系統と進行中の作品を表示する")
     sub.add_parser("resume", help="クラッシュ後の再開（決定論的リプレイ）")
     sub.add_parser("publish", help="公開ゲートを起動する（初回は人間承認必須）")
@@ -35,8 +99,20 @@ def main(argv: list[str] | None = None) -> int:
     explore.add_argument("--skip-web", action="store_true")
     explore.add_argument("--reingest", action="store_true")
     args = parser.parse_args(argv)
+    root = Path(__file__).resolve().parent.parent
+    if args.command == "new":
+        from aleph.core.artifacts import Work
+
+        works_root = root / "works"
+        works_root.mkdir(parents=True, exist_ok=True)
+        work_id = _next_work_id(works_root)
+        work = Work(works_root, work_id)
+        work.create({"hint": args.hint} if args.hint else {})
+        print(f"new: created {work_id} at {work.dir}", file=sys.stderr)
+        return 0
+    if args.command == "run":
+        return _cmd_run(root, args)
     if args.command == "status":
-        root = Path(__file__).resolve().parent.parent
         config = load_config(root)
         budget = Budget(config)
         units = {"api": "USD", "harness": "calls", "local": "gpu_hours"}
