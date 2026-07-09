@@ -90,12 +90,13 @@ def pipeline_to_draft(
     *,
     generations: int = 2,
     poetics: str = "",
+    materials: list | None = None,
 ) -> Path:
     """ニッチ報告→criteria→3案→進化→drafts/v1.md を全自動でつなぐ（PLAN §10 M3）."""
     criteria_path = derive_criteria(work, niche, audience, author, poetics=poetics)
     criteria_text = criteria_path.read_text(encoding="utf-8")
 
-    proposals = generate_proposals(work, criteria_text, [], audience, author, n=3)
+    proposals = generate_proposals(work, criteria_text, materials or [], audience, author, n=3)
     winner = evolve(work, proposals, criteria_text, audience, author, critic, generations=generations)
 
     work.append_decision(

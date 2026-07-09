@@ -193,6 +193,17 @@ def run_work(work, deps, *, decided_by: str) -> State:
     return state
 
 
+def _stop_inputs_from_trajectory(work) -> tuple[list[dict], list[list[str]]]:
+    traj_path = work.dir / "reviews" / "trajectory.jsonl"
+    rows: list[dict] = []
+    if traj_path.exists():
+        for line in traj_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                rows.append(json.loads(line))
+    instructions_history = [row["instructions"] for row in rows if "instructions" in row]
+    return rows, instructions_history
+
+
 # ================================================================= RealDeps
 # 実LLM依存の配線。テスト対象外（m6テストは FakeDeps で配線のみ検査）。
 # import時エラーにならないよう、重い依存は遅延importで書く（PLAN_CHANGELOG 0.7.8）。
@@ -313,7 +324,7 @@ class RealDeps:
 
         return pipeline_to_draft(
             work, niche, audience, self._author, self._scout,
-            generations=2, poetics=self._poetics(),
+            generations=2, poetics=self._poetics(), materials=materials,
         )
 
     # -- L6 査読・改稿ループ（M4 critique_revise_loop） ----------------------
@@ -335,15 +346,8 @@ class RealDeps:
     def decide_stop(self, work):
         from aleph.meta.stopping import decide_stop
 
-        traj_path = work.dir / "reviews" / "trajectory.jsonl"
-        trajectory: list[dict] = []
-        if traj_path.exists():
-            for line in traj_path.read_text(encoding="utf-8").splitlines():
-                if line.strip():
-                    trajectory.append(json.loads(line))
-        # novelty_dist が trajectory に無ければ停止判定の過剰彫琢経路は使えない;
-        # 収束経路のみで判定するため空の instructions_history を渡す。
-        return decide_stop(trajectory=trajectory, instructions_history=[])
+        trajectory, instructions_history = _stop_inputs_from_trajectory(work)
+        return decide_stop(trajectory=trajectory, instructions_history=instructions_history)
 
     # -- L7 公開判断（M5 publication_gate へ委譲。PLAN §7.3d） ----------------
     def decide_publication(self, work, audience):

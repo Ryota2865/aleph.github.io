@@ -12,13 +12,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
+from aleph.critique.review import sanitize_critique
+
 
 def revise(work, report: dict, audience: str, author: Callable[[str], str], *, version: int) -> Path:
     """前版全文+批評+改稿指示(自然言語のみ)を author に渡し、次版を書く（PLAN §7.2）."""
     previous_text = work.draft_path(version).read_text(encoding="utf-8")
     criteria_review = report.get("criteria_review", {})
-    critiques = [str(c) for c in criteria_review.get("critiques", [])]
-    revise_instructions = [str(i) for i in report.get("revise_instructions", [])]
+    critiques = [sanitize_critique(str(c)) for c in criteria_review.get("critiques", [])]
+    revise_instructions = [sanitize_critique(str(i)) for i in report.get("revise_instructions", [])]
 
     lines = [
         f"宛先: {audience}",

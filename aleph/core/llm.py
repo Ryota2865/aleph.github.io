@@ -177,7 +177,9 @@ class Router:
         return 0.0
 
     @staticmethod
-    def _precheck_amount(ledger: str, provider_name: str, messages: Sequence[Message], kwargs: dict) -> float:
+    def _precheck_amount(
+        ledger: str, provider_name: str, messages: Sequence[Message], kwargs: dict, decl: dict
+    ) -> float:
         """呼び出し前に予見できる消費見積り（PLAN §2.1: 超過が予見される呼び出しは実行前に拒否）.
 
         api は実費が応答後にしか確定しないため、プロンプト長と max_tokens から
@@ -193,6 +195,13 @@ class Router:
             prompt_chars = sum(len(m.content) for m in messages)
             est_prompt_tokens = max(1, prompt_chars // 4)
             est_completion_tokens = kwargs.get("max_tokens") or 1024
+            pricing = decl.get("pricing")
+            if pricing:
+                cost = (
+                    est_prompt_tokens * pricing["input_per_mtok"] / 1e6
+                    + est_completion_tokens * pricing["output_per_mtok"] / 1e6
+                )
+                return round(cost, 6)
             usage = Usage(prompt_tokens=est_prompt_tokens, completion_tokens=est_completion_tokens)
             return _estimate_cost(provider_name, usage)
         if ledger == "local":
@@ -218,7 +227,7 @@ class Router:
         kwargs.update(overrides)
 
         self.budget.precheck(
-            ledger, self._precheck_amount(ledger, provider_name, messages, kwargs), work_id=work_id
+            ledger, self._precheck_amount(ledger, provider_name, messages, kwargs, decl), work_id=work_id
         )
 
         using_fake = getattr(self, "_provider_for_test", None) is not None

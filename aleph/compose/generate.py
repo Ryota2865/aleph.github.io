@@ -11,6 +11,8 @@ import json
 from pathlib import Path
 from typing import Callable
 
+from aleph.critique.review import sanitize_critique
+
 Author = Callable[[str], str]
 Critic = Callable[[str], str]
 
@@ -195,7 +197,9 @@ def evolve(
         best_score, best_critique, best_candidate = scored[0]
         winner = best_candidate
 
-        crossover_prompt = _crossover_prompt(best_candidate, criteria, audience, best_critique)
+        crossover_prompt = _crossover_prompt(
+            best_candidate, criteria, audience, sanitize_critique(best_critique)
+        )
         response = author(crossover_prompt)
         new_candidate = _extract_json_object(response)
 

@@ -32,20 +32,29 @@ def _next_work_id(works_root: Path) -> str:
     return f"w{highest + 1:04d}"
 
 
+def _budget_state_path(root: Path) -> Path:
+    return Path(root) / "state" / "budget.json"
+
+
+def _work_for_cli(works_root: Path, work_id: str, config):
+    from aleph.core.artifacts import Work
+
+    return Work(works_root, work_id, secrets=config.secrets.values())
+
+
 def _cmd_run(root: Path, args) -> int:
     """aleph run: 実LLM依存を組み立てて pipeline.run_work を呼ぶ（M6 配線）."""
-    from aleph.core.artifacts import Work
     from aleph.explore.corpus import LlamaServerEmbedder
     from aleph.pipeline import RealDeps, run_work
 
     config = load_config(root)
-    work = Work(root / "works", args.work)
+    work = _work_for_cli(root / "works", args.work, config)
     if not work.dir.exists():
         print(f"run: work not found: {work.dir}", file=sys.stderr)
         return 1
 
     logger = CallLogger(work.calls, secrets=config.secrets.values())
-    budget = Budget(config)
+    budget = Budget(config, state_path=_budget_state_path(root))
     router = Router(config, logger, budget)
 
     embedder = None
@@ -101,12 +110,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parent.parent
     if args.command == "new":
-        from aleph.core.artifacts import Work
-
         works_root = root / "works"
         works_root.mkdir(parents=True, exist_ok=True)
+        config = load_config(root)
         work_id = _next_work_id(works_root)
-        work = Work(works_root, work_id)
+        work = _work_for_cli(works_root, work_id, config)
         work.create({"hint": args.hint} if args.hint else {})
         print(f"new: created {work_id} at {work.dir}", file=sys.stderr)
         return 0
@@ -114,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_run(root, args)
     if args.command == "status":
         config = load_config(root)
-        budget = Budget(config)
+        budget = Budget(config, state_path=_budget_state_path(root))
         units = {"api": "USD", "harness": "calls", "local": "gpu_hours"}
         for ledger, values in budget.status().items():
             print(
@@ -127,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
         out_dir = Path(args.out)
         cfg = load_config(root)
         logger = CallLogger(out_dir / "calls.jsonl", secrets=cfg.secrets.values())
-        budget = Budget(cfg)
+        budget = Budget(cfg, state_path=_budget_state_path(root))
         router = Router(cfg, logger, budget)
         scout = lambda prompt: router.call(  # noqa: E731 - 仕様上の配線をそのまま表す
             "scout",
