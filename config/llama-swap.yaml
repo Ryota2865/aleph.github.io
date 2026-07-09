@@ -84,6 +84,7 @@ models:
       --embedding --pooling cls
       -ngl 99
       -c 8192
+      -b 8192 -ub 8192
     checkEndpoint: /health
     ttl: 0
 
