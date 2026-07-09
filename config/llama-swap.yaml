@@ -1,0 +1,109 @@
+# llama-swap 設定（PLAN §2.3）— RTX 3090 (24GB) 単機でのローカル推論スタック。
+# 秘密情報はここに書かない。起動は scripts/start_local_stack.sh を参照。
+#
+# モデル名（models: 以下のキー）は config/models.yaml の roles.*.model と
+# 一字一句一致させること。ALEPHのRouter/LocalRuntimeは "model" フィールドを
+# そのままここのキーへ渡す（PLAN §2.3, aleph/core/local.py）。
+#
+# 構成方針:
+# - 大型4モデル（27B〜31B Q4）は "large" グループで排他スワップ（同時1つ）。
+# - bge-m3 埋め込みは "embeddings" グループで persistent 常駐（大型モデルの
+#   スワップの影響を受けない）。
+# - yaml-language-server: $schema=https://raw.githubusercontent.com/mostlygeek/llama-swap/refs/heads/main/config-schema.json
+
+healthCheckTimeout: 300  # 初回ロード（17GB級ディスク読込）を待てるだけの余裕
+logLevel: info
+logToStdout: "both"      # llama-swapのプロキシログ + upstream(llama-server)ログを両方state/へ
+
+startPort: 10001          # ${PORT} マクロの開始番号。8080(llama-swap自身)と衝突しない
+
+macros:
+  "llama_bin": "/home/ryota_tanaka/llama.cpp/build/bin/llama-server"
+  "gguf_dir": "/home/ryota_tanaka/models/gguf"
+  "emb_dir": "/home/ryota_tanaka/models/embeddings"
+
+models:
+  # --- 大型4モデル（排他スワップ・PLAN §2.3: 同時に1つしか載らない） ---
+
+  "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL":   # roles.scout（models.yaml）
+    name: "Gemma 4 26B-A4B (scout, MoE)"
+    cmd: |
+      ${llama_bin}
+      --host 127.0.0.1 --port ${PORT}
+      -m ${gguf_dir}/gemma4/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
+      -ngl 99 -fa on
+      -c 8192
+      --reasoning-budget 0
+    checkEndpoint: /health
+    ttl: 0
+    # scout = 大量安価な下働き（PLAN §2.3）。思考トークンは無効化する。
+    # 実測(2026-07-09): 思考有効だと max_tokens が reasoning_content に食われ
+    # content が空になる。批評・読者モデル用の Qwen3.6 は思考を残す。
+
+  "gemma-4-31B-it-qat-UD-Q4_K_XL":       # roles.author_local（models.yaml）
+    name: "Gemma 4 31B (author_local)"
+    cmd: |
+      ${llama_bin}
+      --host 127.0.0.1 --port ${PORT}
+      -m ${gguf_dir}/gemma4/gemma-4-31B-it-qat-UD-Q4_K_XL.gguf
+      -ngl 99 -fa on
+      -c 4096
+    checkEndpoint: /health
+    ttl: 0
+
+  "Qwen3.6-27B-Q4_K_M":                  # roles.reader_model / critic_jury local（models.yaml）
+    name: "Qwen 3.6 27B (reader / local jury)"
+    cmd: |
+      ${llama_bin}
+      --host 127.0.0.1 --port ${PORT}
+      -m ${gguf_dir}/qwen36/Qwen3.6-27B-Q4_K_M.gguf
+      -ngl 99 -fa on
+      -c 8192
+    checkEndpoint: /health
+    ttl: 0
+
+  "Qwen3.5-27B-Q4_K_M":                  # models.yaml未参照だが資産として保有。将来のroleに備え登録
+    name: "Qwen 3.5 27B"
+    cmd: |
+      ${llama_bin}
+      --host 127.0.0.1 --port ${PORT}
+      -m ${gguf_dir}/qwen35/Qwen3.5-27B-Q4_K_M.gguf
+      -ngl 99 -fa on
+      -c 8192
+    checkEndpoint: /health
+    ttl: 0
+
+  # --- 埋め込み（常駐・PLAN §2.3: embedder + rerankerは常駐可） ---
+
+  "bge-m3":                              # roles.embedder（models.yaml）
+    name: "BGE-M3 embeddings (f16)"
+    cmd: |
+      ${llama_bin}
+      --host 127.0.0.1 --port ${PORT}
+      -m ${emb_dir}/bge-m3/bge-m3-f16.gguf
+      --embedding --pooling cls
+      -ngl 99
+      -c 8192
+    checkEndpoint: /health
+    ttl: 0
+
+routing:
+  router:
+    use: group
+    settings:
+      groups:
+        "large":
+          swap: true        # グループ内は1つだけロード（排他スワップ）
+          exclusive: true    # 他グループ（embeddings以外）を全てアンロード
+          members:
+            - "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL"
+            - "gemma-4-31B-it-qat-UD-Q4_K_XL"
+            - "Qwen3.6-27B-Q4_K_M"
+            - "Qwen3.5-27B-Q4_K_M"
+
+        "embeddings":
+          persistent: true   # 他グループ（large）のスワップでアンロードされない
+          swap: false        # グループ内は全メンバー同時ロード可
+          exclusive: false   # ロードしても他グループをアンロードしない
+          members:
+            - "bge-m3"

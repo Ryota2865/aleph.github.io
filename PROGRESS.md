@@ -327,3 +327,60 @@ PLAN_CHANGELOG 0.7.1 として記録。要旨: (1)既定オフ承認（§15-1前
 - D3（7/12午前）: 統合ラン完走→初稿をFable 5が読む
 - 効率原則: 実装はすべてCodexへ委任、環境作業はサブエージェント並列、
   Fable 5は仕様・設計判断・最終検証に集中（トークン温存）。
+
+## 2026-07-09 — 一次コーパス（青空文庫）取得（サブエージェント / Sonnet 5）
+
+D0のコーパス取得タスクを実施。Hugging Face `globis-university/aozorabunko-clean`
+（CC BY 4.0、青空文庫全作品をルビ・入力者注除去済みでクリーニング済み）から
+`corpus/aozora/works.jsonl` を構築（`scripts/build_aozora_corpus.py`）。
+
+- PD判定: 青空文庫マスターメタデータの `作品著作権フラグ`/`人物著作権フラグ`
+  両方が「なし」の行のみ採用。元データ16,951行は実測で全行既に両フラグ「なし」
+  （除外0件。本文空1件のみ別理由で除外）→ 16,950件を書き出し（要件10,000件超過）。
+- サニティチェック: 死後70年ルールは2018年の法改正時点で既にPD化していた作品に
+  遡及しない（旧50年ルール）。本コーパスの死没年最大値は1967年で、1968年以降
+  没の著者は0件 → 経過措置と整合していることを確認。
+- 品質チェック: `scripts/qa_aozora_corpus.py` でスキーマ違反0件・id重複0件、
+  ランダム5件を目視検査（文字化けなし、ルビ記法残留なし）。
+- 総サイズ約704 MiB。スキーマ・詳細は `corpus/README.md` に追記済み。
+- 作成物: `scripts/build_aozora_corpus.py`（本体）、`scripts/qa_aozora_corpus.py`
+  （QA）、`scripts/inspect_aozora_dataset{,2,3}.py`（データセット調査スパイク、
+  削除せず保持）。`corpus/` はgit管理外のため `git add` はしていない
+  （`corpus/README.md` のみ追跡対象）。
+
+### 次の一手
+- Project Gutenberg / Wikisource 等の追加一次コーパスは未着手（青空文庫のみで
+  M1着手には十分な件数）。必要なら別タスクで追加。
+- M1（`aleph/explore/corpus.py` の取り込み・チャンク・埋め込み処理）はこの
+  JSONLを入力として使う想定。
+
+## 2026-07-09 — ローカル推論スタック完成（Fable 5仕上げ。電源断からの復帰込み）
+
+サブエージェント（Sonnet 5）が llama-swap導入・bge-m3 GGUF変換(f16, 1.1G)・
+config/llama-swap.yaml・scripts/start_local_stack.sh まで施工したところで
+ホストの電源断。Fable 5が状態を確認し、残り（起動・検証・校正）を直接仕上げた。
+
+### 実測値（RTX 3090実機、2026-07-09）
+- 埋め込み: bge-m3 f16、/v1/embeddings 応答、**1024次元**。大型モデルスワップ後も
+  常駐維持（persistent group動作確認、応答0秒）
+- 初回ロード: gemma-4-26B-A4B（14G）67秒
+- スワップ: 26B→Qwen3.6-27B **81秒** → config/budgets.yaml の swap_cost_seconds を
+  45→90 に校正
+- VRAM: Qwen3.6-27B + bge-m3 常駐で 18.8/24.6 GB
+- **ALEPH_LOCAL=1 uv run pytest -m local → test_local_swap PASSED**。
+  M0受入基準の最後の1項目（実機swap）がこれで検証完了。**M0は完全に緑**
+
+### 重要な発見と対処
+- gemma-4 も Qwen3.6 も**思考(reasoning)モデル**として応答し、content が空で
+  reasoning_content に出力が入る。scout（大量安価な下働き）には致命的なトークン
+  浪費なので、llama-swap.yaml の scout エントリに **--reasoning-budget 0** を付与
+  （検証済み: content に直接応答が入るようになった）。Qwen3.6（reader/批評）は
+  思考を残す。**M1以降の実装への含意**: OpenAICompatProvider は
+  reasoning_content の存在を意識すること（M1仕様に記載する）
+- 「pkill -f llama-swap」は自分のコマンドライン文字列にもマッチして自殺する。
+  停止は state/llama-swap.pid 経由で行うこと
+- スパイクスクリプト（inspect_aozora_dataset*.py）は規約に従い削除
+- .env にオーナーが ANTHROPIC_API_KEY / OPENAI_API_KEY（各10ドル課金）/
+  ZAI_API_KEY（Coding planサブスク）を追加。**api台帳が使用可能になった**。
+  オーナー回答: harness/gguf/api自由に使ってよい、品質と予算のバランスは設計者に
+  一任、レートが余ればFable 5執筆もロマン。優先方針は**M6完走最優先**で確定

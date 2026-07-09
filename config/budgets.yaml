@@ -7,7 +7,7 @@ harness:
   concurrent: 1
 local:
   gpu_hours_per_day: 8
-  swap_cost_seconds: 45      # モデル交換の見積り。同一モデルのステップ束ね（PLAN §2.3）の閾値
+  swap_cost_seconds: 90      # モデル交換コスト。実測81秒（2026-07-09、26B→27B Q4、RTX 3090実機）に余裕を持たせ校正
 
 publish:                     # 公開の規律（PLAN §7.3d・§14.3-7）
   max_per_month: 4           # 週刊連載のリズム。周期性の維持自体が設計目標
