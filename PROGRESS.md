@@ -286,3 +286,44 @@ PLAN §12.1）に依頼する予定——ただしFable5は明日昼までレー
 ### 次の一手
 - 上記 (a) 実機RTX 3090 / (b) Fable5審査 は据え置き（変更なし）。
 - 以後の実装は `codex-implement` に投げて Claude が検証する運用が可能。
+
+## 2026-07-09 — Fable 5復帰。0.7設計者審査完了、M1〜M6完走スプリント開始
+
+Fable 5のサブスク利用が7/12まで延長された。オーナー指示: 週次レートリミットの
+50%以内で、最も効率のよい方法でALEPHを完成（M6統合ラン）まで走り切る。
+体制: **Fable 5 = 設計者/司令塔**（仕様書き・設計判断・検証の統括）、
+**Codex (GPT-5.5) = 実装**（codex-implement）、**Sonnet 5/Opus 4.8 = サブエージェント**
+（環境施工・検証の並列作業）。監査分離（PLAN §12）: Codex施工分はClaude側が監査。
+
+### 0.7設計者審査（完了）
+PLAN_CHANGELOG 0.7.1 として記録。要旨: (1)既定オフ承認（§15-1前提の強制化であり
+強化）、(2)CLI別慎重度差を条件付き承認——**ALEPHランタイムからのcodex harnessは
+公開リポジトリである限りack=false推奨既定**（批評はローカル陪審で代替。開発ツール
+としてのcodex-audit/implementはランタイム規律の対象外）、(3)§15-1をCLOSED。
+これで旧§15の未決事項はすべて解決。
+
+### 環境偵察の結果（2026-07-09）
+- GPU: RTX 3090 24GB、WSLから可視、ほぼ空き。ディスク312GB空き。
+- **llama.cpp はビルド済み**（~/llama.cpp/build/bin/ に llama-server・llama-embedding。
+  チェックアウト d77599234）。CUDA有効かは起動時に要確認。
+- GGUF資産: gemma-4-31B(17G)・gemma-4-26B-A4B(14G)・Qwen3.5-27B(16G)・
+  Qwen3.6-27B(16G)。models.yaml の reader_small (Qwen3-8B) はGGUF未変換
+  （~/models/hf にHF形式あり。必要になったら変換 or 役割再宣言）。
+- 埋め込み: bge-m3等は ~/models/embeddings にHFスナップショット形式。GGUF未変換。
+  → llama.cpp の convert_hf_to_gguf.py で変換し llama-server --embedding で常駐予定。
+- **llama-swap 未インストール**（GitHub releasesの単一バイナリ導入予定）。
+- Python ML依存（numpy/chromadb/hdbscan等）未導入 → uv add で導入。
+  ベクタDBは **Chroma を選定**（PLAN §1.1の「QdrantまたはChroma」の範囲内。
+  Docker不要でpipのみ、10k文書規模に十分）。
+- コーパス: ローカルに青空文庫資産なし → ダウンロードが必要。
+- .env: BRAVE_API_KEY のみ（Anthropic/OpenAI APIキーなし）。**したがって閉ループの
+  LLM呼び出しはローカル + harness のみで賄う**（api台帳は実質使用不可）。
+
+### スプリント計画（7/9夜〜7/12昼）
+- D0（7/9）: 環境施工（llama-swap導入・bge-m3変換・server起動・ALEPH_LOCAL=1で
+  test_local_swap緑）／コーパス取得／M1仕様書→codex-implement
+- D1（7/10）: M1完成+監査／M2実装（logprobs技法含む）
+- D2（7/11）: M3+M4+M5実装／M6統合ラン準備
+- D3（7/12午前）: 統合ラン完走→初稿をFable 5が読む
+- 効率原則: 実装はすべてCodexへ委任、環境作業はサブエージェント並列、
+  Fable 5は仕様・設計判断・最終検証に集中（トークン温存）。
