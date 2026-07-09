@@ -36,8 +36,9 @@ markers = [
     "m2: M2受入基準（ロジック契約）。質的判定は実ラン+監査で検証。",
     "m3: M3受入基準（ロジック契約）。実ランは統合時に検証。",
     "m4: M4受入基準（ロジック契約）。敵対的査読の実Web再検索は統合時に検証。",
+    "m5: M5受入基準（ロジック契約）。詩学の実生成はM6統合ランで検証。",
     "local: RTX 3090上のローカル推論が必要。ALEPH_LOCAL=1 で有効化。",
 ]
 # 既定では設計不変条件テストのみ実行（現時点で緑であるべきもの）。
 # 施工者・監査者は `pytest -m m0` / `pytest -m m1` 等で各受入基準を実行する。
-addopts = "-m 'not m0 and not m1 and not m2 and not m3 and not m4 and not local'"
+addopts = "-m 'not m0 and not m1 and not m2 and not m3 and not m4 and not m5 and not local'"
