@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -239,18 +240,22 @@ def find_niches(
             "web_check": "not_checked",
         }
         if web_checker is not None:
-            result = web_checker(item)
-            if isinstance(result, dict):
-                web_excluded = bool(result.get("excluded", False))
-                prior_examples = result.get("prior_examples", [])
-                web_rationale = result.get("rationale", "")
-            else:
-                web_excluded = bool(getattr(result, "excluded", False))
-                prior_examples = getattr(result, "prior_examples", [])
-                web_rationale = getattr(result, "rationale", "")
-            item["excluded"] = item["excluded"] or web_excluded
-            item["prior_examples"] = prior_examples
-            item["web_check"] = web_rationale or ("excluded" if web_excluded else "clear")
+            try:
+                result = web_checker(item)
+                if isinstance(result, dict):
+                    web_excluded = bool(result.get("excluded", False))
+                    prior_examples = result.get("prior_examples", [])
+                    web_rationale = result.get("rationale", "")
+                else:
+                    web_excluded = bool(getattr(result, "excluded", False))
+                    prior_examples = getattr(result, "prior_examples", [])
+                    web_rationale = getattr(result, "rationale", "")
+                item["excluded"] = item["excluded"] or web_excluded
+                item["prior_examples"] = prior_examples
+                item["web_check"] = web_rationale or ("excluded" if web_excluded else "clear")
+            except Exception as e:
+                print(f"{type(e).__name__}", file=sys.stderr)
+                item["web_check"] = "error"
         classified.append(item)
     return rank_niches(classified)[:top_n]
 
