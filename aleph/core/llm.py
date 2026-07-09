@@ -53,6 +53,7 @@ class LLMResponse:
     cost_usd: float
     logprobs: tuple[TokenLogprob, ...] | None = None
     response_hash: str = ""
+    reasoning: str | None = None
 
 
 class Provider(Protocol):
@@ -429,6 +430,7 @@ class OpenAICompatProvider:
             cost_usd=_estimate_cost(self.name, usage),
             logprobs=_parse_openai_logprobs(choice.get("logprobs")),
             response_hash=sha256_text(text),
+            reasoning=choice["message"].get("reasoning_content"),
         )
 
 
