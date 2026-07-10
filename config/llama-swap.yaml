@@ -12,7 +12,7 @@
 # - yaml-language-server: $schema=https://raw.githubusercontent.com/mostlygeek/llama-swap/refs/heads/main/config-schema.json
 
 healthCheckTimeout: 300  # 初回ロード（17GB級ディスク読込）を待てるだけの余裕
-logLevel: info
+logLevel: warn  # info だとZed等の高頻度ポーリングでrequestログが際限なく肥大する（226GB事故の再発防止）
 logToStdout: "both"      # llama-swapのプロキシログ + upstream(llama-server)ログを両方state/へ
 
 startPort: 10001          # ${PORT} マクロの開始番号。8080(llama-swap自身)と衝突しない
