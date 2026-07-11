@@ -342,7 +342,11 @@ class AnthropicProvider:
 
     def __init__(self, api_key: str, client: httpx.Client | None = None) -> None:
         self._api_key = api_key
-        self._client = client or httpx.Client(timeout=120.0)
+        # 思考モデル×長い max_tokens では生成に数分かかる。read=120s は
+        # w0001 実ランで ReadTimeout ×3リトライの全滅を起こした(課金だけ残る)。
+        self._client = client or httpx.Client(
+            timeout=httpx.Timeout(600.0, connect=10.0),
+        )
 
     def complete(
         self,
@@ -407,7 +411,11 @@ class OpenAICompatProvider:
         self.name = name
         self._base_url = base_url.rstrip("/")
         self._api_key = api_key
-        self._client = client or httpx.Client(timeout=120.0)
+        # ローカル(llama-server)兼用: dense 27B が 8192 トークンを生成すると
+        # 数分+モデルスワップ約90秒かかるため、APIより長めに取る。
+        self._client = client or httpx.Client(
+            timeout=httpx.Timeout(900.0, connect=10.0),
+        )
 
     def complete(
         self,
