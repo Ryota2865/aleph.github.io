@@ -333,6 +333,7 @@ def test_pipeline_to_draft_reuses_compose_artifacts_on_resume(monkeypatch, tmp_p
 
     work = Work(tmp_path, "w6205")
     work.compositions.mkdir(parents=True, exist_ok=True)
+    work.draft_path(1).parent.mkdir(parents=True, exist_ok=True)
     (work.compositions / "criteria.md").write_text("既存の基準", encoding="utf-8")
     proposal = {
         "form": "短編", "parts": ["起", "結"], "material_placement": "冒頭",
