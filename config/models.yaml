@@ -32,8 +32,8 @@ roles:
   critic_jury:                                      # 複数指定 = 陪審（PLAN §7.1）
     - { provider: anthropic, model: claude-opus-4-8, max_tokens: 8192, pricing: { input_per_mtok: 5.0, output_per_mtok: 25.0 } }
     - { provider: openai,    model: gpt-5.5, max_tokens: 8192 }
-    - { provider: llamacpp,  model: Qwen3.6-27B-Q4_K_M, max_tokens: 8192 }   # ローカル陪審員（時分割）
-  reader_model:    { provider: llamacpp, model: Qwen3.6-27B-Q4_K_M, max_tokens: 8192, logprobs: true }
+    - { provider: llamacpp,  model: Qwen3.6-27B-Q4_K_M, max_tokens: 4096 }   # ローカル陪審員（時分割・非思考）
+  reader_model:    { provider: llamacpp, model: Qwen3.6-27B-Q4_K_M, max_tokens: 4096, logprobs: true }
   reader_small:    { provider: llamacpp, model: Qwen3-8B, logprobs: true }
   scout:           { provider: llamacpp, model: gemma-4-26B-A4B-it-qat-UD-Q4_K_XL, max_tokens: 2048 }  # MoE=高速
   scout_api:       { provider: anthropic, model: claude-haiku-4-5, max_tokens: 2048, pricing: { input_per_mtok: 1.0, output_per_mtok: 5.0 } }  # ローカル飽和時のみ

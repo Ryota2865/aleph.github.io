@@ -61,11 +61,14 @@ models:
       -ngl 99 -fa on
       -c 24576 -np 1
       -ctk q8_0 -ctv q8_0
+      --reasoning-budget 0
     checkEndpoint: /health
     ttl: 0
     # -c 8192 では24,000字級の草稿を審査するプロンプト(12k+トークン)が入らず、
     # リクエストがキューに滞留したままハングした(w0001実ラン 2026-07-11)。
     # -np 1 でスロット分割によるコンテキスト縮小も防ぐ。KVはq8量子化でVRAMに収める。
+    # --reasoning-budget 0: 思考有効だと批評1件の生成が30分超(w0001実ラン)。
+    # 深い批評はAPI陪審(opus/gpt-5.5)が担い、ローカル陪審・読者は非思考の即応とする。
 
   "Qwen3.5-27B-Q4_K_M":                  # models.yaml未参照だが資産として保有。将来のroleに備え登録
     name: "Qwen 3.5 27B"
