@@ -165,7 +165,7 @@ def run_work(work, deps, *, decided_by: str) -> State:
         # クラッシュ再開時: 査読軌跡が既に2ラウンド分あれば、まず擱筆判定から入る
         # （查読・改稿の重複実行はAPI実費と時間の再支出になる。w0001実ランの回帰）
         rows_at_entry, _ = _stop_inputs_from_trajectory(work)
-        skip_first_critique = len(rows_at_entry) >= 2
+        skip_first_critique = len(rows_at_entry) >= 1
         while True:
             if not skip_first_critique:
                 deps.critique_and_revise(work, audience)

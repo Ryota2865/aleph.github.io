@@ -27,6 +27,10 @@ _SCORE_PATTERNS = (
     re.compile(r"\d+\.\d+"),
 )
 
+# 査読に渡す草稿の上限(字)。ローカル審級の文脈長(20480トークン、うち生成4096)に
+# プロンプト外装込みで収まる値。超過分は冒頭抜粋+注記で査読する。
+_REVIEW_EXCERPT_CHARS = 28000
+
 
 def sanitize_critique(text: str) -> str:
     """author プロンプトへ渡す批評文から数値スコアらしき断片だけを除去する."""
@@ -176,6 +180,15 @@ def run_review(
     search_fn: Callable[..., list[dict]],
 ) -> dict:
     """5審級（技術/基準/新奇性/読者/敵対的）を実行し、reviews/v{version}.md に報告を書く（PLAN §7.1）."""
+    # 過大な草稿は冒頭抜粋で査読する。ローカル審級の文脈長(20480)を超えると
+    # llama-server が 400 を返して査読不能になる(w0003 実ラン: 21万字の草稿)。
+    # 草稿長のガバナンス(length_estimate の強制)は別途の改善債務。
+    full_len = len(draft_text)
+    if full_len > _REVIEW_EXCERPT_CHARS:
+        draft_text = (
+            draft_text[:_REVIEW_EXCERPT_CHARS]
+            + f"\n\n……(以下略。全文{full_len}字のうち冒頭{_REVIEW_EXCERPT_CHARS}字の抜粋で査読)"
+        )
     technical = _technical_review(scout, draft_text)
     criteria_review = _criteria_review(jury, criteria, draft_text)
     novelty = novelty_review(draft_text, embedder, index_dir)
