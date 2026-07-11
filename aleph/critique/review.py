@@ -90,7 +90,16 @@ def novelty_review(draft_text: str, embedder: Callable[[list[str]], np.ndarray],
             if line.strip():
                 chunks.append(json.loads(line))
 
-    query = np.asarray(embedder([draft_text]), dtype=np.float32)[0]
+    # 埋め込みモデルの文脈長(8192トークン)を超える草稿は埋め込みが 500 になる(w0003実ラン)。
+    # 冒頭・中間・末尾の有界セグメントを埋め込み平均して全体の表現とする。
+    seg = 5000
+    if len(draft_text) > seg:
+        mid = len(draft_text) // 2
+        segments = [draft_text[:seg], draft_text[mid - seg // 2: mid + seg // 2], draft_text[-seg:]]
+    else:
+        segments = [draft_text]
+    vectors = np.asarray(embedder(segments), dtype=np.float32)
+    query = vectors.mean(axis=0)
     query_norm = float(np.linalg.norm(query))
 
     best_sim = -1.0
