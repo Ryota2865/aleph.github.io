@@ -46,8 +46,8 @@ def test_no_hardcoded_model_names_outside_config():
 def test_budget_declares_owner_decisions():
     cfg = load_config(ROOT)
     # PLAN §14-3 の$10からオーナー決定で改定（2026-07-11、自動リロード有効・残高$13.84
-    # 確認の上。PLAN_CHANGELOG 0.7.10）
-    assert cfg.budgets["api"]["usd_per_month"] == 15.0
+    # 確認の上、0.7.10。さらに15→18、0.7.12）
+    assert cfg.budgets["api"]["usd_per_month"] == 18.0
     assert cfg.budgets["publish"]["max_per_month"] == 4  # PLAN §14.3-7
 
 
