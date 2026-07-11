@@ -332,6 +332,31 @@ def test_budget_work_remaining_accessor(cfg, tmp_path):
     assert budget.work_remaining("unseen") == pytest.approx(limit)
 
 
+def test_decide_stop_regression_path_on_score_drop():
+    """改稿でスコアが有意に下落したら擱筆する(w0002実ラン 8.80→8.33 の回帰)."""
+    from aleph.meta.stopping import decide_stop
+
+    result = decide_stop(
+        trajectory=[{"mean_score": 8.8}, {"mean_score": 8.33}],
+        instructions_history=[["a"], ["b"]],
+        k=3, epsilon=0.05,
+    )
+    assert result["stop"] is True and result["path"] == "regression"
+
+
+def test_remaining_api_budget_uses_min_of_work_and_month(cfg, tmp_path):
+    """予算経路は作品残額と月残額の小さい方を見る(月上限precheckクラッシュの回帰)."""
+    from aleph.pipeline import _remaining_api_budget
+
+    budget = Budget(cfg, state_path=tmp_path / "budget.json")
+    month_limit = cfg.budgets["api"]["usd_per_month"]
+    work_limit = cfg.budgets["api"]["usd_per_work"]
+    # 別作品で月枠を大きく消費 → 対象作品の残額は月残額で頭打ちになる
+    budget.charge("api", month_limit - 1.0, work_id="other")
+    remaining = _remaining_api_budget(budget, "wY")
+    assert remaining == pytest.approx(min(1.0, work_limit))
+
+
 def test_run_work_resume_skips_duplicate_critique_when_trajectory_full(tmp_path):
     """CRITIQUE再開時、査読軌跡が2ラウンド分あれば擱筆判定を先に行い重複査読しない.
 

@@ -68,6 +68,20 @@ def decide_stop(
 
     if len(recent) >= 2:
         scores = [float(record["mean_score"]) for record in recent]
+
+        # 退行: 直近の改稿でスコアが epsilon 超下落 = 改稿が作品を損ねている。
+        # 磨き続けても回復する保証はなく実費だけが増える(w0002実ラン 8.80→8.33 で観測。
+        # 擱筆判断の趣旨=「これ以上の介入が作品を良くしない徴候で止まる」PLAN §7.3a に従う)
+        if scores[-1] < scores[-2] - epsilon:
+            return {
+                "stop": True,
+                "path": "regression",
+                "reason": (
+                    f"直近の改稿でスコアが {scores[-2]:.2f}→{scores[-1]:.2f} と下落した。"
+                    "改稿が作品を損ねているため擱筆する。"
+                ),
+            }
+
         improvements = [b - a for a, b in zip(scores, scores[1:])]
         converged_score = all(delta < epsilon for delta in improvements)
 

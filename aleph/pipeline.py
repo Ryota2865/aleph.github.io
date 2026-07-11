@@ -199,6 +199,22 @@ def run_work(work, deps, *, decided_by: str) -> State:
     return state
 
 
+def _remaining_api_budget(budget, work_id: str) -> float | None:
+    """作品別上限と月上限のうち、小さい方の残額。どちらも未宣言なら None.
+
+    擱筆判断の予算経路は両方の防壁を見る必要がある(w0002実ランで作品残額だけを見て
+    続行し、月上限precheckでクラッシュする経路が観測された)。
+    """
+    candidates = []
+    work_rem = budget.work_remaining(work_id)
+    if work_rem is not None:
+        candidates.append(work_rem)
+    api = budget.status().get("api")
+    if api and api.get("limit") is not None:
+        candidates.append(float(api["limit"]) - float(api["spent"]))
+    return min(candidates) if candidates else None
+
+
 def _stop_inputs_from_trajectory(work) -> tuple[list[dict], list[list[str]]]:
     traj_path = work.dir / "reviews" / "trajectory.jsonl"
     rows: list[dict] = []
@@ -362,7 +378,7 @@ class RealDeps:
         # 予算切れ経路（PLAN §7.3a）: 残額が改稿1サイクルの想定費を下回ったら
         # precheckクラッシュではなく擱筆判断として品位ある停止をする（w0001実ランの回帰）
         min_cycle = float(self.config.budgets.get("api", {}).get("usd_min_revise_cycle", 1.2))
-        remaining = self.router.budget.work_remaining(work.work_id)
+        remaining = _remaining_api_budget(self.router.budget, work.work_id)
         exhausted = remaining is not None and remaining < min_cycle
         return decide_stop(
             trajectory=trajectory, instructions_history=instructions_history,
