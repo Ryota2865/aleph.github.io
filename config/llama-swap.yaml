@@ -32,7 +32,8 @@ models:
       --host 127.0.0.1 --port ${PORT}
       -m ${gguf_dir}/gemma4/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
       -ngl 99 -fa on
-      -c 8192
+      -c 24576 -np 1
+      -ctk q8_0 -ctv q8_0
       --reasoning-budget 0
     checkEndpoint: /health
     ttl: 0
@@ -58,9 +59,13 @@ models:
       --host 127.0.0.1 --port ${PORT}
       -m ${gguf_dir}/qwen36/Qwen3.6-27B-Q4_K_M.gguf
       -ngl 99 -fa on
-      -c 8192
+      -c 24576 -np 1
+      -ctk q8_0 -ctv q8_0
     checkEndpoint: /health
     ttl: 0
+    # -c 8192 では24,000字級の草稿を審査するプロンプト(12k+トークン)が入らず、
+    # リクエストがキューに滞留したままハングした(w0001実ラン 2026-07-11)。
+    # -np 1 でスロット分割によるコンテキスト縮小も防ぐ。KVはq8量子化でVRAMに収める。
 
   "Qwen3.5-27B-Q4_K_M":                  # models.yaml未参照だが資産として保有。将来のroleに備え登録
     name: "Qwen 3.5 27B"
