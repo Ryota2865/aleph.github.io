@@ -289,10 +289,16 @@ class RealDeps:
 
     # -- L2 探索（niche 上位1件） --------------------------------------------
     def explore(self, work):
-        from aleph.explore.atlas import build_atlas
+        from aleph.explore.atlas import Atlas, build_atlas
         from aleph.explore.niche import find_niches, report
 
-        atlas = build_atlas(self.index_dir)
+        # アトラス成果物が揃っていれば再構築しない（cli.py explore と同じ方針。
+        # build_atlas の PCA+HDBSCAN は 9万チャンク規模で数十分かかる）
+        atlas_ready = all(
+            (self.index_dir / name).exists()
+            for name in ("labels.npy", "density.npy", "style.npy", "atlas_meta.json")
+        )
+        atlas = Atlas.load(self.index_dir) if atlas_ready else build_atlas(self.index_dir)
         niches = find_niches(atlas, self._scout, top_n=1)
         if niches:
             report(niches, work.niche / "report.md", top_n=1)
