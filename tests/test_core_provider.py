@@ -97,3 +97,42 @@ def test_router_uses_role_pricing_for_cost(tmp_path, monkeypatch):
     assert resp.cost_usd == pytest.approx(0.06)
     status = budget.status()
     assert status["api"]["spent"] == pytest.approx(0.06)
+
+
+# ---------------------------------------------------------------- OpenAICompatProvider
+def _openai_compat_captured_payload(name: str) -> dict:
+    from aleph.core.llm import OpenAICompatProvider
+
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": 3, "completion_tokens": 2},
+                "model": "m",
+            },
+        )
+
+    provider = OpenAICompatProvider(
+        base_url="http://test/v1", api_key="k", name=name,
+        client=_client_with_handler(handler),
+    )
+    provider.complete("m", [Message("user", "hi")], max_tokens=64)
+    return captured["payload"]
+
+
+def test_openai_api_uses_max_completion_tokens():
+    """gpt-5系従量APIは max_tokens を400で拒否する（w0001実ラン陪審の回帰）."""
+    payload = _openai_compat_captured_payload("openai")
+    assert payload.get("max_completion_tokens") == 64
+    assert "max_tokens" not in payload
+
+
+def test_llamacpp_keeps_max_tokens():
+    """llama-server は従来どおり max_tokens を受け取る."""
+    payload = _openai_compat_captured_payload("llamacpp")
+    assert payload.get("max_tokens") == 64
+    assert "max_completion_tokens" not in payload

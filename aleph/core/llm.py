@@ -435,7 +435,10 @@ class OpenAICompatProvider:
             "temperature": temperature,
         }
         if max_tokens is not None:
-            payload["max_tokens"] = max_tokens
+            # OpenAI従量APIの思考モデル(gpt-5系)は max_tokens を400で拒否し
+            # max_completion_tokens を要求する。llama-server は max_tokens のみ解する。
+            key = "max_completion_tokens" if self.name == "openai" else "max_tokens"
+            payload[key] = max_tokens
         if logprobs:
             payload["logprobs"] = True
             payload["top_logprobs"] = 5
