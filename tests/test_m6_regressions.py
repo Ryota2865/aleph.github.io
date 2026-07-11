@@ -323,6 +323,59 @@ def test_evolve_rejects_empty_candidates(tmp_path):
         evolve(work, [], "基準", AUDIENCE, lambda p: "ok", lambda p: "ok")
 
 
+def test_budget_work_remaining_accessor(cfg, tmp_path):
+    """Budget.work_remaining は作品別上限の残額を返す(未宣言なら None)."""
+    budget = Budget(cfg, state_path=tmp_path / "budget.json")
+    limit = cfg.budgets["api"]["usd_per_work"]
+    budget.charge("api", 1.5, work_id="wX")
+    assert budget.work_remaining("wX") == pytest.approx(limit - 1.5)
+    assert budget.work_remaining("unseen") == pytest.approx(limit)
+
+
+def test_run_work_resume_skips_duplicate_critique_when_trajectory_full(tmp_path):
+    """CRITIQUE再開時、査読軌跡が2ラウンド分あれば擱筆判定を先に行い重複査読しない.
+
+    w0001 実ランの回帰: 予算切れクラッシュからの再開が査読一式(API実費+ローカル
+    数十分)を再実行してしまう。
+    """
+    from aleph.core.loop import Checkpoint, State
+    from aleph.pipeline import run_work
+
+    work = Work(tmp_path / "works", "w6206")
+    work.create({})
+    reviews = work.dir / "reviews"
+    reviews.mkdir(exist_ok=True)
+    rows = [
+        {"version": 1, "mean_score": 8.6, "instructions": ["a"]},
+        {"version": 2, "mean_score": 8.57, "instructions": ["b"]},
+    ]
+    (reviews / "trajectory.jsonl").write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8",
+    )
+    Checkpoint(work_id="w6206", state=State.CRITIQUE, step=6,
+               payload={"audience": "自分 1.0"}).save(work.dir)
+
+    calls: list[str] = []
+
+    class Deps:
+        def critique_and_revise(self, work_, audience):
+            calls.append("critique")
+            return 2
+
+        def decide_stop(self, work_):
+            calls.append("stop")
+            return {"stop": True, "path": "budget", "reason": "残額が改稿1サイクル未満"}
+
+        def decide_publication(self, work_, audience):
+            calls.append("gate")
+            return {"decision": "SHELVE", "reason": "テスト"}
+
+    final = run_work(work, Deps(), decided_by="regression-test")
+    assert final == State.SHELVE
+    assert "critique" not in calls, "軌跡が揃っているのに査読を重複実行した"
+    assert calls[0] == "stop"
+
+
 def test_pipeline_to_draft_reuses_compose_artifacts_on_resume(monkeypatch, tmp_path):
     """COMPOSE成果物(criteria/proposals/winner)が既にあれば author を再呼び出ししない.
 

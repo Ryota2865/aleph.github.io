@@ -104,6 +104,12 @@ class Budget:
             if spent + amount > self._work_limit:
                 raise BudgetExceeded(f"api:{work_id}", self._work_limit, spent, amount)
 
+    def work_remaining(self, work_id: str) -> float | None:
+        """作品別上限(usd_per_work)の残額。上限未宣言なら None."""
+        if self._work_limit is None:
+            return None
+        return self._work_limit - self._work_spent.get(work_id, 0.0)
+
     def charge(self, ledger: str, amount: float, meta: dict | None = None, work_id: str | None = None) -> None:
         self._roll_if_needed(ledger)
         l = self._ledgers[ledger]

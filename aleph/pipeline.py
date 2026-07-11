@@ -162,8 +162,14 @@ def run_work(work, deps, *, decided_by: str) -> State:
     if state == State.CRITIQUE:
         audience = ctx.get("audience")
         guard = 0
+        # クラッシュ再開時: 査読軌跡が既に2ラウンド分あれば、まず擱筆判定から入る
+        # （查読・改稿の重複実行はAPI実費と時間の再支出になる。w0001実ランの回帰）
+        rows_at_entry, _ = _stop_inputs_from_trajectory(work)
+        skip_first_critique = len(rows_at_entry) >= 2
         while True:
-            deps.critique_and_revise(work, audience)
+            if not skip_first_critique:
+                deps.critique_and_revise(work, audience)
+            skip_first_critique = False
             stop = deps.decide_stop(work)
             if stop.get("stop"):
                 go(
@@ -353,7 +359,15 @@ class RealDeps:
         from aleph.meta.stopping import decide_stop
 
         trajectory, instructions_history = _stop_inputs_from_trajectory(work)
-        return decide_stop(trajectory=trajectory, instructions_history=instructions_history)
+        # 予算切れ経路（PLAN §7.3a）: 残額が改稿1サイクルの想定費を下回ったら
+        # precheckクラッシュではなく擱筆判断として品位ある停止をする（w0001実ランの回帰）
+        min_cycle = float(self.config.budgets.get("api", {}).get("usd_min_revise_cycle", 1.2))
+        remaining = self.router.budget.work_remaining(work.work_id)
+        exhausted = remaining is not None and remaining < min_cycle
+        return decide_stop(
+            trajectory=trajectory, instructions_history=instructions_history,
+            budget_exhausted=exhausted,
+        )
 
     # -- L7 公開判断（M5 publication_gate へ委譲。PLAN §7.3d） ----------------
     def decide_publication(self, work, audience):
