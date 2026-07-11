@@ -313,7 +313,7 @@ class RealDeps:
         try:
             from aleph.materia.similarity import find_hidden_pairs, to_material_cards
 
-            pairs = find_hidden_pairs(self.index_dir, top_n=5)
+            pairs = find_hidden_pairs(self.index_dir, top_n=5, min_chars=80)
             cards = to_material_cards(pairs)
         except Exception:
             cards = []

@@ -49,17 +49,23 @@ def _jaccard(a: set, b: set) -> float:
     return len(a & b) / len(union)
 
 
-def find_hidden_pairs(index_dir, *, top_n: int = 50, knn_k: int = 10) -> list[dict]:
+def find_hidden_pairs(index_dir, *, top_n: int = 50, knn_k: int = 10,
+                      min_chars: int = 0) -> list[dict]:
     """表層遠・深層近な対を発見する（PLAN §5.1）.
 
     M1のプレーン索引をkNNで探索し、同一work_id対を除外した候補のうち
     score（= deep_sim × surface_dist）降順で上位 top_n 件を返す。
     surface_dist は (著者差, 年代差の正規化, 1-語彙3gram Jaccard) の平均。
+
+    min_chars: 本文（strip後）がこの文字数未満のチャンクを候補から除外する。
+    章番号だけのチャンク（「一」等）は埋め込みがほぼ同一になり、自明な対で
+    上位を占有してしまうため、実運用では 80 程度を渡すこと。
     """
     rows, vectors = _load_index(index_dir)
     n = len(rows)
     if n < 2:
         return []
+    substantial = [len((r.get("text") or "").strip()) >= min_chars for r in rows]
     normed = _normalize(vectors.astype(np.float64))
     k = min(knn_k + 1, n)  # 自分自身を含むため+1
     nn = NearestNeighbors(n_neighbors=k, metric="cosine")
@@ -68,9 +74,13 @@ def find_hidden_pairs(index_dir, *, top_n: int = 50, knn_k: int = 10) -> list[di
 
     candidate_idx: set[tuple[int, int]] = set()
     for i, neighbors in enumerate(indices):
+        if not substantial[i]:
+            continue
         for j in neighbors:
             j = int(j)
             if j == i:
+                continue
+            if not substantial[j]:
                 continue
             if rows[i]["work_id"] == rows[j]["work_id"]:
                 continue

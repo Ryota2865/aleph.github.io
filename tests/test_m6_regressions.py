@@ -242,3 +242,56 @@ def test_pipeline_to_draft_passes_materials_to_generate_proposals(monkeypatch, t
 
     assert result == work.draft_path(1)
     assert captured["materials"] == materials
+
+
+def test_find_hidden_pairs_min_chars_excludes_heading_only_chunks(tmp_path):
+    """章番号だけのチャンク(「一」等)は min_chars 指定で候補から除外される.
+
+    w0001 実ランで素材カード5枚全てが「一」「二」の対に縮退した回帰
+    (埋め込みほぼ同一×表層は空白差のみ → score 上位を自明対が占有)。
+    """
+    import numpy as np
+
+    from aleph.materia.similarity import find_hidden_pairs
+
+    dim = 8
+    base = np.zeros(dim); base[0] = 1.0
+    other = np.zeros(dim); other[1] = 1.0
+    long_a = (
+        "エントロピーは不可逆過程において増大するという法則を、彼は恋愛の終わりに"
+        "重ねて考えていた。戻らない方向にだけ進む時間の矢が、部屋の湿度にまで染みて、"
+        "窓の外の夕暮れを少しずつ取り返しのつかない色に変えていくのだった。"
+    )
+    long_b = (
+        "あの日から、心は戻らない方向へだけ動いた。物理学の講義で聞いた言葉が、"
+        "なぜか毎晩、消灯後の天井に浮かんでは消える。誰にも言えない計算だった。"
+        "式の両辺に残るのは、いつも取り返しのつかなさだけだった。"
+    )
+    rows = [
+        {"chunk_id": "j1", "work_id": "w1", "title": "甲", "author": "A",
+         "seq": 0, "text": "一", "char_len": 1, "meta": {"era": "1920"}},
+        {"chunk_id": "j2", "work_id": "w2", "title": "乙", "author": "B",
+         "seq": 0, "text": "　　　　一", "char_len": 5, "meta": {"era": "1950"}},
+        {"chunk_id": "s1", "work_id": "w3", "title": "丙", "author": "C",
+         "seq": 0, "text": long_a, "char_len": len(long_a), "meta": {"era": "1950"}},
+        {"chunk_id": "s2", "work_id": "w4", "title": "丁", "author": "D",
+         "seq": 0, "text": long_b, "char_len": len(long_b), "meta": {"era": "1890"}},
+    ]
+    vecs = np.stack([base, base * 0.999, other, other * 0.98]).astype(np.float32)
+    np.save(tmp_path / "embeddings.npy", vecs)
+    with (tmp_path / "chunks.jsonl").open("w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    (tmp_path / "manifest.json").write_text(
+        json.dumps({"n_works": 4, "n_chunks": 4, "dim": dim}), encoding="utf-8",
+    )
+
+    pairs = find_hidden_pairs(tmp_path, top_n=10, min_chars=80)
+    ids = [{p["chunk_a"], p["chunk_b"]} for p in pairs]
+    assert {"j1", "j2"} not in ids, "見出しだけの自明対が min_chars で除外されていない"
+    assert {"s1", "s2"} in ids, "実質のある対が失われている"
+
+    # 既定値(min_chars=0)では従来挙動(junkも候補に載る)= 既存テスト互換
+    pairs_default = find_hidden_pairs(tmp_path, top_n=10)
+    ids_default = [{p["chunk_a"], p["chunk_b"]} for p in pairs_default]
+    assert {"j1", "j2"} in ids_default
