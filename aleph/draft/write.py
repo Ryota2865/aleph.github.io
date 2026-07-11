@@ -8,6 +8,8 @@
 """
 from __future__ import annotations
 
+import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -92,12 +94,41 @@ def pipeline_to_draft(
     poetics: str = "",
     materials: list | None = None,
 ) -> Path:
-    """ニッチ報告→criteria→3案→進化→drafts/v1.md を全自動でつなぐ（PLAN §10 M3）."""
-    criteria_path = derive_criteria(work, niche, audience, author, poetics=poetics)
+    """ニッチ報告→criteria→3案→進化→drafts/v1.md を全自動でつなぐ（PLAN §10 M3）.
+
+    COMPOSE 途中のクラッシュ再開でauthor呼び出し（実費）を繰り返さないよう、
+    ディスク上の成果物（criteria.md / proposal_*.json / winner.json）が既に
+    あればそれを再利用する。作品ディレクトリは作品ごとに独立なので安全。
+    """
+    from aleph.compose.generate import _PROPOSAL_REQUIRED_FIELDS
+
+    criteria_path = work.compositions / "criteria.md"
+    if not criteria_path.exists():
+        criteria_path = derive_criteria(work, niche, audience, author, poetics=poetics)
+    else:
+        print("pipeline_to_draft: reusing criteria.md", file=sys.stderr)
     criteria_text = criteria_path.read_text(encoding="utf-8")
 
-    proposals = generate_proposals(work, criteria_text, materials or [], audience, author, n=3)
-    winner = evolve(work, proposals, criteria_text, audience, author, critic, generations=generations)
+    proposals = []
+    for p in sorted(work.compositions.glob("proposal_*.json")):
+        try:
+            item = json.loads(p.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(item, dict) and all(f in item for f in _PROPOSAL_REQUIRED_FIELDS):
+            proposals.append(item)
+    if len(proposals) >= 3:
+        print(f"pipeline_to_draft: reusing {len(proposals)} proposals", file=sys.stderr)
+    else:
+        proposals = generate_proposals(work, criteria_text, materials or [], audience, author, n=3)
+
+    winner_path = work.compositions / "winner.json"
+    if winner_path.exists():
+        winner = json.loads(winner_path.read_text(encoding="utf-8"))
+        print("pipeline_to_draft: reusing winner.json", file=sys.stderr)
+    else:
+        winner = evolve(work, proposals, criteria_text, audience, author, critic, generations=generations)
+        winner_path.write_text(json.dumps(winner, ensure_ascii=False, indent=2), encoding="utf-8")
 
     work.append_decision(
         {

@@ -321,3 +321,48 @@ def test_evolve_rejects_empty_candidates(tmp_path):
     work = Work(tmp_path, "w6204")
     with pytest.raises(ValueError, match="候補が0件"):
         evolve(work, [], "基準", AUDIENCE, lambda p: "ok", lambda p: "ok")
+
+
+def test_pipeline_to_draft_reuses_compose_artifacts_on_resume(monkeypatch, tmp_path):
+    """COMPOSE成果物(criteria/proposals/winner)が既にあれば author を再呼び出ししない.
+
+    w0001 実ランの回帰: COMPOSE 途中クラッシュからの再開が criteria+proposals を
+    毎回作り直し、author 実費(~$1.5)を再支出していた。
+    """
+    import aleph.draft.write as write_module
+
+    work = Work(tmp_path, "w6205")
+    work.compositions.mkdir(parents=True, exist_ok=True)
+    (work.compositions / "criteria.md").write_text("既存の基準", encoding="utf-8")
+    proposal = {
+        "form": "短編", "parts": ["起", "結"], "material_placement": "冒頭",
+        "style_policy": "簡素", "length_estimate": "4000字",
+    }
+    for i in (1, 2, 3):
+        (work.compositions / f"proposal_{i}.json").write_text(
+            json.dumps(proposal, ensure_ascii=False), encoding="utf-8",
+        )
+    (work.compositions / "winner.json").write_text(
+        json.dumps(proposal, ensure_ascii=False), encoding="utf-8",
+    )
+
+    def must_not_call(*args, **kwargs):
+        raise AssertionError("成果物があるのに高価な段階が再実行された")
+
+    monkeypatch.setattr(write_module, "derive_criteria", must_not_call)
+    monkeypatch.setattr(write_module, "generate_proposals", must_not_call)
+    monkeypatch.setattr(write_module, "evolve", must_not_call)
+
+    def fake_write(work_, composition, audience, author, *, version=1):
+        assert composition == proposal
+        path = work_.draft_path(version)
+        path.write_text("本文", encoding="utf-8")
+        return path
+
+    monkeypatch.setattr(write_module, "write_draft", fake_write)
+
+    result = write_module.pipeline_to_draft(
+        work, {"id": "n1", "description": "ニッチ"}, AUDIENCE,
+        must_not_call, must_not_call,
+    )
+    assert result == work.draft_path(1)

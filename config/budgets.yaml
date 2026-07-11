@@ -1,7 +1,8 @@
 # 予算宣言（PLAN §2.1・§11・§14.1）— 3系統を別々に計上する
 api:
   usd_per_month: 10.0        # オーナー決定（PLAN §14-3）
-  usd_per_work: 3.0          # 仮置き。運用で調整（変更はPLAN_CHANGELOGに記録）
+  usd_per_work: 4.5          # 3.0→4.5（PLAN_CHANGELOG 0.7.9）: w0001の統合デバッグ実費
+                             # （タイムアウト課金・やり直し ~$1.1）を吸収。月上限$10は不変
 harness:
   calls_per_day: 40          # 控えめ運用（PLAN §15-1 の作業前提）
   concurrent: 1
