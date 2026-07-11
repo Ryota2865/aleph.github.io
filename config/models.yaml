@@ -24,14 +24,16 @@ roles:
   # 注: claude-fable-5 / claude-opus-4-8 はAPI仕様上 temperature を受け付けない（送ると400）。
   # max_tokens: 思考(reasoning)モデルは思考トークンも completion 枠を消費する。
   # プロバイダ既定の1024では構成案JSONや草稿が途中で切れる（w0001実ランの回帰）。
-  author_primary:  { provider: anthropic, model: claude-fable-5, max_tokens: 16384, pricing: { input_per_mtok: 10.0, output_per_mtok: 50.0 } }
-  author_alt:      { provider: openai,    model: gpt-5.5,        max_tokens: 16384, temperature: 1.0 }
+  # 2026-07-11 オーナー提案の実験(w0003〜): 著者役を gpt-5.5 に切替(PLAN_CHANGELOG 0.7.11)。
+  # fable-5 は author_alt に退避(w0001/w0002 の著者。Anthropic残高$5.61を温存)。
+  author_primary:  { provider: openai,    model: gpt-5.5,        max_tokens: 16384, temperature: 1.0, pricing: { input_per_mtok: 5.0, output_per_mtok: 30.0 } }
+  author_alt:      { provider: anthropic, model: claude-fable-5, max_tokens: 16384, pricing: { input_per_mtok: 10.0, output_per_mtok: 50.0 } }
   author_local:    { provider: llamacpp,  model: gemma-4-31B-it-qat-UD-Q4_K_XL, max_tokens: 8192 }
   author_harness:  { provider: harness,   cli: claude-code }   # 重い知性・低頻度の役割用
   critic_harness:  { provider: harness,   cli: codex }
   critic_jury:                                      # 複数指定 = 陪審（PLAN §7.1）
     - { provider: anthropic, model: claude-opus-4-8, max_tokens: 8192, pricing: { input_per_mtok: 5.0, output_per_mtok: 25.0 } }
-    - { provider: openai,    model: gpt-5.5, max_tokens: 8192 }
+    - { provider: openai,    model: gpt-5.5, max_tokens: 8192, pricing: { input_per_mtok: 5.0, output_per_mtok: 30.0 } }  # 注: w0003では著者と同モデル(陪審多様性の債務)
     - { provider: llamacpp,  model: Qwen3.6-27B-Q4_K_M, max_tokens: 4096 }   # ローカル陪審員（時分割・非思考）
   reader_model:    { provider: llamacpp, model: Qwen3.6-27B-Q4_K_M, max_tokens: 4096, logprobs: true }
   reader_small:    { provider: llamacpp, model: Qwen3-8B, logprobs: true }

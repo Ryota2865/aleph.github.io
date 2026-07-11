@@ -112,7 +112,10 @@ def test_cli_budget_state_path_restores_status(cfg, tmp_path):
 
 
 def test_router_precheck_uses_role_pricing_before_provider_call(cfg, tmp_path):
-    remaining = 0.08
+    # 境界は author_primary の宣言価格から動的に計算する(著者モデルの切替に依存しない)
+    out_per_mtok = cfg.models["roles"]["author_primary"]["pricing"]["output_per_mtok"]
+    estimate = 2000 * out_per_mtok / 1e6
+    remaining = estimate * 0.8
     budget = Budget(cfg)
     budget.charge("api", cfg.budgets["api"]["usd_per_month"] - remaining)
     logger = CallLogger(tmp_path / "calls.jsonl", secrets=cfg.secrets.values())
