@@ -28,8 +28,8 @@ _SCORE_PATTERNS = (
 )
 
 # 査読に渡す草稿の上限(字)。ローカル審級の文脈長(20480トークン、うち生成4096)に
-# プロンプト外装込みで収まる値。超過分は冒頭抜粋+注記で査読する。
-_REVIEW_EXCERPT_CHARS = 28000
+# プロンプト外装込みで収まる値(日本語は1字≈0.8-1トークン)。超過分は冒頭抜粋+注記で査読する。
+_REVIEW_EXCERPT_CHARS = 18000
 
 
 def sanitize_critique(text: str) -> str:
