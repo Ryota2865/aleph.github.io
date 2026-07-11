@@ -112,6 +112,7 @@ def generate_proposals(
     """構成案をn系統以上、必須フィールドつきで生成し保存する（PLAN §6.1）."""
     materials_summary = _summarize_materials(materials)
     valid: list[dict] = []
+    response = ""
     for attempt in range(_MAX_PROPOSAL_ATTEMPTS):
         prompt = _proposal_prompt(criteria, audience, materials_summary, n, attempt)
         response = author(prompt)
@@ -125,6 +126,16 @@ def generate_proposals(
             break
 
     work.compositions.mkdir(parents=True, exist_ok=True)
+    if not valid:
+        # 空リストを黙って返すと下流(evolve)が IndexError で落ちる(w0001 実ランの回帰)。
+        # 診断用に最終応答を保存してラウドに失敗する。
+        failure_path = work.compositions / "proposal_parse_failure.txt"
+        failure_path.write_text(response, encoding="utf-8")
+        raise RuntimeError(
+            f"generate_proposals: {_MAX_PROPOSAL_ATTEMPTS}回の試行で有効な構成案が"
+            f"0件(必須フィールド {_PROPOSAL_REQUIRED_FIELDS})。"
+            f"最終応答を {failure_path} に保存した。"
+        )
     for index, proposal in enumerate(valid, start=1):
         path = work.compositions / f"proposal_{index}.json"
         path.write_text(json.dumps(proposal, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -175,7 +186,9 @@ def evolve(
     最終世代で critic score が最大の案を返す。
     """
     candidates: list[dict] = list(proposals)
-    winner: dict = candidates[0] if candidates else {}
+    if not candidates:
+        raise ValueError("evolve: 候補が0件。generate_proposals の結果を確認すること。")
+    winner: dict = candidates[0]
     log_path = work.compositions / "evolution.jsonl"
     work.compositions.mkdir(parents=True, exist_ok=True)
 

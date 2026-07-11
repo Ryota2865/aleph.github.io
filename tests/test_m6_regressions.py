@@ -295,3 +295,29 @@ def test_find_hidden_pairs_min_chars_excludes_heading_only_chunks(tmp_path):
     pairs_default = find_hidden_pairs(tmp_path, top_n=10)
     ids_default = [{p["chunk_a"], p["chunk_b"]} for p in pairs_default]
     assert {"j1", "j2"} in ids_default
+
+
+def test_generate_proposals_raises_loudly_when_all_attempts_unparseable(tmp_path):
+    """全試行でJSON抽出に失敗したら、空リストを黙って返さずラウドに失敗する.
+
+    w0001 実ランの回帰: 空の proposals が evolve まで素通りし
+    scored[0] の IndexError でクラッシュした。診断用に最終応答も保存する。
+    """
+    from aleph.compose.generate import generate_proposals
+
+    work = Work(tmp_path, "w6203")
+    author = lambda prompt: "構成案をうまく書けませんでした。JSONはありません。"  # noqa: E731
+
+    with pytest.raises(RuntimeError, match="有効な構成案が0件"):
+        generate_proposals(work, "基準", [], AUDIENCE, author, n=3)
+    failure = work.compositions / "proposal_parse_failure.txt"
+    assert failure.exists() and "JSONはありません" in failure.read_text(encoding="utf-8")
+
+
+def test_evolve_rejects_empty_candidates(tmp_path):
+    """evolve は空の候補リストを明示的に拒否する(IndexErrorではなくValueError)."""
+    from aleph.compose.generate import evolve
+
+    work = Work(tmp_path, "w6204")
+    with pytest.raises(ValueError, match="候補が0件"):
+        evolve(work, [], "基準", AUDIENCE, lambda p: "ok", lambda p: "ok")
