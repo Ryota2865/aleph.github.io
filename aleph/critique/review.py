@@ -70,7 +70,7 @@ def _review_input(draft_text: str) -> str:
         f"【査読セグメント: {label} / 全文{full_len}字】\n{text}"
         for label, text in segments
     ]
-    blocks.append(f"【注記】全文{full_len}字から冒頭・中間・末尾を各約{_REVIEW_SEGMENT_CHARS}字で抜粋。")
+    blocks.append(f"【注記】全文{full_len}字から冒頭・中間・末尾を各約{_REVIEW_SEGMENT_CHARS}字で抜粋。セグメント境界は機械的切断であり、境界起因の文の断絶・重複・文字欠けは作品の疵ではないため報告しないこと。")
     return "\n\n".join(blocks)
 
 
