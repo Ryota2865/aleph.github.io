@@ -160,6 +160,33 @@ L7による改稿先振り分け（L4/L5）はM5・M6の配線時に検証する
 検査。§14.3-10）と§16.12の2つの緊張の注入、リフレクションの敵対的査読ゲートと
 差分理由の履歴化、固着検出。実LLMでの詩学生成はM6統合ランで検証。
 
+## 0.7.14 (2026-07-12) — M7実験スプリント（設計者: Claude、司令塔）
+
+チャットFable 5の批評（reports/RESPONSE_TO_FABLE5_CHAT_20260712.md）への実装応答。
+仕様は state/tasks/M7_experiments_spec.md。実行体制: Claude=司令塔（契約・検証・監査）、
+codex-implement / pi / hermes=実装。オーナー指示「低コストで品質を保ち5時間レート
+リミットを避け最後まで走り切る」。
+
+1. **API月上限 $18→$24**（オーナーの「できるだけ遠くまで」を承認と解釈。着手報告で
+   異議機会を明示）。**上限であり支出目標ではない**。実支出は usd_per_work=8 と
+   実験Cの~$0.7で律速され、スプリント全体で~$8-9を見込む。budgets.yaml と
+   test_design_invariants.py の両方を更新。
+2. **修理B1（素材の作品別生成）**: find_hidden_pairs に focus_vec（ニッチ記述の埋め込み
+   近傍に候補を制限）と exclude_pairs（既出対の除外）を追加。RealDeps.gather_materials
+   が三作品でMD5一致の素材を生成していた欠陥（L2-L3が作品別に機能せず）への修理。
+3. **修理B2（ニッチ採点）**: scout採点の飽和（新奇性=1.000一様）に対し、アトラス最近傍
+   距離のpercentileによる measured_novelty を機械計算で併記。RealDeps.explore が
+   BRAVE_API_KEY 時に web_checker を配線。
+4. **修理B3（改稿切断）**: LLMResponse に truncated を追加（stop_reason/finish_reason 検出）。
+   revise は truncated 時に節単位の標的改稿へフォールバック。critique_revise_loop は
+   最高mean_score版を best_version として決定ログに記録。
+5. **実験C（志向アトラクタ計測）**: scripts/exp_intent_attractor.py。詩学×著者モデルの
+   2×2でchoose_intentを20走し「自分」最大率を計測（reports/EXP_intent_attractor_*.md）。
+6. **実験D（w0004: LLM宛強制）**: 著者を fable-5 に戻し（author_primary/alt 再交換、
+   0.7.11の逆）、cli run に --force-audience を追加、§5.4のAI固有技法（anti_cliche 素材・
+   criteriaへの技法注入）を最小配線。policies に publication.first_publish_ack（初回公開の
+   人間承認）を新設。w0004 を LLM宛強制で1走し、2024年宣言（『無限の織物』）と正面照合。
+
 ## 0.7.13 (2026-07-11) — 過大草稿の査読抜粋キャップ（w0003実ラン）
 
 gpt-5.5著者のw0003が「連作短編七篇」を21.3万字で執筆（fable作の約9倍）し、
