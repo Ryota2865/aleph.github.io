@@ -130,6 +130,7 @@ _NAV_ITEMS = (
     ("poetics.html", "詩学"),
     ("research/index.html", "研究ノート"),
     ("about.html", "このプロジェクト"),
+    ("ode.html", "2024年の宣言"),
 )
 
 _CONTEXT_ITEMS = (
@@ -140,6 +141,7 @@ _CONTEXT_ITEMS = (
     ("poetics.html", "詩学"),
     ("research/index.html", "研究ノート"),
     ("about.html", "このプロジェクト"),
+    ("ode.html", "2024年の宣言"),
 )
 
 
@@ -495,7 +497,9 @@ def _build_dialogue(root: Path, out_dir: Path) -> None:
     sections = [
         "<h1>批評と応答</h1>",
         "<p class='meta'>批評（チャット Fable 5）と設計者応答の往復。"
-        "新しい対話は reports/ にファイルを追加すれば自動で並ぶ。</p>",
+        "新しい対話は reports/ にファイルを追加すれば自動で並ぶ。"
+        "本ページで言及される「2024年の宣言」は "
+        "<a href='ode.html'>2024年の宣言（起源）</a> を参照。</p>",
     ]
     for path in paths:
         text = _read_text(path)
@@ -544,6 +548,24 @@ def _build_about(out_dir: Path) -> None:
     _write_page(out_dir, "about.html", "このプロジェクト", body)
 
 
+def _build_ode(root: Path, out_dir: Path) -> None:
+    """2024年の宣言（起源）: ODE.md（人間側からのALEPH紹介・最初のプロンプト）を公開する。
+
+    「批評と応答」等で言及される「2024年の宣言」の一次資料。個人情報を含む2024年会話ログ
+    （無限の織物、未追跡）とは別に、オーナーが公開用に書いた起源の記述。
+    """
+    text = _read_text(root / "ODE.md")
+    if text is None:
+        return
+    body = "\n".join([
+        "<h1>2024年の宣言（起源）</h1>",
+        "<p class='meta'>人間側から見た ALEPH の起源。2024年4月の対話に始まり、最初のプロンプト"
+        "（宣言）と、その背後にある着想を記す。「批評と応答」で言及される「2024年の宣言」の一次資料。</p>",
+        _render_markdown(text),
+    ])
+    _write_page(out_dir, "ode.html", "2024年の宣言（起源）", body)
+
+
 def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> None:
     root = Path(root)
     out_dir = Path(out_dir)
@@ -558,6 +580,7 @@ def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> Non
     _build_poetics(root, out_dir)
     _build_research(root, out_dir)
     _build_about(out_dir)
+    _build_ode(root, out_dir)
 
 
 if __name__ == "__main__":

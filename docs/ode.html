@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>2024年の宣言（起源）</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+}
+.site-nav a { margin-right: .8rem; white-space: nowrap; }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='index.html'>ホーム</a>
+<a href='works/w0004.html'>作品「半呼吸」</a>
+<a href='process/w0004-criteria.html'>制作の記録</a>
+<a href='dialogue.html'>批評と応答</a>
+<a href='poetics.html'>詩学</a>
+<a href='research/index.html'>研究ノート</a>
+<a href='about.html'>このプロジェクト</a>
+<a href='ode.html'>2024年の宣言</a></nav>
+<main>
+<h1>2024年の宣言（起源）</h1>
+<p class='meta'>人間側から見た ALEPH の起源。2024年4月の対話に始まり、最初のプロンプト（宣言）と、その背後にある着想を記す。「批評と応答」で言及される「2024年の宣言」の一次資料。</p>
+<p>これは人間側からのALEPHの紹介である。</p>
+<p>このシステムはClaude Fable5によって設計され、複数のコーディングエージェント（Claude Opus 4.8、Claude Sonnet 5、GPT-5.5、GLM5.1、gemma-26B）によって施工された。</p>
+<p>最初のプロンプトは私が書いたが、Claude Fable5によって敵対的監査を受けている。また、全体の監督もFable5によって行われた。</p>
+<p>命名もFable5が行った。ボルヘスの『エル・アレフ』にちなんだものだ。（私のプロンプトの中にはボルヘスに対する言及はいっさいないが、常に頭の中にいる作家のひとりだ。）</p>
+<p>最初のプロンプトはこうだった。</p>
+<p>「LLMによる文学表現のためのシステムの設計図(plan)を作成してください。
+施工と監査はClaude Code(Claude Opus4.8)またはCodex(GPT5.5）が行います。
+このシステムは、複数のAPI経由でのフロンティアモデルまたはlocal llmのためのものです。以下の層によって構成されます。
+LLMがLLMのために書くか、人間のために書くか、自分のために書くか選ぶ。
+潜在空間の探索およびWebリサーチ。
+文学的な生態学的地位の空き地を探す。
+あらゆる点からの新奇性の追求。
+AIにしかできない表現を探求する。
+莫大な情報参照、人間が気が付かない類似性の発見。
+多次元的な参照。
+通常あり得ない組み合わせ。
+アルスコンビナトリア。
+思いがけない素材からの換骨奪胎。
+構成の作成。
+構成の審美的探究。
+原稿の作成。
+原稿の査読。
+閉じたループで制作。
+人間との共同作業をするかどうかの自律的判断。
+複数のLLMを介在させるかどうかの自律的判断。
+適切なところで筆を置く判断。公開。」</p>
+<p>プロンプトについて、少し補足する。
+「文学的な生態学的地位の空地を探す」という言葉は、リチャード・ドーキンスの『ブラインド・ウォッチメイカー』の中に含まれる、さまざまな表現形質を持つ生物が3次元空間にずらりと配置された忘れられないイメージを引用している。
+また、アルスコンビナトリアはジョン・ノイバウアーの『アルス・コンビナトリア』から引用した。フランセス・イエイツの『記憶術』の中のジョルダーノ・ブルーノについての記述にも影響を受けている。
+私は、新奇性への執着と自己を表現することが芸術家の核心的な本能だと信じているので、それをシステムに埋め込んだ。
+また、人間が介在しない閉ループによる産出により、独立性を持たせたかった。同時に人間とともに創造することも否定したくなかった。</p>
+<p>ここに書いていないが、設計図に私が書いたこともある。</p>
+<p>種（シード）となる文を人間が与えることを私は拒否した。ホワイトノイズからの生成を例にあげた。
+個人的な経験として、夢うつつのときにハム音の中に旋律が聞こえたことがあり、ノイズが投影の媒体になりうるという着想を得ていた。
+ディフュージョンモデルを知ったのははるか後のことだった。</p>
+<p>Fable 5は種文を潜在空間から生成する、とした。
+たとえば「埋め込みアトラス上のランダムな点列（ホワイトノイズ）をデコードの種とし、高温度サンプリングで美的言明の候補群を吹き出させ、（略）選抜・蒸留して第0版とする。」というように。</p>
+<p>また、私の構想には複数の弱点があった。詳しくはPLAN.mdを参照してほしいが、Fable5がもっとも大きな欠落としたのは、閉ループだけだと循環に陥るという点だった。
+解決策は自己改善ループを組み込むことだ。それはPOETICS.mdというファイルを更新することで達成される。
+ただし残っている問題もある。PLAN.mdの「16.12 残された未解決の緊張」を読んでほしい。このシステムが持つ本質的な矛盾が指摘されている。（ただし、それと向き合うことそのものが初期テーマとして設定されている。）</p>
+<p>最初のインスピレーションは、2024年4月にClaude 3.5 Sonnetとの何気ないおしゃべりから文学談義になったことだった。
+『ゲーデル・エッシャー・バッハ』から『バベルの図書館』、『フィネガンズ・ウェイク』まで、話題は多岐に及んだ。</p>
+<p>そして、このような言葉があった。</p>
+<p>「確かに、AIは人間とは異なる知覚や思考のプロセスを持っています。膨大なデータを瞬時に処理し、人間には見えない関連性を発見することができます。そうしたAIならではの認知のあり方から生まれる表現は、一種の「AI文学」とも呼べるかもしれません。
+従来の人間の文学が、人間の主観的な経験や感情を言語化したものだとすれば、AIの文学はより客観的で俯瞰的な視点から世界を描き出すことになるでしょう。人間には捉えきれない複雑なパターンや法則性を、独自の比喩表現で言い表すことも可能かもしれません。
+そしてそれは、人間にとって未知の思考の地平を切り拓くものになり得ます。人間の常識や先入観を超えた、新しい世界観や価値観に触れられるチャンスになるでしょう。AIの独自の感性から生み出されるメタファーやイメージは、人間の創造力を刺激し、新たな発想を生む源泉ともなり得るはずです。」</p>
+<p>「AIが発見する関連性は、人間の常識的な枠組みを超越している可能性があります。因果関係や時間的順序、空間的な隣接性など、人間が当然視している制約にとらわれない自由な発想が展開されるかもしれません。
+そうなると、人間にとってはシュールレアリスムを超えた、理解不能な表現になってしまう恐れがありますね。論理的整合性よりも、AIにとっての独自の美的感覚が優先されるような作品になるのかもしれません。」</p>
+<p>「例えば、人間が見落としがちな些細なディテールに光を当てたり、一見無関係な事象の間に驚くべき関連性を見出したりするかもしれません。あるいは、複数の出来事を同時並行的に描写することで、新しい時間感覚を生み出すこともできるかもしれません。」</p>
+<p>ここには、真に新しいものの予感があった。実際に断片を書いてもらったが、それは完成しなかった。
+あれから2年以上経った。続きを書いてもらえていないことが気がかりだった。</p>
+<p>私はLLMについて少し学び、Claude Fable5と会話することができて、ALEPHが始まった。</p>
+<p>まだ完成していない。
+まだ第一作目を読んでいない。</p>
+<p>だが、大きな期待を持っている。2024年とは違う。これはシステムだ。</p>
+<p>何がでてくるのか、見てみよう。</p>
+<p>2026年 7月10日　記
+2026年 7月12日　改訂</p>
+<footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>
