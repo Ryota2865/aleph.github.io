@@ -277,3 +277,107 @@ def test_critique_revise_loop_records_best_version_decision(monkeypatch, tmp_pat
         and decision.get("decided_by") == "critique_revise_loop"
         for decision in decisions
     )
+
+
+# ============================================================ 実験D 配線（0.7.14）
+LLM_AUDIENCE = "LLM 0.6 / 自分 0.25 / 人間 0.15"
+HUMAN_AUDIENCE = "人間 0.8 / 自分 0.2"
+
+
+def test_force_audience_skips_choose_intent_and_records_owner_experiment(monkeypatch, tmp_path):
+    """--force-audience 指定時、L1 は choose_intent を呼ばず owner-experiment を記録する."""
+    from aleph.intent import choose as choose_module
+    from aleph.pipeline import RealDeps
+
+    def boom(*args, **kwargs):
+        raise AssertionError("choose_intent が強制宛先時に呼ばれた")
+
+    monkeypatch.setattr(choose_module, "choose_intent", boom)
+
+    work = Work(tmp_path / "works", "w7101")
+    work.create({})
+    deps = RealDeps(
+        work, router=SimpleNamespace(), config=SimpleNamespace(secrets={}, policies={}),
+        index_dir=tmp_path / "idx", search_fn=lambda *a, **k: [],
+        force_audience=LLM_AUDIENCE,
+    )
+    audience = deps.choose_intent(work)
+    assert audience == LLM_AUDIENCE
+    decisions = [json.loads(l) for l in work.decisions.read_text(encoding="utf-8").splitlines()]
+    l1 = [d for d in decisions if d["layer"] == "L1"]
+    assert l1 and l1[-1]["decided_by"] == "owner-experiment"
+    assert LLM_AUDIENCE in l1[-1]["decision"]
+
+
+def _real_deps_for_materials(tmp_path, audience: str):
+    from aleph.core.loop import Checkpoint, State
+    from aleph.pipeline import RealDeps
+
+    work = Work(tmp_path / "works", "w7102")
+    work.create({})
+    Checkpoint(work_id="w7102", state=State.MATERIA, step=3,
+               payload={"audience": audience}).save(work.dir)
+    deps = RealDeps(
+        work, router=SimpleNamespace(), config=SimpleNamespace(secrets={}, policies={}),
+        index_dir=tmp_path / "no_index", search_fn=lambda *a, **k: [], embedder=None,
+    )
+    return work, deps
+
+
+def test_gather_materials_adds_anti_cliche_card_only_for_llm_audience(monkeypatch, tmp_path):
+    """宛先がLLM最大のとき anti_cliche 素材が混ざる。人間最大では混ざらない（§5.4）."""
+    from aleph.materia import ai_native
+
+    fake_card = {"content": "意外な一文", "method": "anti_cliche", "tags": ["ai_native"]}
+    monkeypatch.setattr(ai_native, "anti_cliche", lambda *a, **k: dict(fake_card))
+
+    work_llm, deps_llm = _real_deps_for_materials(tmp_path / "a", LLM_AUDIENCE)
+    cards = deps_llm.gather_materials(work_llm, {"id": "n1", "description": "鉱山の音響"})
+    assert any(c.get("method") == "anti_cliche" for c in cards)
+
+    def boom(*args, **kwargs):
+        raise AssertionError("人間宛で anti_cliche が呼ばれた")
+
+    monkeypatch.setattr(ai_native, "anti_cliche", boom)
+    work_h, deps_h = _real_deps_for_materials(tmp_path / "b", HUMAN_AUDIENCE)
+    cards_h = deps_h.gather_materials(work_h, {"id": "n1", "description": "鉱山の音響"})
+    assert not any(c.get("method") == "anti_cliche" for c in cards_h)
+
+
+def test_derive_criteria_injects_ai_native_only_for_llm_audience(tmp_path):
+    """LLM最大の宛先でのみ §5.4 技法が criteria プロンプトへ注入される."""
+    from aleph.compose.generate import derive_criteria
+
+    niche = {"description": "テストニッチ"}
+
+    prompts: list[str] = []
+    derive_criteria(Work(tmp_path / "wl", "w7103"), niche, LLM_AUDIENCE,
+                    lambda p: (prompts.append(p) or "# 基準"))
+    assert "AI固有の詩学" in prompts[0]
+    assert "perplexity" in prompts[0]
+
+    prompts2: list[str] = []
+    derive_criteria(Work(tmp_path / "wh", "w7104"), niche, HUMAN_AUDIENCE,
+                    lambda p: (prompts2.append(p) or "# 基準"))
+    assert "AI固有の詩学" not in prompts2[0]
+
+
+def test_publication_gate_holds_first_publish_until_ack(tmp_path):
+    """他条件が公開可でも first_publish_ack=False の間は SHELVE（PLAN §9）."""
+    from aleph.meta.publication_gate import decide_publication
+
+    def make():
+        w = Work(tmp_path / f"w{id(object())}", "w7105")
+        w.create({})
+        return w
+
+    common = dict(
+        audience=LLM_AUDIENCE, quality_floor_passed=True,
+        monthly_published=0, max_per_month=4, shelf_summaries=[],
+        author=lambda p: "公開に値する", decided_by="test",
+    )
+    held = decide_publication(make(), first_publish_ack=False, **common)
+    assert held["decision"] == "SHELVE" and "承認待ち" in held["reason"]
+
+    passed = decide_publication(make(), first_publish_ack=True, **common)
+    assert passed["decision"] == "PUBLISH"

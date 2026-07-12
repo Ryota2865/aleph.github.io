@@ -81,6 +81,7 @@ def _cmd_run(root: Path, args) -> int:
     deps = RealDeps(
         work, router, config=config, index_dir=root / args.index,
         search_fn=search_fn, embedder=embedder,
+        force_audience=getattr(args, "force_audience", None),
     )
     final = run_work(work, deps, decided_by="cli-run")
     print(f"run: {args.work} -> {final.value}", file=sys.stderr)
@@ -95,6 +96,11 @@ def main(argv: list[str] | None = None) -> int:
     run_p = sub.add_parser("run", help="閉ループを実行する（チェックポイントから継続）")
     run_p.add_argument("--work", required=True, help="作品id（works/<id>）")
     run_p.add_argument("--index", default="state/atlas", help="探索・素材索引のディレクトリ")
+    run_p.add_argument(
+        "--force-audience", default=None,
+        help="L1の自律選択を上書きし宛先配合を固定する実験用（例 'LLM 0.6 / 自分 0.25 / 人間 0.15'）。"
+        "指定時 L1 は choose_intent を呼ばず owner-experiment 決定として記録する（PLAN §3・0.7.14）",
+    )
     sub.add_parser("status", help="予算3系統と進行中の作品を表示する")
     sub.add_parser("resume", help="クラッシュ後の再開（決定論的リプレイ）")
     sub.add_parser("publish", help="公開ゲートを起動する（初回は人間承認必須）")

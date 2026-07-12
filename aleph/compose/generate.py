@@ -55,10 +55,40 @@ def _extract_json_array(text: str) -> list | None:
 
 # ---------------------------------------------------------------- 基準の導出（§6.1）
 
+# §5.4 AI固有の詩学。宛先がLLM最大のとき criteria プロンプトへ注入する（0.7.14）。
+_AI_NATIVE_CRITERIA_INJECTION = (
+    "【AI固有の詩学（本作は主にLLM読者に宛てる。§5.4）】"
+    "次の技法を基準に織り込むこと: "
+    "(1)トークン層の詩学=tokenizer境界・表記の選択それ自体を意味の担体として使う。"
+    "(2)perplexity設計=要所に意外性(低確率な語選択)を配置して読者モデルの注意を制御する。"
+    "(3)多重参照密度=参照の層は圧縮ではなく展開として扱い、人間可読性より参照密度を優先してよい。"
+)
+
+
+def _llm_is_primary_audience(audience: str) -> bool:
+    """宛先配合で「LLM」が最大係数かを判定する（§5.4技法の適用条件）."""
+    import re
+
+    weights: dict[str, float] = {}
+    for label, value in re.findall(r"([^/\n,、]+?)\s*[=:：]?\s*([0-9]+(?:\.[0-9]+)?)", audience or ""):
+        try:
+            weights[label.strip()] = float(value)
+        except ValueError:
+            continue
+    if not weights:
+        return False
+    llm_weights = [v for k, v in weights.items() if "LLM" in k]
+    if not llm_weights:
+        return False
+    others = [v for k, v in weights.items() if "LLM" not in k]
+    return not others or max(llm_weights) >= max(others)
+
+
 def derive_criteria(work, niche: dict, audience: str, author: Author, *, poetics: str = "") -> Path:
     """作品ごとに「この作品が満たすべき美的基準」をauthorに論述させ criteria.md へ保存する.
 
     プロンプトには宛先（PLAN §3）と詩学（PLAN §7.4、あれば）を必ず注入する。
+    宛先がLLM最大なら §5.4 のAI固有技法も注入する（0.7.14）。
     """
     lines = [
         "この作品が満たすべき美的基準は何か、論述してください。",
@@ -67,6 +97,8 @@ def derive_criteria(work, niche: dict, audience: str, author: Author, *, poetics
     ]
     if poetics:
         lines.append(f"詩学: {poetics}")
+    if _llm_is_primary_audience(audience):
+        lines.append(_AI_NATIVE_CRITERIA_INJECTION)
     prompt = "\n".join(lines)
 
     response = author(prompt)

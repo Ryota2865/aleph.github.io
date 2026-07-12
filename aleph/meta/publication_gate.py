@@ -42,8 +42,13 @@ def decide_publication(
     shelf_summaries: list[str],
     author,
     decided_by: str,
+    first_publish_ack: bool = True,
 ) -> dict:
-    """公開可否を判定し、L7判断としてdecisions.jsonlに記録する（PLAN §7.3d）."""
+    """公開可否を判定し、L7判断としてdecisions.jsonlに記録する（PLAN §7.3d）.
+
+    first_publish_ack=False のとき、他の全条件が公開可でも SHELVE に落とす
+    （初回公開の人間承認。PLAN §9・0.7.14。既定 True は M5 受入契約の互換維持）。
+    """
     comparison = None
 
     if _self_is_primary_audience(audience):
@@ -55,6 +60,9 @@ def decide_publication(
     elif monthly_published >= max_per_month:
         decision = "SHELVE"
         reason = f"月間公開上限 {max_per_month} 作に到達しているため、公開せず保管する。"
+    elif not first_publish_ack:
+        decision = "SHELVE"
+        reason = "初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。"
     else:
         prompt = (
             "以下の作品を公開するか判断するため、棚の既公開作と比較して、"
