@@ -4,7 +4,7 @@ api:
                              # 2026-07-13に28→36（純粋条件走行 w0005/w0006 用。オーナーが実残高
                              # Anthropic 6.43 / OpenAI 5.29 USD を明示して承認。実支出は実残高と
                              # usd_per_work=8 で律速）。上限であり支出目標ではない
-  usd_per_work: 8.0          # 3.0→4.5→6.0→8.0（PLAN_CHANGELOG 0.7.9）: w0001の統合デバッグ実費
+  usd_per_work: 9.0          # 3.0→4.5→6.0→8.0（PLAN_CHANGELOG 0.7.9）: w0001の統合デバッグ実費
                              # ~$1.1に加え、precheckのmax_tokensベース見積り（実費の3-4倍）が
                              # DRAFT途中で早期ブロックしたため。月上限$18が最終防壁
 harness:

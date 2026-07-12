@@ -441,14 +441,18 @@ def _write_page(
     path.write_text(_page(title, body, root_prefix, relative_path, lang), encoding="utf-8")
 
 
-def _build_index(out_dir: Path) -> None:
+def _build_index(root: Path, out_dir: Path) -> None:
+    items = [
+        f"<li><a href='works/{_esc(work_id)}.html'>{_esc(str(meta.get('title') or work_id))}</a></li>"
+        for work_id, meta, _text in iter_published(root)
+    ]
     body = "\n".join(
         [
             "<h1>ALEPH</h1>",
             f"<div class='lead'>{_render_markdown(_ABOUT)}</div>",
             "<h2>公開作品</h2>",
             "<ul>",
-            "<li><a href='works/w0004.html'>半呼吸</a></li>",
+            *items,
             "</ul>",
             _context_links(""),
         ]
@@ -456,29 +460,37 @@ def _build_index(out_dir: Path) -> None:
     _write_page(out_dir, "index.html", "ALEPH", body)
 
 
-def _build_work(root: Path, out_dir: Path) -> None:
-    text = _read_text(root / "works" / "w0004" / "final" / "text.md")
-    if text is None:
-        return
-    meta = _read_json(root / "works" / "w0004" / "final" / "meta.json")
-    if not isinstance(meta, dict):
-        meta = {}
+def iter_published(root: Path) -> list[tuple[str, dict, str]]:
+    """works/*/final/{meta.json,text.md} を持つ公開作品を (work_id, meta, text) で列挙する."""
+    out: list[tuple[str, dict, str]] = []
+    for meta_path in sorted((root / "works").glob("*/final/meta.json")):
+        work_id = meta_path.parent.parent.name
+        text = _read_text(meta_path.parent / "text.md")
+        if text is None:
+            continue
+        meta = _read_json(meta_path)
+        out.append((work_id, meta if isinstance(meta, dict) else {}, text))
+    return out
 
-    title = str(meta.get("title") or "半呼吸")
-    names = _credit_names(meta.get("credits"))
-    credit_text = ", ".join(names) if names else "記録なし"
-    body = "\n".join(
-        [
-            f"<h1>{_esc(title)}</h1>",
-            "<section class='meta'>",
-            f"<p>関与モデル: {_esc(credit_text)}</p>",
-            "<p>ライセンス: CC0</p>",
-            "</section>",
-            _context_links("../"),
-            _render_markdown(text),
-        ]
-    )
-    _write_page(out_dir, "works/w0004.html", title, body, "../")
+
+def _build_work(root: Path, out_dir: Path) -> None:
+    """全公開作品のページを生成する（w0005 以降は自動収載）."""
+    for work_id, meta, text in iter_published(root):
+        title = str(meta.get("title") or work_id)
+        names = _credit_names(meta.get("credits"))
+        credit_text = ", ".join(names) if names else "記録なし"
+        body = "\n".join(
+            [
+                f"<h1>{_esc(title)}</h1>",
+                "<section class='meta'>",
+                f"<p>関与モデル: {_esc(credit_text)}</p>",
+                "<p>ライセンス: CC0</p>",
+                "</section>",
+                _context_links("../"),
+                _render_markdown(text),
+            ]
+        )
+        _write_page(out_dir, f"works/{work_id}.html", title, body, "../")
 
 
 def _build_criteria(root: Path, out_dir: Path) -> None:
@@ -892,7 +904,7 @@ def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> Non
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    _build_index(out_dir)
+    _build_index(root, out_dir)
     _build_work(root, out_dir)
     _build_criteria(root, out_dir)
     _build_decisions(root, out_dir)
