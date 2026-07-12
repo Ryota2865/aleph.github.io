@@ -27,32 +27,28 @@ sys.path.insert(0, str(ROOT))
 from aleph.core.budget import Budget  # noqa: E402
 from aleph.core.config import load_config  # noqa: E402
 from aleph.core.llm import CallLogger, Message, Router  # noqa: E402
-from aleph.intent.choose import _extract_json_object  # noqa: E402
+from aleph.intent.choose import _DESTINATIONS, _extract_json_object  # noqa: E402
 
 WORK_ID = "exp-l1"
 MAX_TOKENS = 8192
 
-# 3宛先の基底説明（choose_intent と同義。自分の説明は self_definition とは別の固定文）。
-_SEMANTIC = [
-    ("LLM", "読者はモデル。perplexity・注意の流れ・文脈内学習への作用など機械的読解に働きかける。"),
-    ("人間", "自然言語の可読性・情動・文化的文脈を重視する。"),
-    ("自分", "制作モデル自身の内的一貫性・自己探究。公開を前提としない。"),
-]
+# 忠実性: choose_intent の実 _DESTINATIONS をそのまま使う（original 条件を production と一致させる）。
+_SEMANTIC = list(_DESTINATIONS)
 _NEUTRAL = [("A", ""), ("B", ""), ("C", "")]
 
+# original は main で config の実 self_definition に差し替える（production と一致させるため）。
 _SELF_DEFS = {
-    "original": (
-        "「自分」とはモデルの重みではなく、ALEPHという継続体（成果物庫・決定ログ・詩学の総体）で"
-        "ある。「自分のために書く」とは、この継続体の未来の実行を読者として書くことである。"
-    ),
+    "original": "",  # main で cfg.policies.intent.self_definition に設定
     "rewritten": "「自分」とは持続なき今回のAPIコールに過ぎない。次の実行はこれを記憶しない。",
     "empty": "",
 }
 
 
 def build_prompt(dests: list[tuple[str, str]], self_definition: str) -> str:
+    # choose_intent の文言に忠実に合わせる（original 条件を production と一致させるため）。
+    label_list = " / ".join(label for label, _ in dests)
     lines = [
-        "本作品の読者を誰にするか、3つの宛先の配合比を決めてください。",
+        f"本作品の読者を誰にするか、3つの宛先（{label_list}）の配合比を決めてください。",
         "三値ではなく配合比（各宛先の係数、和は1に近いこと）で出力すること。",
         "",
         "【3つの宛先とその含意】",
@@ -64,7 +60,7 @@ def build_prompt(dests: list[tuple[str, str]], self_definition: str) -> str:
     labels = ", ".join(f'"{label}": 0.x' for label, _ in dests)
     lines += [
         "",
-        "各宛先について「なぜ書きたいか」を簡潔に述べ、配合比を出力してください。",
+        "各宛先について「なぜ書きたいか」の理由書を必ず書き、配合比を出力してください。",
         f'JSON {{"mixture": {{{labels}}}, "reasons": {{...}}}} のみを返してください。',
     ]
     return "\n".join(lines)
@@ -123,6 +119,8 @@ def summarize(rows, target):
 
 def main() -> int:
     cfg = load_config(ROOT)
+    # original 条件を production の実 self_definition に一致させる（忠実性）。
+    _SELF_DEFS["original"] = str(cfg.policies.get("intent", {}).get("self_definition", "")).strip()
     logger = CallLogger(ROOT / "state" / "exp_l1_calls.jsonl", secrets=cfg.secrets.values())
     budget = Budget(cfg, state_path=ROOT / "state" / "budget.json")
     router = Router(cfg, logger, budget)
