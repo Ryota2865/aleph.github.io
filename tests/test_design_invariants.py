@@ -45,9 +45,9 @@ def test_no_hardcoded_model_names_outside_config():
 
 def test_budget_declares_owner_decisions():
     cfg = load_config(ROOT)
-    # PLAN §14-3 の$10からオーナー決定で改定（10→15→18→24→26→28）。2026-07-12: 26→28
-    # （0.7.17、border-case実験E。上限であり支出目標ではない）
-    assert cfg.budgets["api"]["usd_per_month"] == 28.0
+    # PLAN §14-3 の$10からオーナー決定で改定（10→...→28→36）。2026-07-13: 28→36
+    # （純粋条件走行。上限であり支出目標ではない）
+    assert cfg.budgets["api"]["usd_per_month"] == 36.0
     assert cfg.budgets["publish"]["max_per_month"] == 4  # PLAN §14.3-7
 
 
