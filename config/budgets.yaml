@@ -1,9 +1,9 @@
 # 予算宣言（PLAN §2.1・§11・§14.1）— 3系統を別々に計上する
 api:
-  usd_per_month: 26.0        # オーナー決定（10→15→18→24→26へ段階引き上げ）。
-                             # 2026-07-12に24→26（PLAN_CHANGELOG 0.7.14-3、実験C 全2×2・N=3の
-                             # headroom確保。fable precheck見積りが保守的なため）。上限であり支出目標
-                             # ではない。実残高 Anthropic $8.93 / OpenAI $6.59（2026-07-12）と潤沢
+  usd_per_month: 28.0        # オーナー決定（10→15→18→24→26→28へ段階引き上げ）。
+                             # 2026-07-12に26→28（PLAN_CHANGELOG 0.7.17、border-case実験Eの
+                             # headroom確保。オーナー承認）。上限であり支出目標ではない。
+                             # 実残高 Anthropic/OpenAI は潤沢だが software cap が律速
   usd_per_work: 8.0          # 3.0→4.5→6.0→8.0（PLAN_CHANGELOG 0.7.9）: w0001の統合デバッグ実費
                              # ~$1.1に加え、precheckのmax_tokensベース見積り（実費の3-4倍）が
                              # DRAFT途中で早期ブロックしたため。月上限$18が最終防壁
