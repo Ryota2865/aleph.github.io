@@ -83,6 +83,24 @@ def _normalized_inverse(values: list[float]) -> list[float]:
     return [float(value) for value in (inverse - inverse.min()) / spread]
 
 
+def _attach_measured_novelty(candidates: list[dict]) -> None:
+    distances: list[float] = []
+    for candidate in candidates:
+        try:
+            distances.append(float(candidate["atlas_nearest_dist"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    sorted_distances = sorted(distances)
+    for candidate in candidates:
+        try:
+            distance = float(candidate["atlas_nearest_dist"])
+        except (KeyError, TypeError, ValueError):
+            candidate["measured_novelty"] = None
+            continue
+        rank = int(np.searchsorted(sorted_distances, distance, side="right")) - 1
+        candidate["measured_novelty"] = rank / max(1, len(sorted_distances) - 1)
+
+
 def _failure_context(atlas) -> str:
     directory = getattr(atlas, "index_dir", None)
     if directory is None:
@@ -136,6 +154,7 @@ def _sparse_candidates(atlas, scout: Callable[[str], str], top_n: int, context: 
                 "work_id": region["work_id"],
                 "chunk_id": region["chunk_id"],
                 "nearest_cluster": region.get("nearest_cluster", -1),
+                "atlas_nearest_dist": float(region["knn_dist"]),
                 "novelty": float(novelty),
                 "reachability": reachable,
             }
@@ -195,6 +214,7 @@ def _cell_candidates(atlas, scout: Callable[[str], str], top_n: int, context: st
                 "description": description,
                 "attributes": dict(zip(axes, combination, strict=True)),
                 "novelty": 1.0,
+                "measured_novelty": None,
                 "reachability": 0.5,
             }
         )
@@ -214,6 +234,7 @@ def find_niches(
     context = _failure_context(atlas)
     candidates = _sparse_candidates(atlas, scout, top_n, context)
     candidates.extend(_cell_candidates(atlas, scout, top_n, context))
+    _attach_measured_novelty(candidates)
 
     classified: list[dict] = []
     for candidate in candidates:
@@ -271,6 +292,8 @@ def report(niches: list[dict], out_path: str | Path, top_n: int = 20) -> None:
         "",
     ]
     for niche in niches[:top_n]:
+        measured = niche.get("measured_novelty")
+        measured_text = "N/A" if measured is None else f"{float(measured):.3f}"
         lines.extend(
             [
                 f"## {niche.get('id', '')}: {niche.get('description', '')}",
@@ -284,6 +307,7 @@ def report(niches: list[dict], out_path: str | Path, top_n: int = 20) -> None:
                     f"到達可能性={float(niche.get('reachability', 0.0)):.3f}, "
                     f"解釈可能性={float(niche.get('interpretability', 0.0)):.3f}"
                 ),
+                f"- 実測新奇性(percentile): {measured_text}",
                 f"- Web照合: {niche.get('web_check', 'not_checked')}",
                 "",
             ]

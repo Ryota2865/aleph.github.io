@@ -284,4 +284,23 @@ def critique_revise_loop(
         new_path = revise(work, report, audience, author, version=version)
         version = int(new_path.stem[1:])
 
+    rows: list[dict] = []
+    if traj_path.exists():
+        for line in traj_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                rows.append(json.loads(line))
+    if rows:
+        best_row = max(rows, key=lambda row: float(row.get("mean_score", 0.0)))
+        best_version = int(best_row.get("version", version))
+        work.append_decision(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "layer": "L6",
+                "decision": f"採用 v{best_version}",
+                "reason": f"trajectory.jsonl の mean_score 最大版を best_version として記録",
+                "decided_by": "critique_revise_loop",
+                "best_version": best_version,
+            }
+        )
+
     return version

@@ -49,8 +49,16 @@ def _jaccard(a: set, b: set) -> float:
     return len(a & b) / len(union)
 
 
-def find_hidden_pairs(index_dir, *, top_n: int = 50, knn_k: int = 10,
-                      min_chars: int = 0) -> list[dict]:
+def find_hidden_pairs(
+    index_dir,
+    *,
+    top_n: int = 50,
+    knn_k: int = 10,
+    min_chars: int = 0,
+    focus_vec: np.ndarray | None = None,
+    focus_top_m: int = 2000,
+    exclude_pairs: set[tuple[str, str]] | None = None,
+) -> list[dict]:
     """表層遠・深層近な対を発見する（PLAN §5.1）.
 
     M1のプレーン索引をkNNで探索し、同一work_id対を除外した候補のうち
@@ -67,6 +75,19 @@ def find_hidden_pairs(index_dir, *, top_n: int = 50, knn_k: int = 10,
         return []
     substantial = [len((r.get("text") or "").strip()) >= min_chars for r in rows]
     normed = _normalize(vectors.astype(np.float64))
+    focus_allowed: set[int] | None = None
+    if focus_vec is not None:
+        focus = np.asarray(focus_vec, dtype=np.float64).reshape(-1)
+        focus_norm = float(np.linalg.norm(focus))
+        if focus_norm > 0 and focus.shape[0] == normed.shape[1]:
+            eligible = np.flatnonzero(np.asarray(substantial, dtype=bool))
+            top_m = min(max(0, int(focus_top_m)), int(eligible.size))
+            if top_m == 0:
+                focus_allowed = set()
+            else:
+                sims = normed @ (focus / focus_norm)
+                order = eligible[np.argsort(sims[eligible], kind="stable")[::-1][:top_m]]
+                focus_allowed = {int(index) for index in order}
     k = min(knn_k + 1, n)  # 自分自身を含むため+1
     nn = NearestNeighbors(n_neighbors=k, metric="cosine")
     nn.fit(normed)
@@ -76,11 +97,15 @@ def find_hidden_pairs(index_dir, *, top_n: int = 50, knn_k: int = 10,
     for i, neighbors in enumerate(indices):
         if not substantial[i]:
             continue
+        if focus_allowed is not None and i not in focus_allowed:
+            continue
         for j in neighbors:
             j = int(j)
             if j == i:
                 continue
             if not substantial[j]:
+                continue
+            if focus_allowed is not None and j not in focus_allowed:
                 continue
             if rows[i]["work_id"] == rows[j]["work_id"]:
                 continue
@@ -95,8 +120,12 @@ def find_hidden_pairs(index_dir, *, top_n: int = 50, knn_k: int = 10,
     max_era_diff = max(era_diffs) if era_diffs else 0.0
 
     pairs: list[dict] = []
+    excluded = exclude_pairs or set()
     for i, j in candidate_idx:
         ri, rj = rows[i], rows[j]
+        chunk_pair = tuple(sorted((str(ri["chunk_id"]), str(rj["chunk_id"]))))
+        if chunk_pair in excluded:
+            continue
         deep_sim = float(np.dot(normed[i], normed[j]))
 
         author_component = 0.0 if ri.get("author") == rj.get("author") else 1.0

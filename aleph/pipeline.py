@@ -321,7 +321,15 @@ class RealDeps:
             for name in ("labels.npy", "density.npy", "style.npy", "atlas_meta.json")
         )
         atlas = Atlas.load(self.index_dir) if atlas_ready else build_atlas(self.index_dir)
-        niches = find_niches(atlas, self._scout, top_n=1)
+        api_key = self.config.secrets.get("BRAVE_API_KEY")
+        web_checker = None
+        if api_key:
+            from aleph.explore.webresearch import web_check
+
+            def web_checker(niche):
+                return web_check(niche, self.search_fn, self._scout)
+
+        niches = find_niches(atlas, self._scout, top_n=1, web_checker=web_checker)
         if niches:
             report(niches, work.niche / "report.md", top_n=1)
             return niches[0]
@@ -335,7 +343,33 @@ class RealDeps:
         try:
             from aleph.materia.similarity import find_hidden_pairs, to_material_cards
 
-            pairs = find_hidden_pairs(self.index_dir, top_n=5, min_chars=80)
+            focus_vec = None
+            if isinstance(niche, dict) and niche.get("description") and self.embedder is not None:
+                try:
+                    vectors = self.embedder([str(niche["description"])])
+                    focus_vec = vectors[0]
+                except Exception:
+                    focus_vec = None
+
+            exclude_pairs: set[tuple[str, str]] = set()
+            for material_path in work.dir.parent.glob("*/materials/*.json"):
+                try:
+                    card = json.loads(material_path.read_text(encoding="utf-8"))
+                    provenance = card.get("provenance", {}) if isinstance(card, dict) else {}
+                    chunk_a = provenance.get("chunk_a")
+                    chunk_b = provenance.get("chunk_b")
+                    if chunk_a and chunk_b:
+                        exclude_pairs.add(tuple(sorted((str(chunk_a), str(chunk_b)))))
+                except Exception:
+                    continue
+
+            pairs = find_hidden_pairs(
+                self.index_dir,
+                top_n=5,
+                min_chars=80,
+                focus_vec=focus_vec,
+                exclude_pairs=exclude_pairs,
+            )
             cards = to_material_cards(pairs)
         except Exception:
             cards = []
