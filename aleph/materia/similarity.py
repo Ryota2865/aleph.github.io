@@ -75,7 +75,7 @@ def find_hidden_pairs(
         return []
     substantial = [len((r.get("text") or "").strip()) >= min_chars for r in rows]
     normed = _normalize(vectors.astype(np.float64))
-    focus_allowed: set[int] | None = None
+    search_indices = np.arange(n)
     if focus_vec is not None:
         focus = np.asarray(focus_vec, dtype=np.float64).reshape(-1)
         focus_norm = float(np.linalg.norm(focus))
@@ -83,29 +83,29 @@ def find_hidden_pairs(
             eligible = np.flatnonzero(np.asarray(substantial, dtype=bool))
             top_m = min(max(0, int(focus_top_m)), int(eligible.size))
             if top_m == 0:
-                focus_allowed = set()
+                return []
             else:
                 sims = normed @ (focus / focus_norm)
-                order = eligible[np.argsort(sims[eligible], kind="stable")[::-1][:top_m]]
-                focus_allowed = {int(index) for index in order}
-    k = min(knn_k + 1, n)  # 自分自身を含むため+1
+                search_indices = eligible[np.argsort(sims[eligible], kind="stable")[::-1][:top_m]]
+    if len(search_indices) < 2:
+        return []
+
+    k = min(knn_k + 1, len(search_indices))  # 自分自身を含むため+1
     nn = NearestNeighbors(n_neighbors=k, metric="cosine")
-    nn.fit(normed)
-    _, indices = nn.kneighbors(normed)
+    search_vectors = normed[search_indices]
+    nn.fit(search_vectors)
+    _, indices = nn.kneighbors(search_vectors)
 
     candidate_idx: set[tuple[int, int]] = set()
-    for i, neighbors in enumerate(indices):
+    for local_i, neighbors in enumerate(indices):
+        i = int(search_indices[local_i])
         if not substantial[i]:
             continue
-        if focus_allowed is not None and i not in focus_allowed:
-            continue
-        for j in neighbors:
-            j = int(j)
+        for local_j in neighbors:
+            j = int(search_indices[int(local_j)])
             if j == i:
                 continue
             if not substantial[j]:
-                continue
-            if focus_allowed is not None and j not in focus_allowed:
                 continue
             if rows[i]["work_id"] == rows[j]["work_id"]:
                 continue

@@ -76,6 +76,43 @@ def test_find_hidden_pairs_focus_vec_and_exclude_pairs_preserve_defaults(tmp_pat
     assert {"b1", "b2"} not in _pair_ids(excluded)
 
 
+def test_find_hidden_pairs_focus_vec_restricts_before_knn(tmp_path):
+    from aleph.materia.similarity import find_hidden_pairs
+
+    def angled(degrees: float) -> np.ndarray:
+        radians = np.deg2rad(degrees)
+        return np.array([np.cos(radians), np.sin(radians)], dtype=np.float64)
+
+    rows = [
+        _row("f1", "w1", "甲", "A", "焦点近傍にある第一の実質本文。" * 4, "1900"),
+        _row("f2", "w2", "乙", "B", "焦点近傍にある第二の実質本文。" * 4, "1950"),
+        _row("d1", "w3", "丙", "C", "焦点外だが第一本文の近くに密集する文章。" * 4, "1880"),
+        _row("d2", "w4", "丁", "D", "焦点外だが第二本文の近くに密集する文章。" * 4, "1960"),
+        _row("d3", "w5", "戊", "E", "焦点外の追加ダミー本文。" * 4, "1970"),
+        _row("d4", "w6", "己", "F", "焦点外の別の追加ダミー本文。" * 4, "1980"),
+    ]
+    vectors = np.stack([
+        angled(20.0),
+        angled(-20.0),
+        angled(21.0),
+        angled(-21.0),
+        angled(22.0),
+        angled(-22.0),
+    ])
+    index = _write_index(tmp_path, rows, vectors)
+
+    pairs = find_hidden_pairs(
+        index,
+        top_n=10,
+        knn_k=1,
+        focus_vec=np.array([1.0, 0.0]),
+        focus_top_m=2,
+        min_chars=20,
+    )
+
+    assert _pair_ids(pairs) == [{"f1", "f2"}]
+
+
 class _SparseAtlas:
     index_dir = None
     meta = {"clusters": []}
@@ -277,6 +314,43 @@ def test_critique_revise_loop_records_best_version_decision(monkeypatch, tmp_pat
         and decision.get("decided_by") == "critique_revise_loop"
         for decision in decisions
     )
+
+
+def test_finalize_publish_uses_highest_mean_score_draft(tmp_path):
+    from aleph.pipeline import _finalize_publish
+
+    work = Work(tmp_path, "w7004")
+    work.create({"title": "公開本文選抜"})
+    work.draft_path(1).write_text("本文v1", encoding="utf-8")
+    work.draft_path(2).write_text("本文v2", encoding="utf-8")
+    work.draft_path(3).write_text("本文v3", encoding="utf-8")
+    rows = [
+        {"version": 1, "mean_score": 7.0, "disagreement": 0.2},
+        {"version": 2, "mean_score": 8.5, "disagreement": 0.1},
+        {"version": 3, "mean_score": 6.0, "disagreement": 0.3},
+    ]
+    (work.reviews / "trajectory.jsonl").write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n",
+        encoding="utf-8",
+    )
+
+    _finalize_publish(work, SimpleNamespace())
+
+    assert (work.final / "text.md").read_text(encoding="utf-8") == "本文v2"
+
+
+def test_finalize_publish_falls_back_to_latest_without_trajectory(tmp_path):
+    from aleph.pipeline import _finalize_publish
+
+    work = Work(tmp_path, "w7005")
+    work.create({"title": "公開本文選抜"})
+    work.draft_path(1).write_text("本文v1", encoding="utf-8")
+    work.draft_path(2).write_text("本文v2", encoding="utf-8")
+    work.draft_path(3).write_text("本文v3", encoding="utf-8")
+
+    _finalize_publish(work, SimpleNamespace())
+
+    assert (work.final / "text.md").read_text(encoding="utf-8") == "本文v3"
 
 
 # ============================================================ 実験D 配線（0.7.14）

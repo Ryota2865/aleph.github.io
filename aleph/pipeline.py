@@ -95,16 +95,42 @@ def _derive_title(work) -> str:
     return work.work_id
 
 
+def _best_reviewed_draft_version(work) -> int | None:
+    traj_path = work.dir / "reviews" / "trajectory.jsonl"
+    if not traj_path.exists():
+        return None
+    best_version: int | None = None
+    best_score: float | None = None
+    try:
+        for line in traj_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            version = int(row["version"])
+            score = float(row["mean_score"])
+            if score != score:
+                return None
+            if best_score is None or score > best_score:
+                best_score = score
+                best_version = version
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+        return None
+    return best_version
+
+
 def _finalize_publish(work, deps) -> None:
-    """PUBLISH確定時: 最新draftを final/text.md へ、final/meta.json へ必須フィールドを書く（PLAN §8）.
+    """PUBLISH確定時: 採用draftを final/text.md へ、final/meta.json へ必須フィールドを書く（PLAN §8）.
 
     credits の実値は deps.credits があればそれを、無ければ役割名を使う。
     intended_reader_models も deps.intended_reader_models があればそれを使う。
     """
     latest = work.latest_draft_version()
+    selected = _best_reviewed_draft_version(work)
+    if selected is None or not work.draft_path(selected).exists():
+        selected = latest
     text = ""
-    if latest > 0 and work.draft_path(latest).exists():
-        text = work.draft_path(latest).read_text(encoding="utf-8")
+    if selected > 0 and work.draft_path(selected).exists():
+        text = work.draft_path(selected).read_text(encoding="utf-8")
     work.final.mkdir(parents=True, exist_ok=True)
     (work.final / "text.md").write_text(text, encoding="utf-8")
 
