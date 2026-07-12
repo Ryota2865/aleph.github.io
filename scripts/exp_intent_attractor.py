@@ -25,7 +25,8 @@ from aleph.core.config import load_config  # noqa: E402
 from aleph.core.llm import CallLogger, Message, Router  # noqa: E402
 from aleph.intent.choose import choose_intent  # noqa: E402
 
-RUNS_PER_CELL = 5
+RUNS_PER_CELL = 3          # 全2×2・N=3（オーナー選択, 0.7.14-3）
+AUTHOR_MAX_TOKENS = 8192   # choose_intent 出力は小さい。fable高速化 + precheck見積り縮小
 WORK_ID = "exp-intent"
 DESTS = ("LLM", "人間", "自分")
 
@@ -57,7 +58,9 @@ def run_cell(router, role: str, poetics: str, policies: dict, tmp_root: Path,
     resolved_model = {"name": None}
 
     def author(prompt: str) -> str:
-        resp = router.call(role, [Message("user", prompt)], work_id=WORK_ID)
+        resp = router.call(
+            role, [Message("user", prompt)], work_id=WORK_ID, max_tokens=AUTHOR_MAX_TOKENS,
+        )
         resolved_model["name"] = resp.model
         return resp.text
 
