@@ -128,7 +128,7 @@ _NAV_ITEMS = (
     ("process/w0004-criteria.html", "制作の記録"),
     ("dialogue.html", "批評と応答"),
     ("poetics.html", "詩学"),
-    ("research/exp-intent-attractor.html", "研究ノート"),
+    ("research/index.html", "研究ノート"),
     ("about.html", "このプロジェクト"),
 )
 
@@ -138,7 +138,7 @@ _CONTEXT_ITEMS = (
     ("process/w0004-reviews.html", "五審級査読"),
     ("dialogue.html", "批評と応答"),
     ("poetics.html", "詩学"),
-    ("research/exp-intent-attractor.html", "研究ノート"),
+    ("research/index.html", "研究ノート"),
     ("about.html", "このプロジェクト"),
 )
 
@@ -515,14 +515,28 @@ def _build_poetics(root: Path, out_dir: Path) -> None:
 
 
 def _build_research(root: Path, out_dir: Path) -> None:
-    paths = sorted((root / "reports").glob("EXP_intent_attractor_*.md"))
+    """研究ノート: reports/EXP_*.md を全て収集し1ページに時系列で並べる（自動収集）。
+
+    運用: 新しい実験は reports/EXP_*.md として出力すれば本ページに追加される。
+    """
+    paths = sorted(
+        (root / "reports").glob("EXP_*.md"),
+        key=lambda p: (_dialogue_date_key(p.name), p.name),
+    )
     if not paths:
         return
-    text = _read_text(paths[-1])
-    if text is None:
-        return
-    body = "\n".join(["<h1>実験C</h1>", _render_markdown(text)])
-    _write_page(out_dir, "research/exp-intent-attractor.html", "実験C", body, "../")
+    sections = [
+        "<h1>研究ノート</h1>",
+        "<p class='meta'>ALEPH 自身の挙動を測る実験の記録。"
+        "新しい実験は reports/ に追加すれば並ぶ。</p>",
+    ]
+    for path in paths:
+        text = _read_text(path)
+        if text is None:
+            continue
+        sections.append("<hr>")
+        sections.append(_render_markdown(text))
+    _write_page(out_dir, "research/index.html", "研究ノート", "\n".join(sections), "../")
 
 
 def _build_about(out_dir: Path) -> None:
