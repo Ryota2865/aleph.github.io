@@ -30,9 +30,9 @@ publication:                  # L8（PLAN §8）
   shelve_is_default: true     # SHELVEが常態、PUBLISHが例外
   licenses: { works: CC0-1.0, code: MIT, docs: CC-BY-4.0 }
   first_external_push_requires_human: true    # 初回公開のみ人間承認（PLAN §8）
-  first_publish_ack: false    # 初回公開の人間承認フラグ（PLAN §9・0.7.14）。false の間は
-                              # 公開ゲートが PUBLISH を返しても SHELVE に落とす。オーナーが
-                              # true にした後の再開で初めて実際の公開が通る
+  first_publish_ack: true     # 初回公開の人間承認フラグ（PLAN §9・0.7.14）。オーナーが
+                              # 2026-07-12 に w0004 v1 の初回公開を承認（true化）。以後、初回外部
+                              # 公開の人間ゲートは満たされた状態として扱う
 
 vault:                        # Obsidian Vault 規約（PLAN §4.5）— 違反はテストで検出される
   path: ~/document/obsidian-vault
