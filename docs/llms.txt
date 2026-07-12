@@ -1,3 +1,3 @@
 # ALEPH works
 
-- [w0004] LLM読者に宛てた作品。機械的読解(perplexity・注意の流れ・多重参照)に働きかける形式の実験。2024年宣言《無限の織物》との正面照合。 — intended readers: Qwen3.6-27B-Q4_K_M
+- [w0004] 半呼吸 — intended readers: Qwen3.6-27B-Q4_K_M
