@@ -280,6 +280,44 @@ def _remaining_api_budget(budget, work_id: str) -> float | None:
     return min(candidates) if candidates else None
 
 
+# 陪審不一致が高い草稿 = 著者が本当に迷いうる自然な境界作品（チャットFable5提案 2026-07-13:
+# 境界の定義を人間の目分量からシステム自身の計測へ）。閾を越えた版を実験E-border の刺激として
+# 予約キューに記録する。観測済みの合意的作品は 0.43-0.52 程度（陪審3・0-10スケール）。
+_E_BORDER_DISAGREEMENT_THRESHOLD = 0.8
+
+
+def reserve_border_candidates(work, *, threshold: float = _E_BORDER_DISAGREEMENT_THRESHOLD,
+                              queue_path: Path | None = None) -> list[dict]:
+    """trajectory の不一致度が閾を越えた版を state/e_border_queue.jsonl に予約する（冪等）."""
+    rows, _ = _stop_inputs_from_trajectory(work)
+    hits = [r for r in rows if float(r.get("disagreement", 0.0)) >= threshold]
+    if not hits:
+        return []
+    queue = queue_path or (work.dir.parent.parent / "state" / "e_border_queue.jsonl")
+    queue.parent.mkdir(parents=True, exist_ok=True)
+    existing = set()
+    if queue.exists():
+        for line in queue.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                rec = json.loads(line)
+                existing.add((rec.get("work_id"), rec.get("version")))
+    reserved = []
+    with open(queue, "a", encoding="utf-8") as f:
+        for r in hits:
+            key = (work.work_id, int(r.get("version", 0)))
+            if key in existing:
+                continue
+            rec = {
+                "ts": _now_iso(), "work_id": work.work_id, "version": int(r.get("version", 0)),
+                "mean_score": float(r.get("mean_score", 0.0)),
+                "disagreement": float(r.get("disagreement", 0.0)),
+                "reason": "陪審不一致が閾を超過。実験E-border の自然な境界刺激として予約",
+            }
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            reserved.append(rec)
+    return reserved
+
+
 def _stop_inputs_from_trajectory(work) -> tuple[list[dict], list[list[str]]]:
     traj_path = work.dir / "reviews" / "trajectory.jsonl"
     rows: list[dict] = []
@@ -560,13 +598,19 @@ class RealDeps:
         # LLM最大宛では reader_model の logprobs で perplexity 曲線を査読に載せる
         # （M8 item4 の実配線。監査 finding 3: run_review は reader_llm 未渡しでは発火しない）
         reader_llm = self._reader_llm if _llm_is_primary_audience(audience or "") else None
-        return critique_revise_loop(
+        result = critique_revise_loop(
             work, criteria, audience, self._author,
             scout=self._scout, jury=self._jury(), reader=self._reader,
             embedder=self.embedder, index_dir=self.index_dir, search_fn=self.search_fn,
             reader_llm=reader_llm,
             max_iters=2,
         )
+        # 高不一致版を E-border 刺激として予約（失敗しても制作を止めない）
+        try:
+            reserve_border_candidates(work)
+        except Exception as exc:  # noqa: BLE001
+            print(f"reserve_border_candidates skipped ({type(exc).__name__})", file=sys.stderr)
+        return result
 
     # -- L7 擱筆判断（M5 stopping.decide_stop） ------------------------------
     def decide_stop(self, work):

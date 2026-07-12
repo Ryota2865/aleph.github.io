@@ -251,3 +251,26 @@ def test_distillation_keeps_missing_element_issues():
     joined = "\n".join(instructions)
     assert "伏線がありません" in joined
     assert "問題ありません" not in joined
+
+
+def test_high_disagreement_versions_reserved_as_border_stimuli(tmp_path):
+    """陪審不一致が閾超の版を E-border 刺激として予約する（Fable5提案 2026-07-13）。冪等."""
+    from aleph.pipeline import reserve_border_candidates
+
+    work = _work(tmp_path / "works", "w8200")
+    rows = [
+        {"version": 1, "mean_score": 7.0, "disagreement": 0.4, "instructions": []},
+        {"version": 2, "mean_score": 6.8, "disagreement": 1.3, "instructions": []},
+    ]
+    reviews = work.dir / "reviews"
+    reviews.mkdir(exist_ok=True)
+    (reviews / "trajectory.jsonl").write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8",
+    )
+    queue = tmp_path / "queue.jsonl"
+    first = reserve_border_candidates(work, queue_path=queue)
+    assert [r["version"] for r in first] == [2]
+    again = reserve_border_candidates(work, queue_path=queue)
+    assert again == []  # 冪等
+    recs = [json.loads(l) for l in queue.read_text(encoding="utf-8").splitlines()]
+    assert len(recs) == 1 and recs[0]["disagreement"] == 1.3
