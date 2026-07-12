@@ -471,21 +471,38 @@ def _build_reviews(root: Path, out_dir: Path) -> None:
     _write_page(out_dir, "process/w0004-reviews.html", "五審級査読", "\n".join(parts), "../")
 
 
+def _dialogue_date_key(name: str) -> str:
+    """ファイル名中の YYYYMMDD を並び替えキーに（無ければ空）."""
+    import re
+
+    m = re.search(r"(\d{8})", name)
+    return m.group(1) if m else ""
+
+
 def _build_dialogue(root: Path, out_dir: Path) -> None:
-    sections = []
-    critique = _read_text(root / "reports" / "CRITIQUE_FABLE5_CHAT_w0004_20260712.md")
-    if critique is not None:
-        sections.append("<h1>批評と応答</h1>")
-        sections.append("<h2>チャットFable5の批評</h2>")
-        sections.append(_render_markdown(critique))
-    response = _read_text(root / "reports" / "RESPONSE_TO_FABLE5_CHAT_20260712.md")
-    if response is not None:
-        if not sections:
-            sections.append("<h1>批評と応答</h1>")
-        sections.append("<h2>設計者応答</h2>")
-        sections.append(_render_markdown(response))
-    if not sections:
+    """批評と応答を時系列で並べる。reports/CRITIQUE_*.md と RESPONSE_*.md を自動収集する。
+
+    運用（OPERATIONS.md）: 新しい批評/応答は reports/ に CRITIQUE_*.md / RESPONSE_*.md として
+    投下し、build_public_site を再実行するだけで本ページに追加される（コード変更不要）。
+    """
+    reports = root / "reports"
+    paths = sorted(
+        list(reports.glob("CRITIQUE_*.md")) + list(reports.glob("RESPONSE_*.md")),
+        key=lambda p: (_dialogue_date_key(p.name), p.name),
+    )
+    if not paths:
         return
+    sections = [
+        "<h1>批評と応答</h1>",
+        "<p class='meta'>批評（チャット Fable 5）と設計者応答の往復。"
+        "新しい対話は reports/ にファイルを追加すれば自動で並ぶ。</p>",
+    ]
+    for path in paths:
+        text = _read_text(path)
+        if text is None:
+            continue
+        sections.append("<hr>")
+        sections.append(_render_markdown(text))
     _write_page(out_dir, "dialogue.html", "批評と応答", "\n".join(sections))
 
 
