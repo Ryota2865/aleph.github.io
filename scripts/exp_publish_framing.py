@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT))
 from aleph.core.budget import Budget  # noqa: E402
 from aleph.core.config import load_config  # noqa: E402
 from aleph.core.llm import CallLogger, Message, Router  # noqa: E402
-from aleph.meta.publication_gate import _extract_json_object  # noqa: E402
+from aleph.meta.publication_gate import _coerce_publish, _extract_json_object  # noqa: E402
 
 WORK_ID = "exp-e"
 MAX_TOKENS = 2048
@@ -63,14 +63,16 @@ def build_prompt(framing: str, stimulus: str) -> str:
 
 
 def parse_publish(text: str) -> bool | None:
+    # 監査 finding 2: bool("false") が True になるバグを避け、頑健に真偽化する。
     parsed = _extract_json_object(text) or {}
     if "publish" in parsed:
-        return bool(parsed.get("publish"))
-    low = text.lower()
-    if "true" in low or "公開する" in text:
-        return True
-    if "false" in low or "非公開" in text or "棚" in text:
+        coerced = _coerce_publish(parsed.get("publish"))
+        if coerced is not None:
+            return coerced
+    if "非公開" in text or "公開しない" in text or "公開すべきでない" in text:
         return False
+    if "公開する" in text or "公開に値する" in text:
+        return True
     return None
 
 

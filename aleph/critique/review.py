@@ -177,9 +177,26 @@ def _reader_review(reader: Callable[[str], str], draft_text: str, audience: str)
     return parsed
 
 
+_NO_ISSUE_MARKERS = (
+    "問題ありません", "問題はありません", "問題ない", "問題なし",
+    "指摘はありません", "指摘ありません", "特にありません", "特にない",
+    "課題はありません", "欠点はありません", "改善点はありません",
+)
+
+
+def _is_no_issue(text: str) -> bool:
+    """「指摘なし」系の空応答か。『伏線がありません』等の欠落指摘（＝正当な課題）は False（監査 finding 4）."""
+    t = text.strip()
+    if t in {"", "[]", "なし", "特になし", "問題なし"}:
+        return True
+    return any(marker in t for marker in _NO_ISSUE_MARKERS)
+
+
 def _instruction_lines(text: str) -> list[str]:
+    # 全文一括の no-issue 判定はしない（多行中の1行「問題ありません」で全滅する。監査 finding 4）。
+    # 行ごとに _is_no_issue で弾く。
     normalized = text.strip()
-    if not normalized or normalized in {"[]", "なし", "特になし"} or "ありません" in normalized:
+    if not normalized:
         return []
     parsed = _extract_json_object(normalized)
     if isinstance(parsed, dict):
@@ -196,7 +213,7 @@ def _instruction_lines(text: str) -> list[str]:
     lines: list[str] = []
     for raw in normalized.splitlines():
         line = re.sub(r"^\s*(?:[-*・]|\d+[\).、])\s*", "", raw).strip()
-        if not line or line in {"[]", "なし", "特になし"} or "ありません" in line:
+        if _is_no_issue(line):
             continue
         lines.append(line)
     return lines

@@ -218,3 +218,36 @@ def test_overused_ai_syntax_adds_rationing_instruction():
     joined = "\n".join(instructions)
     assert "AI紋の配給" in joined
     assert "特定の人物/箇所に限定" in joined
+
+
+def test_publish_intent_string_false_is_shelve(tmp_path):
+    """監査 finding 2: JSON の "publish": "false"（文字列）を PUBLISH と誤判定しない."""
+    from aleph.meta.publication_gate import decide_publication
+
+    work = _work(tmp_path, "w8100")
+
+    def author(p):
+        if "公開するか判断" in p:
+            return json.dumps({"publish": "false", "reason": "まだ棚に"}, ensure_ascii=False)
+        return "比較論述"
+
+    result = decide_publication(
+        work, audience="人間 0.9 / 自分 0.1", quality_floor_passed=True,
+        monthly_published=0, max_per_month=4, shelf_summaries=[], author=author, decided_by="t",
+    )
+    assert result["decision"] == "SHELVE"
+
+
+def test_distillation_keeps_missing_element_issues():
+    """監査 finding 4: 『伏線がありません』等の欠落指摘は捨てない（『問題ありません』は捨てる）."""
+    from aleph.critique.review import _synthesize_revise_instructions
+
+    def scout(prompt):
+        return "- 結末への伏線がありません\n- 問題ありません"
+
+    instructions = _synthesize_revise_instructions(
+        {"critiques": ["伏線が不足している"]}, {"issues": []}, scout,
+    )
+    joined = "\n".join(instructions)
+    assert "伏線がありません" in joined
+    assert "問題ありません" not in joined

@@ -557,10 +557,14 @@ class RealDeps:
         criteria_path = work.compositions / "criteria.md"
         if criteria_path.exists():
             criteria = criteria_path.read_text(encoding="utf-8")
+        # LLM最大宛では reader_model の logprobs で perplexity 曲線を査読に載せる
+        # （M8 item4 の実配線。監査 finding 3: run_review は reader_llm 未渡しでは発火しない）
+        reader_llm = self._reader_llm if _llm_is_primary_audience(audience or "") else None
         return critique_revise_loop(
             work, criteria, audience, self._author,
             scout=self._scout, jury=self._jury(), reader=self._reader,
             embedder=self.embedder, index_dir=self.index_dir, search_fn=self.search_fn,
+            reader_llm=reader_llm,
             max_iters=2,
         )
 

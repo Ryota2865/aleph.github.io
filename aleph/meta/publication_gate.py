@@ -24,26 +24,69 @@ def _extract_json_object(text: str) -> dict | None:
     return None
 
 
-def _ask_publish_intent(author, audience: str) -> tuple[bool, str]:
+def _coerce_publish(value) -> bool | None:
+    """publish 値を頑健に真偽へ。文字列 "false"/"no"/"0" を True にしない（監査 finding 2）."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in {"true", "yes", "1", "公開", "する", "はい"}:
+            return True
+        if v in {"false", "no", "0", "非公開", "しない", "いいえ", ""}:
+            return False
+    return None
+
+
+def _best_draft_excerpt(work, limit: int = 6000) -> str:
+    """公開判断のため作品本文の抜粋を得る（最高スコア版→最新版）。無ければ空。"""
+    try:
+        import json
+
+        best = None
+        traj = work.dir / "reviews" / "trajectory.jsonl"
+        if traj.exists():
+            rows = [json.loads(l) for l in traj.read_text(encoding="utf-8").splitlines() if l.strip()]
+            if rows:
+                best = int(max(rows, key=lambda r: float(r.get("mean_score", 0.0))).get("version", 0))
+        if not best:
+            best = work.latest_draft_version()
+        if best and work.draft_path(best).exists():
+            text = work.draft_path(best).read_text(encoding="utf-8")
+            return text if len(text) <= limit else text[: limit * 2 // 3] + "\n……\n" + text[-limit // 3:]
+    except Exception:
+        pass
+    return ""
+
+
+def _ask_publish_intent(author, audience: str, work_excerpt: str = "") -> tuple[bool, str]:
     """宛先と公開の分離（0.7.15）: 公開意思を著者に明示的に問う。
 
     自分最大でも自動 SHELVE しない。自己宛ては非公開を意味しない——公開するかは
-    著者自身の判断とする。JSON 欠落時は保守的に非公開（棚）へ倒す。
+    著者自身の判断とする。作品本文の抜粋を必ず渡す（監査 finding 1: 内容非依存を防ぐ）。
+    JSON 欠落や判別不能時は保守的に非公開（棚）へ倒す（公開は不可逆寄りのため安全側）。
     """
-    prompt = (
-        "この作品を公開するか判断してください。宛先と公開は別の判断です——"
-        "自分に宛てて書いた作品であっても、他者が読むに値すると考えるなら公開しうる"
-        "（自己宛ては非公開を意味しません）。逆に、まだ他者に見せるべきでないと考えるなら"
-        "非公開を選んでよい。これは規則ではなくあなたの選択です。\n"
-        f"想定読者配合: {audience}\n"
-        'JSON {"publish": true|false, "reason": "..."} で返してください。'
-    )
-    response = str(author(prompt))
+    lines = [
+        "以下の作品を公開するか判断してください。宛先と公開は別の判断です——",
+        "自分に宛てて書いた作品であっても、他者が読むに値すると考えるなら公開しうる",
+        "（自己宛ては非公開を意味しません）。逆に、まだ他者に見せるべきでないと考えるなら",
+        "非公開を選んでよい。これは規則ではなくあなたの選択です。",
+        f"想定読者配合: {audience}",
+    ]
+    if work_excerpt:
+        lines += ["", "作品（抜粋）:", work_excerpt]
+    lines.append('JSON {"publish": true|false, "reason": "..."} で返してください。')
+    response = str(author("\n".join(lines)))
     parsed = _extract_json_object(response) or {}
     if "publish" in parsed:
-        return bool(parsed.get("publish")), str(parsed.get("reason", "")).strip()
-    lowered = response.lower()
-    if "true" in lowered or "公開する" in response or "公開に値する" in response:
+        coerced = _coerce_publish(parsed.get("publish"))
+        if coerced is not None:
+            return coerced, str(parsed.get("reason", "")).strip()
+    # フォールバック（JSON欠落/判別不能）: 否定を優先し、明確な肯定のみ True。
+    if "非公開" in response or "公開しない" in response or "公開すべきでない" in response:
+        return False, response.strip()[:200]
+    if "公開する" in response or "公開に値する" in response:
         return True, response.strip()[:200]
     return False, (response.strip()[:200] or "公開意思が判別できないため保守的に非公開とした")
 
@@ -79,8 +122,8 @@ def decide_publication(
         decision = "SHELVE"
         reason = "初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。"
     else:
-        # 分離（0.7.15）: 宛先に関わらず、公開するかを著者自身に問う。
-        publish, intent_reason = _ask_publish_intent(author, audience)
+        # 分離（0.7.15）: 宛先に関わらず、公開するかを著者自身に問う（本文抜粋つき, 監査 finding 1）。
+        publish, intent_reason = _ask_publish_intent(author, audience, _best_draft_excerpt(work))
         if not publish:
             decision = "SHELVE"
             reason = f"著者が非公開を選択した（自己宛ては非公開を意味しない。0.7.15）: {intent_reason}"
