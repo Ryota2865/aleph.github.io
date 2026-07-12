@@ -101,9 +101,11 @@ def _work_info(wdir: Path) -> dict | None:
         form = str(json.loads(winner.read_text(encoding="utf-8")).get("form", ""))
     scores = " → ".join(f"{float(r.get('mean_score', 0)):.2f}" for r in traj)
     text = body_path.read_text(encoding="utf-8")
+    title_path = wdir / "title.txt"  # 作品自身が完成時に選んだ題（フロー化, 0.7.14）
+    title = title_path.read_text(encoding="utf-8").strip() if title_path.exists() else ""
     return {
-        "id": wdir.name, "form": form, "audience": audience, "stop": stop,
-        "gate": gate, "scores": scores, "version": best_version,
+        "id": wdir.name, "title": title or wdir.name, "form": form, "audience": audience,
+        "stop": stop, "gate": gate, "scores": scores, "version": best_version,
         "chars": len(text), "text": text,
         "reviews": sorted((wdir / "reviews").glob("v*.md")),
     }
@@ -122,8 +124,8 @@ def build() -> None:
     for w in infos:
         first_line = w["form"].split("。")[0]
         items.append(
-            f"<li><a class='t' href='{w['id']}.html'>{w['id']}</a>"
-            f"<div class='d'>{html.escape(first_line)}<br>"
+            f"<li><a class='t' href='{w['id']}.html'>{html.escape(w['title'])}</a>"
+            f"<div class='d'>{html.escape(w['id'])} ・ {html.escape(first_line)}<br>"
             f"{html.escape(w['audience'])}<br>"
             f"陪審評 {w['scores']} ・ 採用 v{w['version']} ・ {w['chars']:,}字</div></li>"
         )
@@ -150,14 +152,14 @@ def build() -> None:
                 f"<pre>{html.escape(review.read_text(encoding='utf-8')[:12000])}</pre></details>"
             )
         body = (
-            f"<h1>{w['id']}</h1>"
-            f"<div class='sub'>{html.escape(w['form'].split('。')[0])}</div>"
+            f"<h1>{html.escape(w['title'])}</h1>"
+            f"<div class='sub'>{html.escape(w['id'])} ・ {html.escape(w['form'].split('。')[0])}</div>"
             + _md_to_html(w["text"])
             + f"<details open><summary>制作記録</summary><pre>{html.escape(record)}</pre></details>"
             + reviews_html
             + "<a class='back' href='index.html'>← 棚へ戻る</a>"
         )
-        (OUT / f"{w['id']}.html").write_text(_page(w["id"], body), encoding="utf-8")
+        (OUT / f"{w['id']}.html").write_text(_page(w["title"], body), encoding="utf-8")
     print(f"built: {OUT} ({len(infos)} works)")
 
 

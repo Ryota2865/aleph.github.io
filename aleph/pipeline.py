@@ -82,7 +82,25 @@ def _default_credits() -> dict:
     }
 
 
+def _title_path(work):
+    return work.dir / "title.txt"
+
+
+def _stored_title(work) -> str | None:
+    """作品自身が完成時に選んだ題（title.txt）。無ければ None."""
+    path = _title_path(work)
+    if path.exists():
+        title = path.read_text(encoding="utf-8").strip()
+        if title:
+            return title
+    return None
+
+
 def _derive_title(work) -> str:
+    # 作品自身が選んだ題を最優先（RealDeps.choose_title が FINISH で書く。フロー化, 0.7.14）。
+    stored = _stored_title(work)
+    if stored:
+        return stored
     seed_path = work.seed
     try:
         seed = json.loads(seed_path.read_text(encoding="utf-8"))
@@ -335,6 +353,52 @@ class RealDeps:
             pass
         return self.force_audience or ""
 
+    # -- 題の自己選択（完成時に作品自身＝著者へ聞く。フロー化, 0.7.14） -----------
+    def choose_title(self, work, text: str) -> str:
+        """作品本文から著者に題を1つ選ばせる。失敗時は空文字（呼び出し側でフォールバック）."""
+        from aleph.core.llm import Message
+        from aleph.intent.choose import _extract_json_object
+
+        excerpt = text if len(text) <= 16000 else text[:12000] + "\n……\n" + text[-4000:]
+        prompt = (
+            "あなたはこの作品の著者です。この作品自身がまとうにふさわしい題を一つだけ選んでください。"
+            "内容を説明する題ではなく、作品の核に触れる、簡潔で喚起力のある題を。"
+            'JSON {"title": "…", "reason": "…"} だけを返してください。\n\n' + excerpt
+        )
+        try:
+            resp = self.router.call(
+                "author_primary", [Message("user", prompt)], work_id=self._work_id, max_tokens=2048,
+            )
+            parsed = _extract_json_object(resp.text) or {}
+            title = str(parsed.get("title") or "").strip()
+            if title:
+                work.append_decision({
+                    "ts": _now_iso(),
+                    "layer": "L8",
+                    "decision": f"題を確定: {title}",
+                    "reason": f"作品自身（著者）が完成時に選題。{str(parsed.get('reason') or '').strip()}",
+                    "decided_by": "author_primary",
+                })
+                return title
+        except Exception as exc:  # noqa: BLE001 - 題選択失敗はフォールバックに委ねる
+            print(f"choose_title: skipped ({type(exc).__name__})", file=sys.stderr)
+        return ""
+
+    def _ensure_title(self, work) -> None:
+        """FINISH で一度だけ、作品自身に題を聞いて title.txt に保存する（冪等）."""
+        title_path = _title_path(work)
+        if title_path.exists() and title_path.read_text(encoding="utf-8").strip():
+            return
+        best = _best_reviewed_draft_version(work) or work.latest_draft_version()
+        if not best or not work.draft_path(best).exists():
+            return
+        text = work.draft_path(best).read_text(encoding="utf-8")
+        if not text.strip():
+            return
+        title = self.choose_title(work, text)
+        if title:
+            title_path.write_text(title, encoding="utf-8")
+
     def _jury(self):
         """critic_jury を構成する各員の呼び出し可能オブジェクトのリスト（個別呼び, §7.1）."""
         from aleph.core.llm import Message
@@ -518,6 +582,9 @@ class RealDeps:
     # -- L7 公開判断（M5 publication_gate へ委譲。PLAN §7.3d） ----------------
     def decide_publication(self, work, audience):
         from aleph.meta.publication_gate import decide_publication
+
+        # 完成時に作品自身へ題を聞く（フロー化, 0.7.14）。公開/棚の双方が title.txt を読む。
+        self._ensure_title(work)
 
         # 完成度の床: 直近の査読合意スコア（二段階選抜の第一段。PLAN §7.1・§14.3-8）
         traj_path = work.dir / "reviews" / "trajectory.jsonl"
