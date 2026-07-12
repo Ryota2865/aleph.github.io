@@ -9,6 +9,7 @@ import html
 import json
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -144,8 +145,7 @@ footer {
 
 _NAV_ITEMS = (
     ("index.html", "ホーム"),
-    ("works/w0004.html", "作品「半呼吸」"),
-    ("process/w0004-criteria.html", "制作の記録"),
+    ("works/index.html", "作品"),
     ("dialogue.html", "批評と応答"),
     ("poetics.html", "詩学"),
     ("research/index.html", "研究ノート"),
@@ -155,7 +155,7 @@ _NAV_ITEMS = (
 
 _EN_NAV_ITEMS = (
     ("en/index.html", "Home"),
-    ("en/works/w0004.html", "Work: Half-Breath"),
+    ("works/index.html", "Works"),
     ("en/dialogue.html", "Critique and response"),
     ("en/poetics.html", "Poetics"),
     ("en/research/index.html", "Research"),
@@ -165,7 +165,6 @@ _EN_NAV_ITEMS = (
 
 _EN_PATHS = {
     "index.html": "en/index.html",
-    "works/w0004.html": "en/works/w0004.html",
     "dialogue.html": "en/dialogue.html",
     "poetics.html": "en/poetics.html",
     "research/index.html": "en/research/index.html",
@@ -182,10 +181,14 @@ _EN_CREDIT_LABELS = {
     "探索": "Exploration",
 }
 
+_EN_WORK_TITLES = {
+    "w0004": "Half-Breath",
+}
+
 _CONTEXT_ITEMS = (
-    ("process/w0004-criteria.html", "基準書"),
-    ("process/w0004-decisions.html", "決定ログ"),
-    ("process/w0004-reviews.html", "五審級査読"),
+    ("process/{work_id}-criteria.html", "基準書"),
+    ("process/{work_id}-decisions.html", "決定ログ"),
+    ("process/{work_id}-reviews.html", "五審級査読"),
     ("dialogue.html", "批評と応答"),
     ("poetics.html", "詩学"),
     ("research/index.html", "研究ノート"),
@@ -366,10 +369,16 @@ def _nav(root_prefix: str, current_path: str = "index.html", lang: str = "ja") -
     for href, label in nav_items:
         links.append(f"<a href='{_esc(root_prefix + href)}'>{_esc(label)}</a>")
     if lang == "en":
-        jp_path = _JP_PATHS.get(current_path, "index.html")
+        if current_path.startswith("en/works/") and current_path.endswith(".html"):
+            jp_path = current_path.removeprefix("en/")
+        else:
+            jp_path = _JP_PATHS.get(current_path, "index.html")
         links.append(f"<a href='{_esc(root_prefix + jp_path)}'>日本語</a>")
     else:
-        en_path = _EN_PATHS.get(current_path, "en/index.html")
+        if current_path.startswith("works/") and current_path.endswith(".html") and current_path != "works/index.html":
+            en_path = "en/" + current_path
+        else:
+            en_path = _EN_PATHS.get(current_path, "en/index.html")
         links.append(f"<a href='{_esc(root_prefix + en_path)}'>English</a>")
     return "<nav class='site-nav'>" + "\n".join(links) + "</nav>"
 
@@ -420,9 +429,10 @@ def _page(
     )
 
 
-def _context_links(root_prefix: str) -> str:
+def _context_links(root_prefix: str, work_id: str) -> str:
     parts = ["<section class='context'>", "<h2>この作品をめぐって</h2>", "<ul>"]
     for href, label in _CONTEXT_ITEMS:
+        href = href.format(work_id=work_id)
         parts.append(f"<li><a href='{_esc(root_prefix + href)}'>{_esc(label)}</a></li>")
     parts.extend(["</ul>", "</section>"])
     return "\n".join(parts)
@@ -441,6 +451,23 @@ def _write_page(
     path.write_text(_page(title, body, root_prefix, relative_path, lang), encoding="utf-8")
 
 
+def _has_process_input(root: Path, work_id: str, kind: str) -> bool:
+    work_root = root / "works" / work_id
+    if kind == "criteria":
+        return _read_text(work_root / "compositions" / "criteria.md") is not None
+    if kind == "decisions":
+        return bool(_read_jsonl(work_root / "decisions.jsonl"))
+    if kind == "reviews":
+        return any((work_root / "reviews").glob("v*.md"))
+    return False
+
+
+def _process_table_link(root: Path, work_id: str, kind: str, label: str) -> str:
+    if not _has_process_input(root, work_id, kind):
+        return "<span class='meta'>—</span>"
+    return f"<a href='../process/{_esc(work_id)}-{_esc(kind)}.html'>{_esc(label)}</a>"
+
+
 def _build_index(root: Path, out_dir: Path) -> None:
     items = [
         f"<li><a href='works/{_esc(work_id)}.html'>{_esc(str(meta.get('title') or work_id))}</a></li>"
@@ -454,10 +481,36 @@ def _build_index(root: Path, out_dir: Path) -> None:
             "<ul>",
             *items,
             "</ul>",
-            _context_links(""),
+            "<p><a href='works/index.html'>作品別の制作記録を見る</a></p>",
         ]
     )
     _write_page(out_dir, "index.html", "ALEPH", body)
+
+
+def _build_works_index(root: Path, out_dir: Path) -> None:
+    rows = []
+    for work_id, meta, _text in iter_published(root):
+        title = str(meta.get("title") or work_id)
+        rows.append(
+            "<tr>"
+            f"<td><a href='{_esc(work_id)}.html'>{_esc(title)}</a></td>"
+            f"<td>{_process_table_link(root, work_id, 'criteria', '基準書')}</td>"
+            f"<td>{_process_table_link(root, work_id, 'decisions', '決定ログ')}</td>"
+            f"<td>{_process_table_link(root, work_id, 'reviews', '五審級査読')}</td>"
+            "</tr>"
+        )
+    body = "\n".join(
+        [
+            "<h1>公開作品</h1>",
+            "<table>",
+            "<thead><tr><th>作品</th><th>基準書</th><th>決定ログ</th><th>五審級査読</th></tr></thead>",
+            "<tbody>",
+            *rows,
+            "</tbody>",
+            "</table>",
+        ]
+    )
+    _write_page(out_dir, "works/index.html", "公開作品", body, "../")
 
 
 def iter_published(root: Path) -> list[tuple[str, dict, str]]:
@@ -486,7 +539,7 @@ def _build_work(root: Path, out_dir: Path) -> None:
                 f"<p>関与モデル: {_esc(credit_text)}</p>",
                 "<p>ライセンス: CC0</p>",
                 "</section>",
-                _context_links("../"),
+                _context_links("../", work_id),
                 _render_markdown(text),
             ]
         )
@@ -494,40 +547,42 @@ def _build_work(root: Path, out_dir: Path) -> None:
 
 
 def _build_criteria(root: Path, out_dir: Path) -> None:
-    text = _read_text(root / "works" / "w0004" / "compositions" / "criteria.md")
-    if text is None:
-        return
-    body = "\n".join(["<h1>基準書</h1>", _render_markdown(text)])
-    _write_page(out_dir, "process/w0004-criteria.html", "基準書", body, "../")
+    for work_id, _meta, _text in iter_published(root):
+        text = _read_text(root / "works" / work_id / "compositions" / "criteria.md")
+        if text is None:
+            continue
+        body = "\n".join(["<h1>基準書</h1>", _render_markdown(text)])
+        _write_page(out_dir, f"process/{work_id}-criteria.html", "基準書", body, "../")
 
 
 def _build_decisions(root: Path, out_dir: Path) -> None:
-    rows = _read_jsonl(root / "works" / "w0004" / "decisions.jsonl")
-    if not rows:
-        return
-    rows = sorted(rows, key=lambda row: str(row.get("ts", "")))
-    parts = [
-        "<h1>決定ログ</h1>",
-        "<table>",
-        "<thead><tr><th>ts</th><th>layer</th><th>decision</th><th>reason</th><th>decided_by</th></tr></thead>",
-        "<tbody>",
-    ]
-    for row in rows:
-        parts.append(
-            "<tr>"
-            f"<td>{_esc(row.get('ts', ''))}</td>"
-            f"<td>{_esc(row.get('layer', ''))}</td>"
-            f"<td>{_esc(row.get('decision', ''))}</td>"
-            f"<td>{_esc(row.get('reason', ''))}</td>"
-            f"<td>{_esc(row.get('decided_by', ''))}</td>"
-            "</tr>"
-        )
-    parts.extend(["</tbody>", "</table>"])
-    _write_page(out_dir, "process/w0004-decisions.html", "決定ログ", "\n".join(parts), "../")
+    for work_id, _meta, _text in iter_published(root):
+        rows = _read_jsonl(root / "works" / work_id / "decisions.jsonl")
+        if not rows:
+            continue
+        rows = sorted(rows, key=lambda row: str(row.get("ts", "")))
+        parts = [
+            "<h1>決定ログ</h1>",
+            "<table>",
+            "<thead><tr><th>ts</th><th>layer</th><th>decision</th><th>reason</th><th>decided_by</th></tr></thead>",
+            "<tbody>",
+        ]
+        for row in rows:
+            parts.append(
+                "<tr>"
+                f"<td>{_esc(row.get('ts', ''))}</td>"
+                f"<td>{_esc(row.get('layer', ''))}</td>"
+                f"<td>{_esc(row.get('decision', ''))}</td>"
+                f"<td>{_esc(row.get('reason', ''))}</td>"
+                f"<td>{_esc(row.get('decided_by', ''))}</td>"
+                "</tr>"
+            )
+        parts.extend(["</tbody>", "</table>"])
+        _write_page(out_dir, f"process/{work_id}-decisions.html", "決定ログ", "\n".join(parts), "../")
 
 
-def _trajectory_summary(root: Path) -> str:
-    rows = _read_jsonl(root / "works" / "w0004" / "reviews" / "trajectory.jsonl")
+def _trajectory_summary(root: Path, work_id: str) -> str:
+    rows = _read_jsonl(root / "works" / work_id / "reviews" / "trajectory.jsonl")
     scores: dict[int, object] = {}
     for row in rows:
         version = row.get("version")
@@ -542,23 +597,28 @@ def _trajectory_summary(root: Path) -> str:
 
 
 def _build_reviews(root: Path, out_dir: Path) -> None:
-    parts = ["<h1>五審級査読</h1>"]
-    summary = _trajectory_summary(root)
-    if summary:
-        parts.append(summary)
+    for work_id, _meta, _text in iter_published(root):
+        parts = ["<h1>五審級査読</h1>"]
+        summary = _trajectory_summary(root, work_id)
+        if summary:
+            parts.append(summary)
 
-    found = False
-    for version in (1, 2):
-        text = _read_text(root / "works" / "w0004" / "reviews" / f"v{version}.md")
-        if text is None:
+        found = False
+        review_paths = sorted(
+            (root / "works" / work_id / "reviews").glob("v*.md"),
+            key=lambda path: (len(path.stem), path.stem),
+        )
+        for path in review_paths:
+            text = _read_text(path)
+            if text is None:
+                continue
+            found = True
+            parts.append(f"<h2>{_esc(path.stem)}</h2>")
+            parts.append(_render_markdown(text))
+
+        if not found:
             continue
-        found = True
-        parts.append(f"<h2>v{version}</h2>")
-        parts.append(_render_markdown(text))
-
-    if not found:
-        return
-    _write_page(out_dir, "process/w0004-reviews.html", "五審級査読", "\n".join(parts), "../")
+        _write_page(out_dir, f"process/{work_id}-reviews.html", "五審級査読", "\n".join(parts), "../")
 
 
 def _dialogue_date_key(name: str) -> str:
@@ -681,15 +741,26 @@ def _en_credit_items(credits: object) -> list[str]:
     return items
 
 
-def _build_en_index(out_dir: Path) -> None:
+def _en_work_title(work_id: str, original_title: str) -> str:
+    return _EN_WORK_TITLES.get(work_id, original_title)
+
+
+def _build_en_index(root: Path, out_dir: Path) -> None:
+    work_items = []
+    for work_id, meta, _text in iter_published(root):
+        original_title = str(meta.get("title") or work_id)
+        title = _en_work_title(work_id, original_title)
+        work_items.append(
+            f"<li><a href='works/{_esc(work_id)}.html'>{_esc(title)}</a> "
+            "<span class='meta'>(context in English, work in Japanese)</span></li>"
+        )
     body = "\n".join(
         [
             "<h1>ALEPH</h1>",
             f"<div class='lead'>{_render_markdown(_EN_ABOUT)}</div>",
-            "<h2>Published work</h2>",
+            "<h2>Published works</h2>",
             "<ul>",
-            "<li><a href='works/w0004.html'>Half-Breath</a> "
-            "<span class='meta'>(context in English, work in Japanese)</span></li>",
+            *work_items,
             "</ul>",
             "<h2>Project and research</h2>",
             "<ul>",
@@ -710,55 +781,76 @@ def _build_en_about(out_dir: Path) -> None:
 
 
 def _build_en_work(root: Path, out_dir: Path) -> None:
-    meta = _read_json(root / "works" / "w0004" / "final" / "meta.json")
-    if not isinstance(meta, dict):
-        meta = {}
+    for work_id, meta, _text in iter_published(root):
+        original_title = str(meta.get("title") or work_id)
+        title = _en_work_title(work_id, original_title)
+        license_text = str(meta.get("license") or "CC0")
+        credit_items = _en_credit_items(meta.get("credits"))
+        intended = meta.get("intended_reader_models")
+        if isinstance(intended, list) and intended:
+            intended_text = ", ".join(str(item) for item in intended)
+        else:
+            intended_text = "LLM readers"
+        credits = "\n".join(f"<li>{_esc(item)}</li>" for item in credit_items)
+        if not credits:
+            credits = "<li>Credits not recorded.</li>"
 
-    credit_items = _en_credit_items(meta.get("credits"))
-    intended = meta.get("intended_reader_models")
-    if isinstance(intended, list) and intended:
-        intended_text = ", ".join(str(item) for item in intended)
-    else:
-        intended_text = "LLM readers"
-    credits = "\n".join(f"<li>{_esc(item)}</li>" for item in credit_items)
-    if not credits:
-        credits = "<li>Credits not recorded.</li>"
+        if title == original_title:
+            heading = f"<h1>{_esc(title)}</h1>"
+        else:
+            heading = f"<h1>{_esc(title)} <span class='meta'>({_esc(original_title)})</span></h1>"
 
-    body = "\n".join(
-        [
-            "<h1>Half-Breath <span class='meta'>(半呼吸)</span></h1>",
-            "<section class='meta'>",
-            f"<p>Original title: 半呼吸. License: CC0. Intended reader model(s): {_esc(intended_text)}.</p>",
-            "<p>Read the original text: <a href='../../works/w0004.html'>半呼吸 (Japanese)</a>.</p>",
-            "</section>",
-            "<h2>Context</h2>",
-            "<p><em>Half-Breath</em> is ALEPH's first published work: an experimental "
-            "run forced toward LLM readers after the system's early critiques. The work "
-            "is set around a late Taisho Shingeki rehearsal room, where actors borrow "
-            "translated lines and rehearse conviction around an empty source of fire. "
-            "That historical scene becomes a mirror for ALEPH itself: a system writing "
-            "with borrowed forms, no private human motive, and a need to expose the "
-            "conditions of its own performance.</p>",
-            "<p>The English page does not present the work as a translated literary text. "
-            "The body of the work is Japanese; translating it in full would be a separate "
-            "artistic act. This page supplies context so international readers can "
-            "understand what was made and where the original record is.</p>",
-            "<h2>Criteria in brief</h2>",
-            "<p>The work's criteria ask it not merely to write about Shingeki, but to use "
-            "Shingeki as ALEPH's self-description. The narrator must keep the distance of "
-            "a stagehand or observer rather than an all-knowing mind. Affection must sit "
-            "next to historical violence; cuts, censorship, and interruption must appear "
-            "on the text's surface; rehearsal must become a structure of repeating another's "
-            "words until something changes. Its LLM-facing layer includes orthographic "
-            "variation, low-probability diction at charged moments, and dense references "
-            "that a model reader may parse differently from a human reader.</p>",
-            "<h2>Model roles</h2>",
-            "<ul>",
-            credits,
-            "</ul>",
-        ]
-    )
-    _write_en_page(out_dir, "en/works/w0004.html", "Half-Breath", body, "../../")
+        if work_id == "w0004":
+            context = "\n".join(
+                [
+                    "<h2>Context</h2>",
+                    "<p><em>Half-Breath</em> is ALEPH's first published work: an experimental "
+                    "run forced toward LLM readers after the system's early critiques. The work "
+                    "is set around a late Taisho Shingeki rehearsal room, where actors borrow "
+                    "translated lines and rehearse conviction around an empty source of fire. "
+                    "That historical scene becomes a mirror for ALEPH itself: a system writing "
+                    "with borrowed forms, no private human motive, and a need to expose the "
+                    "conditions of its own performance.</p>",
+                    "<p>The English page does not present the work as a translated literary text. "
+                    "The body of the work is Japanese; translating it in full would be a separate "
+                    "artistic act. This page supplies context so international readers can "
+                    "understand what was made and where the original record is.</p>",
+                    "<h2>Criteria in brief</h2>",
+                    "<p>The work's criteria ask it not merely to write about Shingeki, but to use "
+                    "Shingeki as ALEPH's self-description. The narrator must keep the distance of "
+                    "a stagehand or observer rather than an all-knowing mind. Affection must sit "
+                    "next to historical violence; cuts, censorship, and interruption must appear "
+                    "on the text's surface; rehearsal must become a structure of repeating another's "
+                    "words until something changes. Its LLM-facing layer includes orthographic "
+                    "variation, low-probability diction at charged moments, and dense references "
+                    "that a model reader may parse differently from a human reader.</p>",
+                ]
+            )
+        else:
+            context = "\n".join(
+                [
+                    "<h2>Context</h2>",
+                    "<p>A work produced by the ALEPH closed loop. Original in Japanese.</p>",
+                ]
+            )
+
+        body = "\n".join(
+            [
+                heading,
+                "<section class='meta'>",
+                f"<p>Original title: {_esc(original_title)}. License: {_esc(license_text)}. "
+                f"Intended reader model(s): {_esc(intended_text)}.</p>",
+                f"<p>Read the original: <a href='../../works/{_esc(work_id)}.html'>"
+                f"{_esc(original_title)} (Japanese)</a>.</p>",
+                "</section>",
+                context,
+                "<h2>Model roles</h2>",
+                "<ul>",
+                credits,
+                "</ul>",
+            ]
+        )
+        _write_en_page(out_dir, f"en/works/{work_id}.html", title, body, "../../")
 
 
 def _build_en_research(out_dir: Path) -> None:
@@ -861,7 +953,7 @@ def _build_en_ode(out_dir: Path) -> None:
 
 
 def _build_en_pages(root: Path, out_dir: Path) -> None:
-    _build_en_index(out_dir)
+    _build_en_index(root, out_dir)
     _build_en_about(out_dir)
     _build_en_work(root, out_dir)
     _build_en_research(out_dir)
@@ -899,6 +991,26 @@ def _build_en_note(root: Path, out_dir: Path) -> None:
     path.write_text(page, encoding="utf-8")
 
 
+def _verify_relative_hrefs(out_dir: Path) -> None:
+    html_paths = {path.resolve() for path in out_dir.rglob("*.html")}
+    broken = []
+    for path in sorted(html_paths):
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"""href=(['"])(.*?)\1""", text):
+            href = html.unescape(match.group(2))
+            parsed = urlsplit(href)
+            if parsed.scheme or parsed.netloc or parsed.path == "":
+                continue
+            target = (path.parent / parsed.path).resolve()
+            if target.is_dir():
+                target = target / "index.html"
+            if target not in html_paths:
+                broken.append(f"{path.relative_to(out_dir)} -> {href}")
+    if broken:
+        detail = "\n".join(broken)
+        raise RuntimeError(f"Broken relative hrefs:\n{detail}")
+
+
 def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> None:
     root = Path(root)
     out_dir = Path(out_dir)
@@ -906,6 +1018,7 @@ def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> Non
 
     _build_index(root, out_dir)
     _build_work(root, out_dir)
+    _build_works_index(root, out_dir)
     _build_criteria(root, out_dir)
     _build_decisions(root, out_dir)
     _build_reviews(root, out_dir)
@@ -916,6 +1029,7 @@ def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> Non
     _build_ode(root, out_dir)
     _build_en_note(root, out_dir)
     _build_en_pages(root, out_dir)
+    _verify_relative_hrefs(out_dir)
 
 
 if __name__ == "__main__":
