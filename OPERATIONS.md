@@ -96,6 +96,18 @@ git add docs/ && git commit -m "Publish w0005" && git push origin main
 4. **検証**: 再生成後、(a) EN の研究主張が JP と一致するか、(b) 言語トグルのリンク切れが
    ないか、(c) `uv run pytest -m 'not local'` 緑、を確認してから push。
 
+**新しい作品を公開したときの EN チェックリスト（2026-07-13 追加。w0005/w0006 で漏れた反省）:**
+
+新作の PUBLISH → docs 再生成のあと、build_public_site.py の EN 定数に次の3点を**必ず**追加する
+（追加せずに再生成すると、EN index に日本語題が混ざり、EN 作品ページが汎用文のままになる）:
+
+1. `_EN_TITLES` に英語題（題の翻訳は司令塔=Claude が行う。作品の本文翻訳ではないので可）。
+2. `_EN_WORK_NOTES[work_id]` に **context**（何字・宛先条件・制作上の事実——スコア軌跡・
+   公開選択など decisions/trajectory から正確に）と **criteria_brief**（基準書冒頭を読んで
+   主張に忠実な要約。Full criteria への JP リンクは自動で付く）。
+3. 英文は司令塔が執筆・検証する（機械翻訳を作品や基準の要約として無検証で置かない）。
+   実配線（定数追加）は codex へ委任可（雛形: state/tasks/M9_en_works_codex.md）。
+
 ## 検証（変更のたびに）
 
 ```bash

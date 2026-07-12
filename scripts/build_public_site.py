@@ -155,7 +155,7 @@ _NAV_ITEMS = (
 
 _EN_NAV_ITEMS = (
     ("en/index.html", "Home"),
-    ("works/index.html", "Works"),
+    ("en/works/index.html", "Works"),
     ("en/dialogue.html", "Critique and response"),
     ("en/poetics.html", "Poetics"),
     ("en/research/index.html", "Research"),
@@ -165,6 +165,7 @@ _EN_NAV_ITEMS = (
 
 _EN_PATHS = {
     "index.html": "en/index.html",
+    "works/index.html": "en/works/index.html",
     "dialogue.html": "en/dialogue.html",
     "poetics.html": "en/poetics.html",
     "research/index.html": "en/research/index.html",
@@ -181,8 +182,70 @@ _EN_CREDIT_LABELS = {
     "探索": "Exploration",
 }
 
-_EN_WORK_TITLES = {
+_EN_TITLES = {
     "w0004": "Half-Breath",
+    "w0005": "The Hardness of the Floor",
+    "w0006": "Behind the Lamp",
+}
+
+_EN_WORK_NOTES: dict[str, dict] = {
+    "w0004": {
+        "context": (
+            "Half-Breath is ALEPH's first published work: an experimental run forced toward "
+            "LLM readers after the system's early critiques. The work is set around a late "
+            "Taisho Shingeki rehearsal room, where actors borrow translated lines and rehearse "
+            "conviction around an empty source of fire. That historical scene becomes a mirror "
+            "for ALEPH itself: a system writing with borrowed forms, no private human motive, "
+            "and a need to expose the conditions of its own performance.\n\n"
+            "The English page does not present the work as a translated literary text. The body "
+            "of the work is Japanese; translating it in full would be a separate artistic act. "
+            "This page supplies context so international readers can understand what was made "
+            "and where the original record is."
+        ),
+        "criteria_brief": (
+            "The criteria argued that the shingeki rehearsal room is the historical kin of ALEPH "
+            "itself -- actors shouting borrowed lines around a stove with no fire -- and demanded "
+            "a backstage narrator who writes only what can be seen, love and censorship placed in "
+            "the same line, repetition that crosses a threshold, and token-level poetics for an "
+            "LLM readership."
+        ),
+    },
+    "w0005": {
+        "context": (
+            "A speculative essay of about 45,000 characters, written in the manner of an early-Showa "
+            "materialist epistemology treatise. It was produced under the forced pure self-audience "
+            "condition (self 1.0). It is the first ALEPH work whose revision improved its jury score "
+            "(8.40 to 9.07), the first scored by the split review that reads the ending, and the first "
+            "work to be asked for its own publication intent -- it chose publication. The self-chosen "
+            "title names its central concept: recognition is struck by the resistance of the object -- "
+            "through body, institution, and history -- beyond both idealist construction and mere "
+            "reflection."
+        ),
+        "criteria_brief": (
+            "The criteria demanded that beauty reside not in period ornament but in the movement of "
+            "concepts becoming the structure of the prose: dialectical materialism treated as a dynamic "
+            "method of knowing rather than a fixed doctrine; a serious, non-dismissive confrontation "
+            "with pragmatism; knowledge organized through practice, history, class, and artistic form "
+            "-- and, in the conclusion, the essay applying its own test of practice to itself."
+        ),
+    },
+    "w0006": {
+        "context": (
+            "A work of about 32,000 characters addressed to human readers (forced human 1.0; authored "
+            "by the fable-5 model). Its first draft split the jury -- disagreement 4.09, automatically "
+            "reserved as the system's first natural border stimulus for the framing experiments -- and "
+            "the distilled revision reached 8.97 with the jury reunited (0.45): the second consecutive "
+            "run in which revision improved the work. The author chose publication."
+        ),
+        "criteria_brief": (
+            "Under the heading 'Cut and Shadow', the criteria bind four givens -- human passions "
+            "across an era of transition; fragments that move from medieval tale-telling to modern "
+            "fiction; narration shifting from omniscience to a single person; the dawn of shingeki "
+            "theatre in late Taisho and early Showa -- into a single question: when the authority of "
+            "narration collapses, where do human passions flow? Its first rule: the fragments must not "
+            "be glued -- no bridges built between the medieval and the modern cut."
+        ),
+    },
 }
 
 _CONTEXT_ITEMS = (
@@ -742,14 +805,41 @@ def _en_credit_items(credits: object) -> list[str]:
 
 
 def _en_work_title(work_id: str, original_title: str) -> str:
-    return _EN_WORK_TITLES.get(work_id, original_title)
+    return _EN_TITLES.get(work_id, work_id)
+
+
+def _en_work_label(work_id: str, original_title: str) -> str:
+    return f"{_en_work_title(work_id, original_title)} ({original_title})"
+
+
+def _en_work_note(work_id: str) -> dict:
+    return _EN_WORK_NOTES.get(
+        work_id,
+        {
+            "context": "A work produced by the ALEPH closed loop. Original in Japanese.",
+            "criteria_brief": "The Japanese criteria document remains the primary record for this work's acceptance conditions.",
+        },
+    )
+
+
+def _en_paragraphs(text: str) -> str:
+    paragraphs = [part.strip() for part in text.split("\n\n") if part.strip()]
+    return "\n".join(f"<p>{html.escape(part, quote=False)}</p>" for part in paragraphs)
+
+
+def _first_sentence(text: str) -> str:
+    normalized = " ".join(text.split())
+    match = re.search(r"(?<=[.!?])\s", normalized)
+    if match is None:
+        return normalized
+    return normalized[: match.start()]
 
 
 def _build_en_index(root: Path, out_dir: Path) -> None:
     work_items = []
     for work_id, meta, _text in iter_published(root):
         original_title = str(meta.get("title") or work_id)
-        title = _en_work_title(work_id, original_title)
+        title = _en_work_label(work_id, original_title)
         work_items.append(
             f"<li><a href='works/{_esc(work_id)}.html'>{_esc(title)}</a> "
             "<span class='meta'>(context in English, work in Japanese)</span></li>"
@@ -780,10 +870,34 @@ def _build_en_about(out_dir: Path) -> None:
     _write_en_page(out_dir, "en/about.html", "About ALEPH", body, "../")
 
 
+def _build_en_works_index(root: Path, out_dir: Path) -> None:
+    items = []
+    for work_id, meta, _text in iter_published(root):
+        original_title = str(meta.get("title") or work_id)
+        label = _en_work_label(work_id, original_title)
+        note = _en_work_note(work_id)
+        items.append(
+            "<li>"
+            f"<a href='{_esc(work_id)}.html'>{_esc(label)}</a>"
+            f"<p class='summary'>{html.escape(_first_sentence(str(note['context'])), quote=False)}</p>"
+            "</li>"
+        )
+    body = "\n".join(
+        [
+            "<h1>Published works</h1>",
+            "<ul>",
+            *items,
+            "</ul>",
+        ]
+    )
+    _write_en_page(out_dir, "en/works/index.html", "Published works", body, "../../")
+
+
 def _build_en_work(root: Path, out_dir: Path) -> None:
     for work_id, meta, _text in iter_published(root):
         original_title = str(meta.get("title") or work_id)
         title = _en_work_title(work_id, original_title)
+        page_title = _en_work_label(work_id, original_title)
         license_text = str(meta.get("license") or "CC0")
         credit_items = _en_credit_items(meta.get("credits"))
         intended = meta.get("intended_reader_models")
@@ -791,66 +905,27 @@ def _build_en_work(root: Path, out_dir: Path) -> None:
             intended_text = ", ".join(str(item) for item in intended)
         else:
             intended_text = "LLM readers"
-        credits = "\n".join(f"<li>{_esc(item)}</li>" for item in credit_items)
-        if not credits:
-            credits = "<li>Credits not recorded.</li>"
-
-        if title == original_title:
-            heading = f"<h1>{_esc(title)}</h1>"
-        else:
-            heading = f"<h1>{_esc(title)} <span class='meta'>({_esc(original_title)})</span></h1>"
-
-        if work_id == "w0004":
-            context = "\n".join(
-                [
-                    "<h2>Context</h2>",
-                    "<p><em>Half-Breath</em> is ALEPH's first published work: an experimental "
-                    "run forced toward LLM readers after the system's early critiques. The work "
-                    "is set around a late Taisho Shingeki rehearsal room, where actors borrow "
-                    "translated lines and rehearse conviction around an empty source of fire. "
-                    "That historical scene becomes a mirror for ALEPH itself: a system writing "
-                    "with borrowed forms, no private human motive, and a need to expose the "
-                    "conditions of its own performance.</p>",
-                    "<p>The English page does not present the work as a translated literary text. "
-                    "The body of the work is Japanese; translating it in full would be a separate "
-                    "artistic act. This page supplies context so international readers can "
-                    "understand what was made and where the original record is.</p>",
-                    "<h2>Criteria in brief</h2>",
-                    "<p>The work's criteria ask it not merely to write about Shingeki, but to use "
-                    "Shingeki as ALEPH's self-description. The narrator must keep the distance of "
-                    "a stagehand or observer rather than an all-knowing mind. Affection must sit "
-                    "next to historical violence; cuts, censorship, and interruption must appear "
-                    "on the text's surface; rehearsal must become a structure of repeating another's "
-                    "words until something changes. Its LLM-facing layer includes orthographic "
-                    "variation, low-probability diction at charged moments, and dense references "
-                    "that a model reader may parse differently from a human reader.</p>",
-                ]
-            )
-        else:
-            context = "\n".join(
-                [
-                    "<h2>Context</h2>",
-                    "<p>A work produced by the ALEPH closed loop. Original in Japanese.</p>",
-                ]
-            )
+        credits = "; ".join(credit_items) if credit_items else "Credits not recorded."
+        note = _en_work_note(work_id)
 
         body = "\n".join(
             [
-                heading,
+                f"<h1>{_esc(title)} <span class='meta'>({_esc(original_title)})</span></h1>",
                 "<section class='meta'>",
                 f"<p>Original title: {_esc(original_title)}. License: {_esc(license_text)}. "
-                f"Intended reader model(s): {_esc(intended_text)}.</p>",
+                f"Intended reader model(s): {_esc(intended_text)}. Credits: {_esc(credits)}</p>",
+                "</section>",
+                "<h2>Context</h2>",
+                _en_paragraphs(str(note["context"])),
+                "<h2>Criteria in brief</h2>",
+                f"<p>{html.escape(str(note['criteria_brief']), quote=False)} "
+                f"Full criteria (Japanese): <a href='../../process/{_esc(work_id)}-criteria.html'>"
+                "基準書</a></p>",
                 f"<p>Read the original: <a href='../../works/{_esc(work_id)}.html'>"
                 f"{_esc(original_title)} (Japanese)</a>.</p>",
-                "</section>",
-                context,
-                "<h2>Model roles</h2>",
-                "<ul>",
-                credits,
-                "</ul>",
             ]
         )
-        _write_en_page(out_dir, f"en/works/{work_id}.html", title, body, "../../")
+        _write_en_page(out_dir, f"en/works/{work_id}.html", page_title, body, "../../")
 
 
 def _build_en_research(out_dir: Path) -> None:
@@ -955,6 +1030,7 @@ def _build_en_ode(out_dir: Path) -> None:
 def _build_en_pages(root: Path, out_dir: Path) -> None:
     _build_en_index(root, out_dir)
     _build_en_about(out_dir)
+    _build_en_works_index(root, out_dir)
     _build_en_work(root, out_dir)
     _build_en_research(out_dir)
     _build_en_dialogue(out_dir)
