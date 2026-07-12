@@ -48,6 +48,71 @@ def _esc(text: str) -> str:
     return html.escape(str(text), quote=True)
 
 
+# 依存追加禁止（PLAN §10 M6）のためCSSはインラインの定数として持つ。テーマ対応。
+_CSS = """
+:root { --paper:#faf7f0; --ink:#2b2721; --faint:#8a8174; --line:#e4ddd0; --accent:#8c5a2b; }
+@media (prefers-color-scheme: dark) {
+  :root { --paper:#191713; --ink:#d8d2c5; --faint:#7d766a; --line:#2e2a24; --accent:#c89b66; }
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--paper); color:var(--ink); font-family:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif; line-height:2.0; }
+main { max-width:44rem; margin:0 auto; padding:4rem 1.4rem 6rem; }
+h1 { font-size:1.7rem; font-weight:600; letter-spacing:.14em; margin-bottom:.5rem; }
+.tagline { color:var(--faint); font-size:.95rem; line-height:1.9; margin-bottom:2.6rem; }
+h2 { font-size:1.05rem; font-weight:600; letter-spacing:.18em; margin:2.8rem 0 1.2rem; }
+p { margin-bottom:1em; text-align:justify; }
+article .body p { white-space:pre-wrap; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+ul.works { list-style:none; }
+ul.works li { border-top:1px solid var(--line); padding:1.3rem 0; }
+ul.works li:last-child { border-bottom:1px solid var(--line); }
+.empty { color:var(--faint); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:1.6rem 0; }
+.credits { color:var(--faint); font-size:.85rem; line-height:1.8; margin-bottom:2.4rem; }
+footer { margin-top:4rem; border-top:1px solid var(--line); padding-top:1.4rem; color:var(--faint); font-size:.82rem; line-height:1.9; }
+"""
+
+_TAGLINE = (
+    "LLMによる文学表現のための自律制作システム。文学的生態系の空き地（vacant niche）を探し、"
+    "そこに棲む作品を作る。"
+)
+_ABOUT = (
+    "ALEPH は探索・素材錬成・構成・執筆・査読・擱筆・公開の閉ループを自律的に回す。"
+    "公開は二層構造をとる——表層はこのページ（final 作品と関与モデルの名義）、"
+    "深層は各作品の全制作記録（欠陥稿・五審級の査読・決定ログ）。"
+    "完成は公開を意味しない（PLAN §7.3d）。SHELVE（棚上げ）が常態であり、公開は例外である。"
+)
+_REPO_URL = "https://github.com/Ryota2865/aleph.github.io"
+
+
+def _page(title: str, body: str) -> str:
+    return "\n".join([
+        "<!DOCTYPE html>",
+        "<html lang='ja'>",
+        "<head><meta charset='utf-8'>",
+        "<meta name='viewport' content='width=device-width, initial-scale=1'>",
+        f"<title>{_esc(title)}</title>",
+        f"<style>{_CSS}</style>",
+        "</head>",
+        "<body><main>",
+        body,
+        "</main></body>",
+        "</html>",
+        "",
+    ])
+
+
+def _site_footer() -> str:
+    return (
+        "<footer>"
+        "<p>作品・制作記録: CC0-1.0 ／ システム成果物（詩学・決定ログ・コード）: "
+        "コードは MIT、文書は CC-BY-4.0（PLAN §14.3-9）。</p>"
+        f"<p>ソース: <a href='{_REPO_URL}'>{_esc(_REPO_URL)}</a></p>"
+        "<p>署名は関与モデルの役割つき列記による。単一の「作者」を偽装しない（PLAN §8）。</p>"
+        "</footer>"
+    )
+
+
 def _body_to_html(text: str) -> str:
     """簡易HTML化（見出し・段落のみ。依存なし）。"""
     parts: list[str] = []
@@ -77,21 +142,29 @@ def build_site(*, works_root: Path, out_dir: Path) -> None:
 
     published = list(_iter_published(works_root))
 
-    # --- index.html
-    index_lines = [
-        "<!DOCTYPE html>",
-        "<html lang='ja'>",
-        "<head><meta charset='utf-8'>",
-        "<title>ALEPH works</title></head>",
-        "<body>",
-        "<h1>ALEPH works</h1>",
-        "<ul>",
+    # --- index.html（表紙: 概要 + 公開作品一覧。公開作品ゼロなら正直に空状態を示す）
+    index_body = [
+        "<h1>ALEPH</h1>",
+        f"<p class='tagline'>{_esc(_TAGLINE)}</p>",
+        "<h2>このシステムについて</h2>",
+        f"<p>{_esc(_ABOUT)}</p>",
+        "<h2>公開作品</h2>",
     ]
-    for work_id, meta, _text in published:
-        title = meta.get("title", work_id)
-        index_lines.append(f"<li><a href='works/{_esc(work_id)}.html'>{_esc(title)}</a></li>")
-    index_lines += ["</ul>", "</body>", "</html>", ""]
-    (out_dir / "index.html").write_text("\n".join(index_lines), encoding="utf-8")
+    if published:
+        index_body.append("<ul class='works'>")
+        for work_id, meta, _text in published:
+            title = meta.get("title", work_id)
+            index_body.append(
+                f"<li><a href='works/{_esc(work_id)}.html'>{_esc(title)}</a></li>"
+            )
+        index_body.append("</ul>")
+    else:
+        index_body.append(
+            "<p class='empty'>現在、公開作品はありません。すべての作品は設計上の既定により"
+            "SHELVE（棚上げ）されています。公開は人間承認を要する例外です（PLAN §7.3d・§9）。</p>"
+        )
+    index_body.append(_site_footer())
+    (out_dir / "index.html").write_text(_page("ALEPH", "\n".join(index_body)), encoding="utf-8")
 
     # --- 作品ページ
     for work_id, meta, text in published:
@@ -99,28 +172,20 @@ def build_site(*, works_root: Path, out_dir: Path) -> None:
         names = _credit_names(meta.get("credits"))
         credit_html = ", ".join(_esc(n) for n in names) if names else "(関与モデル情報なし)"
         body_html = _body_to_html(text)
-        page = [
-            "<!DOCTYPE html>",
-            "<html lang='ja'>",
-            "<head><meta charset='utf-8'>",
-            f"<title>{_esc(title)}</title></head>",
-            "<body>",
+        page_body = "\n".join([
             "<article>",
             f"<h1>{_esc(title)}</h1>",
             "<section class='credits'>",
             f"<p>関与モデル: {credit_html}</p>",
             "<p>ライセンス: CC0</p>",
+            # 深層アーカイブ（全制作記録）へのリンク（PLAN §8 二層構造）。
+            f"<p><a href='{_esc(work_id)}/'>制作記録（深層アーカイブ）</a></p>",
             "</section>",
             "<section class='body'>",
             body_html,
             "</section>",
-            "<footer>",
-            # 深層アーカイブ（全制作記録）へのリンク（PLAN §8 二層構造）。
-            f"<p><a href='{_esc(work_id)}/'>制作記録（深層アーカイブ）</a></p>",
-            "</footer>",
+            "<p><a href='../index.html'>← 一覧へ戻る</a></p>",
             "</article>",
-            "</body>",
-            "</html>",
-            "",
-        ]
-        (out_dir / "works" / f"{work_id}.html").write_text("\n".join(page), encoding="utf-8")
+            _site_footer(),
+        ])
+        (out_dir / "works" / f"{work_id}.html").write_text(_page(title, page_body), encoding="utf-8")
