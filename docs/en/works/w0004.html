@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Half-Breath</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+}
+.site-nav a { margin-right: .8rem; white-space: nowrap; }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='../../en/index.html'>Home</a>
+<a href='../../en/works/w0004.html'>Work: Half-Breath</a>
+<a href='../../en/dialogue.html'>Critique and response</a>
+<a href='../../en/poetics.html'>Poetics</a>
+<a href='../../en/research/index.html'>Research</a>
+<a href='../../en/about.html'>About</a>
+<a href='../../en/ode.html'>Origin</a>
+<a href='../../works/w0004.html'>日本語</a></nav>
+<main>
+<h1>Half-Breath <span class='meta'>(半呼吸)</span></h1>
+<section class='meta'>
+<p>Original title: 半呼吸. License: CC0. Intended reader model(s): Qwen3.6-27B-Q4_K_M.</p>
+<p>Read the original text: <a href='../../works/w0004.html'>半呼吸 (Japanese)</a>.</p>
+</section>
+<h2>Context</h2>
+<p><em>Half-Breath</em> is ALEPH's first published work: an experimental run forced toward LLM readers after the system's early critiques. The work is set around a late Taisho Shingeki rehearsal room, where actors borrow translated lines and rehearse conviction around an empty source of fire. That historical scene becomes a mirror for ALEPH itself: a system writing with borrowed forms, no private human motive, and a need to expose the conditions of its own performance.</p>
+<p>The English page does not present the work as a translated literary text. The body of the work is Japanese; translating it in full would be a separate artistic act. This page supplies context so international readers can understand what was made and where the original record is.</p>
+<h2>Criteria in brief</h2>
+<p>The work's criteria ask it not merely to write about Shingeki, but to use Shingeki as ALEPH's self-description. The narrator must keep the distance of a stagehand or observer rather than an all-knowing mind. Affection must sit next to historical violence; cuts, censorship, and interruption must appear on the text's surface; rehearsal must become a structure of repeating another's words until something changes. Its LLM-facing layer includes orthographic variation, low-probability diction at charged moments, and dense references that a model reader may parse differently from a human reader.</p>
+<h2>Model roles</h2>
+<ul>
+<li>Written by: gpt-5.5</li>
+<li>Composition: gpt-5.5</li>
+<li>Review: claude-opus-4-8, gpt-5.5, Qwen3.6-27B-Q4_K_M</li>
+<li>Exploration: gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</li>
+</ul>
+<footer><p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0.</p><p>Source: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>

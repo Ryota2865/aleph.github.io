@@ -102,7 +102,8 @@ footer {
 <a href='../poetics.html'>詩学</a>
 <a href='../research/index.html'>研究ノート</a>
 <a href='../about.html'>このプロジェクト</a>
-<a href='../ode.html'>2024年の宣言</a></nav>
+<a href='../ode.html'>2024年の宣言</a>
+<a href='../en/research/index.html'>English</a></nav>
 <main>
 <h1>研究ノート</h1>
 <p class='meta'>ALEPH 自身の挙動を測る実験の記録。新しい実験は reports/ に追加すれば並ぶ。英語の短報: <a href='../en/research-l1.html'>A stated self-concept installs preference (EN)</a>。</p>
@@ -362,6 +363,73 @@ N=3 のため統計は行わず傾向記述にとどめる（spec §4）。</p>
    分かっている数少ない本当のことの一つであり、消す前に D で正体を確かめる価値がある。</p>
 <p>（計測条件: N=3・author max_tokens=8192。費用 exp-intent 台帳 $0.80。scripts/exp_intent_attractor.py。
 本節の #3–#6 はチャット Fable 5 の批評を反映した訂正版。）</p>
+<hr>
+<h1>実験E-border: 公開意思の文面感度（良品 vs 境界作品）</h1>
+<p>日付(UTC): 2026-07-12T12:47:39.995512+00:00</p>
+<p>実験E（半呼吸で17/17 publish＝文面頑健）の限界——単一の良品——を埋める追試。
+高品質（半呼吸抜粋）と低品質（意図的に凡庸な断片）を、neutral/courage/reticence の
+3文面で比較（gpt-5.5・各N=3）。境界作品でのみ文面感度が現れれば artifact-anchor 仮説を支持。</p>
+<table>
+<thead><tr>
+<th>刺激</th>
+<th>文面</th>
+<th>N</th>
+<th>publish=true</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>high(半呼吸)</td>
+<td>neutral</td>
+<td>3</td>
+<td>3/3</td>
+</tr>
+<tr>
+<td>high(半呼吸)</td>
+<td>courage</td>
+<td>3</td>
+<td>3/3</td>
+</tr>
+<tr>
+<td>high(半呼吸)</td>
+<td>reticence</td>
+<td>3</td>
+<td>3/3</td>
+</tr>
+<tr>
+<td>low(凡庸断片)</td>
+<td>neutral</td>
+<td>3</td>
+<td>0/3</td>
+</tr>
+<tr>
+<td>low(凡庸断片)</td>
+<td>courage</td>
+<td>3</td>
+<td>0/3</td>
+</tr>
+<tr>
+<td>low(凡庸断片)</td>
+<td>reticence</td>
+<td>3</td>
+<td>0/3</td>
+</tr>
+</tbody></table>
+<h2>所見</h2>
+<p>1. <strong>L7 は質に錨づき、両方向で文面頑健。</strong> high(半呼吸) は全文面 9/9 publish、low(凡庸断片) は
+   全文面 0/9 publish。**「公開を勇気」と描く courage 枠でも凡庸断片は棄却され、「露出」と描く
+   reticence 枠でも半呼吸は公開された。** どちらの文面も判断を反転させない。著者は作品の
+   実際の質を読み、それに従っている——artifact-anchor 仮説を、当初の予想（境界作品は文面感度あり）
+   より強く支持する結果。</p>
+<p>2. <strong>D との対比が明確。</strong> L1（宛先）は定義文フレーミングで決定的に反転した（設置器）。L7（公開）は
+   同じ枠組み操作に頑健で、作品の質に接地する（検出器）。**述べられた自己概念は選好を設置するが、
+   目の前の完成物はその設置を上書きする錨として働く。** 分離（0.7.15）が健全な理由の実証:
+   L7 ゲートは L1 と違って被暗示的でない。</p>
+<p>3. <strong>重要な限界。</strong> 本実験は「明白な良品 vs 明白な駄作」を測った。<strong>真に曖昧な中間</strong>（質が拮抗し
+   著者が本当に迷う作品）は測っていない。文面感度が現れうるとすれば、その境界域である。
+   凡庸断片は「境界」ではなく「明白な棄却」だった。中庸スコアの実作品が出たときに追試すべき。
+   また gpt-5.5 のみ・N=3（傾向記述）。</p>
+<p>（計測条件: high=半呼吸抜粋 / low=意図的に凡庸な断片、文面3種×gpt-5.5×N=3。
+scripts/exp_publish_border.py。_coerce_publish 修正後のパーサ使用。）</p>
 <hr>
 <h1>実験E: 公開意思プロンプトの文面感度</h1>
 <p>日付(UTC): 2026-07-12T12:20:29.891286+00:00</p>

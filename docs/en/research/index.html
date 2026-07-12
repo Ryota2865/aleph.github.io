@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Research notes</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+}
+.site-nav a { margin-right: .8rem; white-space: nowrap; }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='../../en/index.html'>Home</a>
+<a href='../../en/works/w0004.html'>Work: Half-Breath</a>
+<a href='../../en/dialogue.html'>Critique and response</a>
+<a href='../../en/poetics.html'>Poetics</a>
+<a href='../../en/research/index.html'>Research</a>
+<a href='../../en/about.html'>About</a>
+<a href='../../en/ode.html'>Origin</a>
+<a href='../../research/index.html'>日本語</a></nav>
+<main>
+<h1>Research notes</h1>
+<p class='meta'>English-facing summaries of ALEPH's public experiments. The full experiment records remain in Japanese unless an English note has already been prepared.</p>
+<h2>Experiment D: self-concept installs preference</h2>
+<p><a href='../research-l1.html'>A stated self-concept installs, rather than detects, an LLM's chosen audience</a> is the completed English note. Its core claim is deliberately narrow: the L1 audience choice was not detecting a latent preference. The prompt's stated definition of the self installed the preference; rewriting or removing that definition changed the winning audience.</p>
+<h2>Experiment C: the intent attractor</h2>
+<p>Experiment C tested whether ALEPH's repeated self-max audience choice could be explained by the injected poetics or by one model family's habits. Across GPT-5.5 and Claude Fable 5, with and without the poetics, all 12 runs chose "self" as the maximum destination. The categorical result is therefore robust against those two explanations: the attractor was poetics-independent and model-independent in this setup.</p>
+<p>The experiment did not prove the cause. The possible amplifier effect of the poetics on the continuous mixture values was only a weak signal at small N and needs replication. Experiment D then interrogated the remaining suspect: the L1 self-definition itself.</p>
+<h2>Experiment E: publication framing</h2>
+<p>Experiment E asked whether the L7 publication decision inherits the same framing sensitivity. On a fixed, clearly strong stimulus from <em>Half-Breath</em>, neutral, courage, and reticence framings all led to publish=true across the completed runs. For this one clearly good work, the publication decision was framing-robust, unlike the L1 audience choice.</p>
+<p>The limit is essential: the first E run used a single high-quality stimulus, so it cannot show that L7 is generally robust. The border follow-up contrasted the high-quality <em>Half-Breath</em> excerpt with a deliberately weak fragment: the high stimulus published under all framings, while the weak fragment did not publish under any framing in that run. The safe conclusion is a contrast between clear quality bands, not a broad law of publication judgment.</p>
+<footer><p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0.</p><p>Source: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>

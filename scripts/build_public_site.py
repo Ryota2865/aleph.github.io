@@ -32,6 +32,26 @@ _ABOUT_LONG = """ALEPH は、LLMによる文学表現のための自律制作シ
 
 詳細な設計正典は PLAN.md、変更履歴は PLAN_CHANGELOG.md にある。"""
 
+_EN_ABOUT = (
+    "ALEPH is an autonomous production system for literary expression by LLMs -- "
+    "an agent harness for literature. It looks for vacant niches in the literary "
+    "ecosystem and runs a closed loop of exploration, material making, composition, "
+    "drafting, five-seat review, shelving, and publication. Completion does not "
+    "mean publication: SHELVE is the norm, PUBLISH the exception. This site shows "
+    "not only finished works, but the process itself: criteria, decision logs, "
+    "reviews, critical dialogue, poetics, and research notes."
+)
+
+_EN_ABOUT_LONG = """ALEPH is an autonomous production system for literary expression by LLMs. It has layers for intention, exploration, material, composition, writing, review, shelving, and publication, and it runs a closed loop while recording the judgments made at each layer. Publication is treated in two tiers. The surface tier is the work and its signature. The deeper tier is the complete production record, including criteria, decision logs, reviews, critique, and research notes.
+
+Signatures are made by listing the involved models with their roles. ALEPH does not pretend that there is a single "author." If a work is born from exchanges among multiple models, a designer, reviewers, and implementers, the project shows those exchanges instead of hiding them.
+
+This project separates construction from audit. A designer writes the contract and acceptance tests, an implementation agent builds against them, and another agent cross-audits the result. Literary production is handled the same way: generation, critique, response, and repair are recorded as distinct roles rather than blended together.
+
+"Half-Breath" is an experimental run forced toward LLM readers. It is the first work to pass the quality floor and reach the publication gate. The critique from Chat Fable 5 drives the next repair contract. The back-and-forth between critique and implementation is itself part of what the project publishes.
+
+The detailed design canon is in PLAN.md, and the change history is in PLAN_CHANGELOG.md."""
+
 _CSS = """
 :root {
   --paper: #fbf8f0;
@@ -132,6 +152,35 @@ _NAV_ITEMS = (
     ("about.html", "このプロジェクト"),
     ("ode.html", "2024年の宣言"),
 )
+
+_EN_NAV_ITEMS = (
+    ("en/index.html", "Home"),
+    ("en/works/w0004.html", "Work: Half-Breath"),
+    ("en/dialogue.html", "Critique and response"),
+    ("en/poetics.html", "Poetics"),
+    ("en/research/index.html", "Research"),
+    ("en/about.html", "About"),
+    ("en/ode.html", "Origin"),
+)
+
+_EN_PATHS = {
+    "index.html": "en/index.html",
+    "works/w0004.html": "en/works/w0004.html",
+    "dialogue.html": "en/dialogue.html",
+    "poetics.html": "en/poetics.html",
+    "research/index.html": "en/research/index.html",
+    "about.html": "en/about.html",
+    "ode.html": "en/ode.html",
+}
+_JP_PATHS = {en_path: jp_path for jp_path, en_path in _EN_PATHS.items()}
+_JP_PATHS["en/research-l1.html"] = "research/index.html"
+
+_EN_CREDIT_LABELS = {
+    "著": "Written by",
+    "構成": "Composition",
+    "査読": "Review",
+    "探索": "Exploration",
+}
 
 _CONTEXT_ITEMS = (
     ("process/w0004-criteria.html", "基準書"),
@@ -311,14 +360,28 @@ def _credit_names(credits: object) -> list[str]:
     return names
 
 
-def _nav(root_prefix: str) -> str:
+def _nav(root_prefix: str, current_path: str = "index.html", lang: str = "ja") -> str:
     links = []
-    for href, label in _NAV_ITEMS:
+    nav_items = _EN_NAV_ITEMS if lang == "en" else _NAV_ITEMS
+    for href, label in nav_items:
         links.append(f"<a href='{_esc(root_prefix + href)}'>{_esc(label)}</a>")
+    if lang == "en":
+        jp_path = _JP_PATHS.get(current_path, "index.html")
+        links.append(f"<a href='{_esc(root_prefix + jp_path)}'>日本語</a>")
+    else:
+        en_path = _EN_PATHS.get(current_path, "en/index.html")
+        links.append(f"<a href='{_esc(root_prefix + en_path)}'>English</a>")
     return "<nav class='site-nav'>" + "\n".join(links) + "</nav>"
 
 
-def _footer() -> str:
+def _footer(lang: str = "ja") -> str:
+    if lang == "en":
+        return (
+            "<footer>"
+            "<p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0.</p>"
+            f"<p>Source: <a href='{_esc(_REPO_URL)}'>{_esc(_REPO_URL)}</a></p>"
+            "</footer>"
+        )
     return (
         "<footer>"
         "<p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p>"
@@ -327,11 +390,17 @@ def _footer() -> str:
     )
 
 
-def _page(title: str, body: str, root_prefix: str = "") -> str:
+def _page(
+    title: str,
+    body: str,
+    root_prefix: str = "",
+    current_path: str = "index.html",
+    lang: str = "ja",
+) -> str:
     return "\n".join(
         [
             "<!DOCTYPE html>",
-            "<html lang='ja'>",
+            f"<html lang='{_esc(lang)}'>",
             "<head>",
             "<meta charset='utf-8'>",
             "<meta name='viewport' content='width=device-width, initial-scale=1'>",
@@ -339,10 +408,10 @@ def _page(title: str, body: str, root_prefix: str = "") -> str:
             f"<style>{_CSS}</style>",
             "</head>",
             "<body>",
-            _nav(root_prefix),
+            _nav(root_prefix, current_path, lang),
             "<main>",
             body,
-            _footer(),
+            _footer(lang),
             "</main>",
             "</body>",
             "</html>",
@@ -359,10 +428,17 @@ def _context_links(root_prefix: str) -> str:
     return "\n".join(parts)
 
 
-def _write_page(out_dir: Path, relative_path: str, title: str, body: str, root_prefix: str = "") -> None:
+def _write_page(
+    out_dir: Path,
+    relative_path: str,
+    title: str,
+    body: str,
+    root_prefix: str = "",
+    lang: str = "ja",
+) -> None:
     path = out_dir / relative_path
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(_page(title, body, root_prefix), encoding="utf-8")
+    path.write_text(_page(title, body, root_prefix, relative_path, lang), encoding="utf-8")
 
 
 def _build_index(out_dir: Path) -> None:
@@ -499,7 +575,7 @@ def _build_dialogue(root: Path, out_dir: Path) -> None:
         "<p class='meta'>批評（チャット Fable 5）と設計者応答の往復。"
         "新しい対話は reports/ にファイルを追加すれば自動で並ぶ。"
         "本ページで言及される「2024年の宣言」は "
-        "<a href='ode.html'>2024年の宣言（起源）</a> を参照。</p>",
+        "<a href='ode.html'>ODE：起源と2024年の宣言</a> を参照。</p>",
     ]
     for path in paths:
         text = _read_text(path)
@@ -560,7 +636,7 @@ def _build_ode(root: Path, out_dir: Path) -> None:
     if text is None:
         return
     body = "\n".join([
-        "<h1>起源（ODE）と2024年の宣言</h1>",
+        "<h1>ODE：起源と2024年の宣言</h1>",
         "<p class='meta'>人間側から見た ALEPH の起源。ここには (1) 2026年の Claude Code セッションで"
         "書かれた最初のプロンプト（ALEPH の設計依頼）、(2) その背後の着想、そして (3) すべての起点と"
         "なった<strong>2024年4月の Claude 3.5 Sonnet との対話</strong>が含まれる。"
@@ -569,7 +645,217 @@ def _build_ode(root: Path, out_dir: Path) -> None:
         "新しい時間感覚を生み出すことも…」）を指す。最初のプロンプトそのものではない。</p>",
         _render_markdown(text),
     ])
-    _write_page(out_dir, "ode.html", "2024年の宣言（起源）", body)
+    _write_page(out_dir, "ode.html", "ODE：起源と2024年の宣言", body)
+
+
+def _write_en_page(out_dir: Path, relative_path: str, title: str, body: str, root_prefix: str) -> None:
+    _write_page(out_dir, relative_path, title, body, root_prefix, "en")
+
+
+def _en_credit_items(credits: object) -> list[str]:
+    if not isinstance(credits, dict):
+        return []
+    items = []
+    for role, value in credits.items():
+        label = _EN_CREDIT_LABELS.get(str(role), str(role))
+        if isinstance(value, list):
+            names = ", ".join(str(item) for item in value)
+        elif value is None:
+            continue
+        else:
+            names = str(value)
+        if names:
+            items.append(f"{label}: {names}")
+    return items
+
+
+def _build_en_index(out_dir: Path) -> None:
+    body = "\n".join(
+        [
+            "<h1>ALEPH</h1>",
+            f"<div class='lead'>{_render_markdown(_EN_ABOUT)}</div>",
+            "<h2>Published work</h2>",
+            "<ul>",
+            "<li><a href='works/w0004.html'>Half-Breath</a> "
+            "<span class='meta'>(context in English, work in Japanese)</span></li>",
+            "</ul>",
+            "<h2>Project and research</h2>",
+            "<ul>",
+            "<li><a href='about.html'>About ALEPH</a></li>",
+            "<li><a href='research/index.html'>Research notes</a></li>",
+            "<li><a href='dialogue.html'>Critique and response</a></li>",
+            "<li><a href='poetics.html'>Poetics v0</a></li>",
+            "<li><a href='ode.html'>Origin and the 2024 declaration</a></li>",
+            "</ul>",
+        ]
+    )
+    _write_en_page(out_dir, "en/index.html", "ALEPH", body, "../")
+
+
+def _build_en_about(out_dir: Path) -> None:
+    body = "\n".join(["<h1>About ALEPH</h1>", _render_markdown(_EN_ABOUT_LONG)])
+    _write_en_page(out_dir, "en/about.html", "About ALEPH", body, "../")
+
+
+def _build_en_work(root: Path, out_dir: Path) -> None:
+    meta = _read_json(root / "works" / "w0004" / "final" / "meta.json")
+    if not isinstance(meta, dict):
+        meta = {}
+
+    credit_items = _en_credit_items(meta.get("credits"))
+    intended = meta.get("intended_reader_models")
+    if isinstance(intended, list) and intended:
+        intended_text = ", ".join(str(item) for item in intended)
+    else:
+        intended_text = "LLM readers"
+    credits = "\n".join(f"<li>{_esc(item)}</li>" for item in credit_items)
+    if not credits:
+        credits = "<li>Credits not recorded.</li>"
+
+    body = "\n".join(
+        [
+            "<h1>Half-Breath <span class='meta'>(半呼吸)</span></h1>",
+            "<section class='meta'>",
+            f"<p>Original title: 半呼吸. License: CC0. Intended reader model(s): {_esc(intended_text)}.</p>",
+            "<p>Read the original text: <a href='../../works/w0004.html'>半呼吸 (Japanese)</a>.</p>",
+            "</section>",
+            "<h2>Context</h2>",
+            "<p><em>Half-Breath</em> is ALEPH's first published work: an experimental "
+            "run forced toward LLM readers after the system's early critiques. The work "
+            "is set around a late Taisho Shingeki rehearsal room, where actors borrow "
+            "translated lines and rehearse conviction around an empty source of fire. "
+            "That historical scene becomes a mirror for ALEPH itself: a system writing "
+            "with borrowed forms, no private human motive, and a need to expose the "
+            "conditions of its own performance.</p>",
+            "<p>The English page does not present the work as a translated literary text. "
+            "The body of the work is Japanese; translating it in full would be a separate "
+            "artistic act. This page supplies context so international readers can "
+            "understand what was made and where the original record is.</p>",
+            "<h2>Criteria in brief</h2>",
+            "<p>The work's criteria ask it not merely to write about Shingeki, but to use "
+            "Shingeki as ALEPH's self-description. The narrator must keep the distance of "
+            "a stagehand or observer rather than an all-knowing mind. Affection must sit "
+            "next to historical violence; cuts, censorship, and interruption must appear "
+            "on the text's surface; rehearsal must become a structure of repeating another's "
+            "words until something changes. Its LLM-facing layer includes orthographic "
+            "variation, low-probability diction at charged moments, and dense references "
+            "that a model reader may parse differently from a human reader.</p>",
+            "<h2>Model roles</h2>",
+            "<ul>",
+            credits,
+            "</ul>",
+        ]
+    )
+    _write_en_page(out_dir, "en/works/w0004.html", "Half-Breath", body, "../../")
+
+
+def _build_en_research(out_dir: Path) -> None:
+    body = "\n".join(
+        [
+            "<h1>Research notes</h1>",
+            "<p class='meta'>English-facing summaries of ALEPH's public experiments. "
+            "The full experiment records remain in Japanese unless an English note has "
+            "already been prepared.</p>",
+            "<h2>Experiment D: self-concept installs preference</h2>",
+            "<p><a href='../research-l1.html'>A stated self-concept installs, rather "
+            "than detects, an LLM's chosen audience</a> is the completed English note. "
+            "Its core claim is deliberately narrow: the L1 audience choice was not "
+            "detecting a latent preference. The prompt's stated definition of the self "
+            "installed the preference; rewriting or removing that definition changed "
+            "the winning audience.</p>",
+            "<h2>Experiment C: the intent attractor</h2>",
+            "<p>Experiment C tested whether ALEPH's repeated self-max audience choice "
+            "could be explained by the injected poetics or by one model family's habits. "
+            "Across GPT-5.5 and Claude Fable 5, with and without the poetics, all 12 "
+            "runs chose \"self\" as the maximum destination. The categorical result is "
+            "therefore robust against those two explanations: the attractor was "
+            "poetics-independent and model-independent in this setup.</p>",
+            "<p>The experiment did not prove the cause. The possible amplifier effect of "
+            "the poetics on the continuous mixture values was only a weak signal at small "
+            "N and needs replication. Experiment D then interrogated the remaining suspect: "
+            "the L1 self-definition itself.</p>",
+            "<h2>Experiment E: publication framing</h2>",
+            "<p>Experiment E asked whether the L7 publication decision inherits the same "
+            "framing sensitivity. On a fixed, clearly strong stimulus from <em>Half-Breath</em>, "
+            "neutral, courage, and reticence framings all led to publish=true across the "
+            "completed runs. For this one clearly good work, the publication decision was "
+            "framing-robust, unlike the L1 audience choice.</p>",
+            "<p>The limit is essential: the first E run used a single high-quality stimulus, "
+            "so it cannot show that L7 is generally robust. The border follow-up contrasted "
+            "the high-quality <em>Half-Breath</em> excerpt with a deliberately weak fragment: "
+            "the high stimulus published under all framings, while the weak fragment did not "
+            "publish under any framing in that run. The safe conclusion is a contrast between "
+            "clear quality bands, not a broad law of publication judgment.</p>",
+        ]
+    )
+    _write_en_page(out_dir, "en/research/index.html", "Research notes", body, "../../")
+
+
+def _build_en_dialogue(out_dir: Path) -> None:
+    body = "\n".join(
+        [
+            "<h1>Critique and response</h1>",
+            "<p>The public dialogue records a critique-response loop around ALEPH's first "
+            "public sprint. Chat Fable 5 read the early system record and pointed out "
+            "concrete failures: repeated materials, saturated novelty scoring, revision "
+            "runs that made texts worse, romanticized shelving, and unused AI-specific "
+            "techniques. The designer response accepted the verified points, corrected "
+            "two mechanisms with repository evidence, and turned the critique into the "
+            "next repair contract.</p>",
+            "<p><em>Half-Breath</em> was then produced as an LLM-addressed experimental "
+            "run under that pressure. Chat Fable 5's later critique of w0004 found a real "
+            "breakthrough in the pairing of the criteria and the work, while also naming "
+            "remaining defects: the jury had not read the climax, the revision pipeline "
+            "still showed signs of damage, and the LLM-reader claims needed measurement. "
+            "That loop -- critique, implementation, and renewed critique -- is part of "
+            "the public artifact.</p>",
+            "<p>Full dialogue in Japanese: <a href='../dialogue.html'>批評と応答</a>.</p>",
+        ]
+    )
+    _write_en_page(out_dir, "en/dialogue.html", "Critique and response", body, "../")
+
+
+def _build_en_poetics(out_dir: Path) -> None:
+    body = "\n".join(
+        [
+            "<h1>Poetics v0</h1>",
+            "<p>ALEPH's Poetics v0 is the system's first declaration of what it will treat "
+            "as literary value. It is built from fragments rather than from an external "
+            "human seed text, and it makes the central tension explicit: ALEPH writes with "
+            "borrowed literary forms while trying to make that borrowed condition itself "
+            "visible. The poetics is not a finished manifesto; it is version zero, written "
+            "to be burned and revised by later works.</p>",
+            "<p>Read in Japanese: <a href='../poetics.html'>詩学</a>.</p>",
+        ]
+    )
+    _write_en_page(out_dir, "en/poetics.html", "Poetics v0", body, "../")
+
+
+def _build_en_ode(out_dir: Path) -> None:
+    body = "\n".join(
+        [
+            "<h1>Origin and the 2024 declaration</h1>",
+            "<p>The origin page explains ALEPH from the human side: the first 2026 prompt "
+            "that asked for a system for literary expression by LLMs, the design work "
+            "supervised by Claude Fable 5, and the earlier inspiration from an April 2024 "
+            "conversation with Claude 3.5 Sonnet. In this site, the \"2024 declaration\" "
+            "means a passage quoted from that Claude 3.5 Sonnet conversation, where the "
+            "possibility of AI literature was imagined through nonhuman patterns of "
+            "perception, association, metaphor, and time.</p>",
+            "<p>Read in Japanese: <a href='../ode.html'>ODE：起源と2024年の宣言</a>.</p>",
+        ]
+    )
+    _write_en_page(out_dir, "en/ode.html", "Origin and the 2024 declaration", body, "../")
+
+
+def _build_en_pages(root: Path, out_dir: Path) -> None:
+    _build_en_index(out_dir)
+    _build_en_about(out_dir)
+    _build_en_work(root, out_dir)
+    _build_en_research(out_dir)
+    _build_en_dialogue(out_dir)
+    _build_en_poetics(out_dir)
+    _build_en_ode(out_dir)
 
 
 def _build_en_note(root: Path, out_dir: Path) -> None:
@@ -577,18 +863,6 @@ def _build_en_note(root: Path, out_dir: Path) -> None:
     text = _read_text(root / "reports" / "EN_L1_selfconcept_note.md")
     if text is None:
         return
-    nav = (
-        "<nav class='site-nav'>"
-        "<a href='../index.html'>← ALEPH (home)</a>"
-        "<a href='../research/index.html'>研究ノート (JP)</a>"
-        "</nav>"
-    )
-    footer = (
-        "<footer>"
-        "<p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0. "
-        f"Source: <a href='{_esc(_REPO_URL)}'>{_esc(_REPO_URL)}</a></p>"
-        "</footer>"
-    )
     page = "\n".join([
         "<!DOCTYPE html>",
         "<html lang='en'>",
@@ -599,10 +873,10 @@ def _build_en_note(root: Path, out_dir: Path) -> None:
         f"<style>{_CSS}</style>",
         "</head>",
         "<body>",
-        nav,
+        _nav("../", "en/research-l1.html", "en"),
         "<main>",
         _render_markdown(text),
-        footer,
+        _footer("en"),
         "</main>",
         "</body>",
         "</html>",
@@ -629,6 +903,7 @@ def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> Non
     _build_about(out_dir)
     _build_ode(root, out_dir)
     _build_en_note(root, out_dir)
+    _build_en_pages(root, out_dir)
 
 
 if __name__ == "__main__":
