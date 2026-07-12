@@ -18,7 +18,9 @@ import numpy as np
 
 from aleph.critique.adversary import adversary_review
 from aleph.critique.reader_model import reader_prompt
+from aleph.critique.style import rationing_instructions
 from aleph.explore.niche import _extract_json_object
+from aleph.materia.ai_native import perplexity_curve
 
 
 _SCORE_PATTERNS = (
@@ -28,8 +30,10 @@ _SCORE_PATTERNS = (
 )
 
 # 査読に渡す草稿の上限(字)。ローカル審級の文脈長(20480トークン、うち生成4096)に
-# プロンプト外装込みで収まる値(日本語は1字≈0.8-1トークン)。超過分は冒頭抜粋+注記で査読する。
+# プロンプト外装込みで収まる値(日本語は1字≈0.8-1トークン)。超過分は冒頭・中間・末尾の
+# 有界セグメントで査読し、クライマックスを必ず審級へ載せる。
 _REVIEW_EXCERPT_CHARS = 18000
+_REVIEW_SEGMENT_CHARS = 6000
 
 
 def sanitize_critique(text: str) -> str:
@@ -38,6 +42,53 @@ def sanitize_critique(text: str) -> str:
     for pattern in _SCORE_PATTERNS:
         sanitized = pattern.sub("[数値除去]", sanitized)
     return sanitized
+
+
+def _review_segments(draft_text: str) -> tuple[list[tuple[str, str]], int]:
+    """長い草稿を冒頭・中間・末尾の査読セグメントへ縮約する."""
+    full_len = len(draft_text)
+    if full_len <= _REVIEW_EXCERPT_CHARS:
+        return [("全文", draft_text)], full_len
+
+    seg = _REVIEW_SEGMENT_CHARS
+    mid = full_len // 2
+    middle_start = max(0, mid - seg // 2)
+    middle_end = min(full_len, middle_start + seg)
+    return [
+        ("冒頭", draft_text[:seg]),
+        ("中間", draft_text[middle_start:middle_end]),
+        ("末尾（クライマックス）", draft_text[-seg:]),
+    ], full_len
+
+
+def _review_input(draft_text: str) -> str:
+    """審級に渡す有界な草稿テキスト。長文では全文長と区切り注記を明記する."""
+    segments, full_len = _review_segments(draft_text)
+    if len(segments) == 1:
+        return draft_text
+    blocks = [
+        f"【査読セグメント: {label} / 全文{full_len}字】\n{text}"
+        for label, text in segments
+    ]
+    blocks.append(f"【注記】全文{full_len}字から冒頭・中間・末尾を各約{_REVIEW_SEGMENT_CHARS}字で抜粋。")
+    return "\n\n".join(blocks)
+
+
+def _llm_is_primary_audience(audience: str) -> bool:
+    """宛先配合で「LLM」が最大係数かを判定する（§5.4技法の適用条件）."""
+    weights: dict[str, float] = {}
+    for label, value in re.findall(r"([^/\n,、]+?)\s*[=:：]?\s*([0-9]+(?:\.[0-9]+)?)", audience or ""):
+        try:
+            weights[label.strip()] = float(value)
+        except ValueError:
+            continue
+    if not weights:
+        return False
+    llm_weights = [v for k, v in weights.items() if "LLM" in k]
+    if not llm_weights:
+        return False
+    others = [v for k, v in weights.items() if "LLM" not in k]
+    return not others or max(llm_weights) >= max(others)
 
 
 def _technical_review(scout: Callable[[str], str], draft_text: str) -> dict:
@@ -126,23 +177,101 @@ def _reader_review(reader: Callable[[str], str], draft_text: str, audience: str)
     return parsed
 
 
-def _synthesize_revise_instructions(criteria_review: dict, technical: dict) -> list[str]:
+def _instruction_lines(text: str) -> list[str]:
+    normalized = text.strip()
+    if not normalized or normalized in {"[]", "なし", "特になし"} or "ありません" in normalized:
+        return []
+    parsed = _extract_json_object(normalized)
+    if isinstance(parsed, dict):
+        items: list[str] = []
+        for key in ("issues", "items", "instructions", "points"):
+            value = parsed.get(key)
+            if isinstance(value, list):
+                items.extend(str(item) for item in value)
+            elif isinstance(value, str):
+                items.append(value)
+        if not items:
+            return []
+        normalized = "\n".join(items)
+    lines: list[str] = []
+    for raw in normalized.splitlines():
+        line = re.sub(r"^\s*(?:[-*・]|\d+[\).、])\s*", "", raw).strip()
+        if not line or line in {"[]", "なし", "特になし"} or "ありません" in line:
+            continue
+        lines.append(line)
+    return lines
+
+
+def _distill_criteria_issues(criteria_review: dict, scout: Callable[[str], str] | None) -> list[str]:
+    critiques = [
+        sanitize_critique(str(critique)).strip()
+        for critique in criteria_review.get("critiques", [])
+        if str(critique).strip()
+    ]
+    if not critiques or scout is None:
+        return []
+    prompt = (
+        "次の批評から「直すべき点」だけを箇条書きで、優先順位順に抽出してください。"
+        "褒め言葉は除いてください。直すべき点がなければ空で返してください。\n"
+        f"批評:\n" + "\n".join(f"- {critique}" for critique in critiques)
+    )
+    response = sanitize_critique(scout(prompt))
+    return _instruction_lines(response)
+
+
+def _synthesize_revise_instructions(
+    criteria_review: dict,
+    technical: dict,
+    scout: Callable[[str], str] | None = None,
+    *,
+    draft_text: str = "",
+) -> list[str]:
     """陪審批評+技術指摘から、数値を含まない自然言語の改稿指示を合成する（Goodhart回避）."""
     instructions: list[str] = []
-    for critique in criteria_review.get("critiques", []):
-        instructions.append(f"陪審の批評に応える: {critique}")
+    for issue in _distill_criteria_issues(criteria_review, scout):
+        instructions.append(sanitize_critique(f"陪審の直すべき点に応える: {issue}"))
     for issue in technical.get("issues", []):
         if isinstance(issue, dict):
             note = str(issue.get("note") or issue.get("where") or issue.get("type") or "").strip()
         else:
             note = str(issue).strip()
         if note:
-            instructions.append(f"技術指摘に応える: {note}")
+            instructions.append(sanitize_critique(f"技術指摘に応える: {note}"))
+    instructions.extend(sanitize_critique(i) for i in rationing_instructions(draft_text))
     return instructions
+
+
+def _perplexity_review(draft_text: str, reader_llm) -> dict:
+    segments, full_len = _review_segments(draft_text)
+    prompts = [
+        f"LLM読者として次の査読セグメントを読んでください。全文{full_len}字中の{label}です。\n{text}"
+        for label, text in segments
+    ]
+    curve = perplexity_curve(prompts, reader_llm)
+    return {
+        "unit": "mean_logprob_per_segment",
+        "segments": [
+            {"label": label, "mean_logprob": value}
+            for (label, _text), value in zip(segments, curve)
+        ],
+        "curve": curve,
+    }
 
 
 def _write_report_markdown(work, version: int, report: dict) -> None:
     cr = report["criteria_review"]
+    perplexity_lines: list[str] = []
+    if "perplexity" in report:
+        perplexity = report["perplexity"]
+        perplexity_lines = [
+            "## LLM審級: perplexity曲線",
+            f"- 単位: {perplexity.get('unit')}",
+            *(
+                f"- {segment.get('label')}: {segment.get('mean_logprob')}"
+                for segment in perplexity.get("segments", [])
+            ),
+            "",
+        ]
     lines = [
         f"# 査読報告 v{version}",
         "",
@@ -161,6 +290,7 @@ def _write_report_markdown(work, version: int, report: dict) -> None:
         "## 読者審級",
         f"- {report['reader']}",
         "",
+        *perplexity_lines,
         "## 敵対的審級",
         f"- 既視的か: {report['adversary'].get('derivative')}",
         *(f"- 根拠: {ev}" for ev in report["adversary"].get("evidence", [])),
@@ -187,23 +317,24 @@ def run_review(
     embedder: Callable[[list[str]], np.ndarray],
     index_dir: str | Path,
     search_fn: Callable[..., list[dict]],
+    reader_llm=None,
 ) -> dict:
     """5審級（技術/基準/新奇性/読者/敵対的）を実行し、reviews/v{version}.md に報告を書く（PLAN §7.1）."""
-    # 過大な草稿は冒頭抜粋で査読する。ローカル審級の文脈長(20480)を超えると
+    # 過大な草稿は有界セグメントで査読する。ローカル審級の文脈長(20480)を超えると
     # llama-server が 400 を返して査読不能になる(w0003 実ラン: 21万字の草稿)。
     # 草稿長のガバナンス(length_estimate の強制)は別途の改善債務。
-    full_len = len(draft_text)
-    if full_len > _REVIEW_EXCERPT_CHARS:
-        draft_text = (
-            draft_text[:_REVIEW_EXCERPT_CHARS]
-            + f"\n\n……(以下略。全文{full_len}字のうち冒頭{_REVIEW_EXCERPT_CHARS}字の抜粋で査読)"
-        )
-    technical = _technical_review(scout, draft_text)
-    criteria_review = _criteria_review(jury, criteria, draft_text)
-    novelty = novelty_review(draft_text, embedder, index_dir)
-    reader_result = _reader_review(reader, draft_text, audience)
-    adversary = adversary_review(draft_text, criteria, search_fn, scout)
-    revise_instructions = _synthesize_revise_instructions(criteria_review, technical)
+    review_text = _review_input(draft_text)
+    technical = _technical_review(scout, review_text)
+    criteria_review = _criteria_review(jury, criteria, review_text)
+    novelty = novelty_review(review_text, embedder, index_dir)
+    reader_result = _reader_review(reader, review_text, audience)
+    adversary = adversary_review(review_text, criteria, search_fn, scout)
+    revise_instructions = _synthesize_revise_instructions(
+        criteria_review,
+        technical,
+        scout,
+        draft_text=draft_text,
+    )
 
     report = {
         "technical": technical,
@@ -213,6 +344,8 @@ def run_review(
         "adversary": adversary,
         "revise_instructions": revise_instructions,
     }
+    if reader_llm is not None and _llm_is_primary_audience(audience):
+        report["perplexity"] = _perplexity_review(draft_text, reader_llm)
     _write_report_markdown(work, version, report)
     return report
 
@@ -230,6 +363,7 @@ def critique_revise_loop(
     index_dir: str | Path,
     search_fn: Callable[..., list[dict]],
     max_iters: int = 2,
+    reader_llm=None,
 ) -> int:
     """v=1から REVISEループを max_iters 回まわす（PLAN §7.2・§10 M4）.
 
@@ -256,6 +390,7 @@ def critique_revise_loop(
             embedder=embedder,
             index_dir=index_dir,
             search_fn=search_fn,
+            reader_llm=reader_llm,
         )
         cr = report["criteria_review"]
         record = {

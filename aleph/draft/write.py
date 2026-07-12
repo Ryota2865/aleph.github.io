@@ -21,6 +21,8 @@ Critic = Callable[[str], str]
 
 _SUMMARY_CHARS = 400
 _SEAM_CONTEXT_CHARS = 200
+_FIRST_PERSON_MARKERS = ("私", "僕", "俺", "わたし", "ぼく", "おれ")
+_THIRD_PERSON_POLICY_MARKERS = ("三人称", "第三人称")
 
 
 def _now_iso() -> str:
@@ -47,6 +49,37 @@ def _smoothing_prompt(tail: str, head: str) -> str:
         "次の接続部を平滑化してください。前半セクションの末尾と後半セクションの冒頭を"
         "自然につなげた新しい接続部のみを返してください。\n"
         f"---前半末尾---\n{tail}\n---後半冒頭---\n{head}\n"
+    )
+
+
+def _composition_expects_third_person(composition: dict) -> bool:
+    policy = json.dumps(
+        {
+            "style_policy": composition.get("style_policy", ""),
+            "point_of_view": composition.get("point_of_view", ""),
+            "viewpoint": composition.get("viewpoint", ""),
+            "parts": composition.get("parts", []),
+        },
+        ensure_ascii=False,
+    )
+    return any(marker in policy for marker in _THIRD_PERSON_POLICY_MARKERS)
+
+
+def _uses_first_person(text: str) -> bool:
+    return any(marker in text for marker in _FIRST_PERSON_MARKERS)
+
+
+def _record_perspective_deviation(work, composition: dict, draft_text: str) -> None:
+    if not _composition_expects_third_person(composition) or not _uses_first_person(draft_text):
+        return
+    work.append_decision(
+        {
+            "ts": _now_iso(),
+            "layer": "L5",
+            "decision": "構成逸脱: 三人称方針に対し本文に一人称語が出現",
+            "reason": "winner の視点/style_policy と本文の人称が食い違ったため、作品は変更せず記録した",
+            "decided_by": "write_draft",
+        }
     )
 
 
@@ -80,6 +113,7 @@ def write_draft(work, composition: dict, audience: str, author: Author, *, versi
     path = work.draft_path(version)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(draft_text, encoding="utf-8")
+    _record_perspective_deviation(work, composition, draft_text)
     return path
 
 
