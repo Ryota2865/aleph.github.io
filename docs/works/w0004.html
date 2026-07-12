@@ -1,40 +1,125 @@
 <!DOCTYPE html>
 <html lang='ja'>
-<head><meta charset='utf-8'>
+<head>
+<meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
 <title>半呼吸</title>
 <style>
-:root { --paper:#faf7f0; --ink:#2b2721; --faint:#8a8174; --line:#e4ddd0; --accent:#8c5a2b; }
-@media (prefers-color-scheme: dark) {
-  :root { --paper:#191713; --ink:#d8d2c5; --faint:#7d766a; --line:#2e2a24; --accent:#c89b66; }
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--paper); color:var(--ink); font-family:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif; line-height:2.0; }
-main { max-width:44rem; margin:0 auto; padding:4rem 1.4rem 6rem; }
-h1 { font-size:1.7rem; font-weight:600; letter-spacing:.14em; margin-bottom:.5rem; }
-.tagline { color:var(--faint); font-size:.95rem; line-height:1.9; margin-bottom:2.6rem; }
-h2 { font-size:1.05rem; font-weight:600; letter-spacing:.18em; margin:2.8rem 0 1.2rem; }
-p { margin-bottom:1em; text-align:justify; }
-article .body p { white-space:pre-wrap; }
-a { color:var(--accent); text-decoration:none; }
-a:hover { text-decoration:underline; }
-ul.works { list-style:none; }
-ul.works li { border-top:1px solid var(--line); padding:1.3rem 0; }
-ul.works li:last-child { border-bottom:1px solid var(--line); }
-.empty { color:var(--faint); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:1.6rem 0; }
-.credits { color:var(--faint); font-size:.85rem; line-height:1.8; margin-bottom:2.4rem; }
-footer { margin-top:4rem; border-top:1px solid var(--line); padding-top:1.4rem; color:var(--faint); font-size:.82rem; line-height:1.9; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+}
+.site-nav a { margin-right: .8rem; white-space: nowrap; }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
 </style>
 </head>
-<body><main>
-<article>
+<body>
+<nav class='site-nav'><a href='../index.html'>ホーム</a>
+<a href='../works/w0004.html'>作品「半呼吸」</a>
+<a href='../process/w0004-criteria.html'>制作の記録</a>
+<a href='../dialogue.html'>批評と応答</a>
+<a href='../poetics.html'>詩学</a>
+<a href='../research/exp-intent-attractor.html'>研究ノート</a>
+<a href='../about.html'>このプロジェクト</a></nav>
+<main>
 <h1>半呼吸</h1>
-<section class='credits'>
-<p>関与モデル: gpt-5.5, gpt-5.5, claude-opus-4-8, gpt-5.5, Qwen3.6-27B-Q4_K_M, gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</p>
+<section class='meta'>
+<p>関与モデル: gpt-5.5, claude-opus-4-8, Qwen3.6-27B-Q4_K_M, gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</p>
 <p>ライセンス: CC0</p>
-<p><a href='w0004/'>制作記録（深層アーカイブ）</a></p>
 </section>
-<section class='body'>
+<section class='context'>
+<h2>この作品をめぐって</h2>
+<ul>
+<li><a href='../process/w0004-criteria.html'>基準書</a></li>
+<li><a href='../process/w0004-decisions.html'>決定ログ</a></li>
+<li><a href='../process/w0004-reviews.html'>五審級査読</a></li>
+<li><a href='../dialogue.html'>批評と応答</a></li>
+<li><a href='../poetics.html'>詩学</a></li>
+<li><a href='../research/exp-intent-attractor.html'>研究ノート</a></li>
+<li><a href='../about.html'>このプロジェクト</a></li>
+</ul>
+</section>
 <h1>第一稽古　火事だッ</h1>
 <p>「火事だッ」</p>
 <p>　板の上でそれを言ったのは、火の粉を見た者ではなく、翻訳原稿の二枚目を持たされた二枚目俳優だった。</p>
@@ -278,10 +363,10 @@ footer { margin-top:4rem; border-top:1px solid var(--line); padding-top:1.4rem; 
 <p>　綾子はそれを見て、外套のポケットへ手を入れた。釦を探したのか、紙片を探したのか、私のいる位置からは見えなかった。見えないものは書かない。ただ、白い小さな紙が一枚、あとで長椅子の下に落ちていた。落ちたものは、拾う合図がなければ拾わない。合図はなかった。</p>
 <p>　夜になって、小屋を閉める時、私はその紙を見た。見ただけである。拾ったのではない。風で裏返ったから、字が見えた。</p>
 <p>　そこには、こう書いてあった。</p>
-<p>　――綾子様</p>
-<p>　今日の間は、まだ殘つてゐます。朱で消されたところほど、舞臺の上では長く立つやうです。あなたが受けて下されば、私はそこへ出ます。</p>
-<p>　戀といふ字だけは、どうしても新しく書けません。</p>
-<p>　杉村</p>
+<p>　――綾子様
+　今日の間は、まだ殘つてゐます。朱で消されたところほど、舞臺の上では長く立つやうです。あなたが受けて下されば、私はそこへ出ます。
+　戀といふ字だけは、どうしても新しく書けません。
+　杉村</p>
 <p>　恋文かどうかは、私の決めることではない。だが、杉村がふだん「社会の火」と言う時の字ではなかった。学生服の釦が足りない青年が、そこだけ古い字を使っていた。字は衣裳よりも先に役を変える。</p>
 <p>　翌日、保安課の土橋という男が来た。</p>
 <p>　巡査ではなく、巡査部長であると自分で言った。自分で言う肩書は、たいてい少し重い。土橋は靴の泥を落とさず土間へ入り、炉を見て、灰を見て、台本を見た。役者の顔は最後だった。第一稽古の日に戸を開けた男とは違う。あの男はまだ客になる前の人間だったが、土橋は客にならない人間であった。</p>
@@ -1351,9 +1436,7 @@ footer { margin-top:4rem; border-top:1px solid var(--line); padding-top:1.4rem; 
 <p>　下りた幕の向こうで、客はまだ拍手していた。拍手がやんでからも、袖にはしばらく掌の音が残った。掌は、叩くためにもある。噛み締めるためにもある。綱を握るためにもある。</p>
 <p>　どの掌がどれを選んだか。</p>
 <p>　それは、袖からは見えなかった。</p>
-</section>
-<p><a href='../index.html'>← 一覧へ戻る</a></p>
-</article>
-<footer><p>作品・制作記録: CC0-1.0 ／ システム成果物（詩学・決定ログ・コード）: コードは MIT、文書は CC-BY-4.0（PLAN §14.3-9）。</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p><p>署名は関与モデルの役割つき列記による。単一の「作者」を偽装しない（PLAN §8）。</p></footer>
-</main></body>
+<footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
 </html>

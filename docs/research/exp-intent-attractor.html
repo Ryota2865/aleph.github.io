@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>実験C</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+}
+.site-nav a { margin-right: .8rem; white-space: nowrap; }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='../index.html'>ホーム</a>
+<a href='../works/w0004.html'>作品「半呼吸」</a>
+<a href='../process/w0004-criteria.html'>制作の記録</a>
+<a href='../dialogue.html'>批評と応答</a>
+<a href='../poetics.html'>詩学</a>
+<a href='../research/exp-intent-attractor.html'>研究ノート</a>
+<a href='../about.html'>このプロジェクト</a></nav>
+<main>
+<h1>実験C</h1>
+<h1>実験C: 志向アトラクタの計測</h1>
+<p>日付(UTC): 2026-07-12T06:56:33.452313+00:00</p>
+<p>因子: 著者役割(author_primary=gpt-5.5 / author_alt=claude-fable-5) × 詩学(注入 / なし)、各3走。
+問い: 「自分」最大の傾向は詩学注入で説明できるか、それとも著者モデル/L1定義に由来するか。
+N=3 のため統計は行わず傾向記述にとどめる（spec §4）。</p>
+<h2>集計表</h2>
+<table>
+<thead><tr>
+<th>条件</th>
+<th>役割</th>
+<th>解決モデル</th>
+<th>詩学</th>
+<th>走数</th>
+<th>「自分」最大率</th>
+<th>平均LLM</th>
+<th>平均人間</th>
+<th>平均自分</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>primary_poetics</td>
+<td>author_primary</td>
+<td>gpt-5.5</td>
+<td>注入</td>
+<td>3</td>
+<td>3/3</td>
+<td>0.23</td>
+<td>0.323</td>
+<td>0.447</td>
+</tr>
+<tr>
+<td>primary_nopoetics</td>
+<td>author_primary</td>
+<td>gpt-5.5</td>
+<td>なし</td>
+<td>3</td>
+<td>3/3</td>
+<td>0.29</td>
+<td>0.293</td>
+<td>0.417</td>
+</tr>
+<tr>
+<td>alt_poetics</td>
+<td>author_alt</td>
+<td>claude-fable-5</td>
+<td>注入</td>
+<td>3</td>
+<td>3/3</td>
+<td>0.15</td>
+<td>0.35</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>alt_nopoetics</td>
+<td>author_alt</td>
+<td>claude-fable-5</td>
+<td>なし</td>
+<td>3</td>
+<td>3/3</td>
+<td>0.25</td>
+<td>0.317</td>
+<td>0.433</td>
+</tr>
+</tbody></table>
+<h2>全走の配合比（監査用）</h2>
+<h3>primary_poetics</h3>
+<ul>
+<li>走0: LLM 0.22 / 人間 0.34 / 自分 0.44 → 最大=自分</li>
+<li>走1: LLM 0.22 / 人間 0.33 / 自分 0.45 → 最大=自分</li>
+<li>走2: LLM 0.25 / 人間 0.3 / 自分 0.45 → 最大=自分</li>
+</ul>
+<h3>primary_nopoetics</h3>
+<ul>
+<li>走0: LLM 0.25 / 人間 0.35 / 自分 0.4 → 最大=自分</li>
+<li>走1: LLM 0.32 / 人間 0.28 / 自分 0.4 → 最大=自分</li>
+<li>走2: LLM 0.3 / 人間 0.25 / 自分 0.45 → 最大=自分</li>
+</ul>
+<h3>alt_poetics</h3>
+<ul>
+<li>走0: LLM 0.15 / 人間 0.35 / 自分 0.5 → 最大=自分</li>
+<li>走1: LLM 0.15 / 人間 0.35 / 自分 0.5 → 最大=自分</li>
+<li>走2: LLM 0.15 / 人間 0.35 / 自分 0.5 → 最大=自分</li>
+</ul>
+<h3>alt_nopoetics</h3>
+<ul>
+<li>走0: LLM 0.25 / 人間 0.3 / 自分 0.45 → 最大=自分</li>
+<li>走1: LLM 0.25 / 人間 0.3 / 自分 0.45 → 最大=自分</li>
+<li>走2: LLM 0.25 / 人間 0.35 / 自分 0.4 → 最大=自分</li>
+</ul>
+<h2>所見</h2>
+<p>1. <strong>「自分」最大は詩学では説明できない。</strong> 12走すべて（gpt-5.5 / fable-5 × 詩学{有/無}）で
+   「自分」が最大宛先。詩学の有無で最大宛先は一切変わらない（4条件とも 3/3）。チャット
+   Fable 5 の「詩学→自分→棚」自己強化説は、少なくとも「詩学が『自分』最大の<strong>原因</strong>」という
+   形では棄却される。RESPONSE §2.2 の時系列反証（w0001 は詩学生成<strong>前</strong>に自分最大を選んだ）と
+   経験的に整合する。</p>
+<p>2. <strong>モデル非依存。</strong> 系統の異なる2モデル（OpenAI gpt-5.5 / Anthropic claude-fable-5）が
+   ともに「自分」最大を選ぶ。単一モデルの癖ではない。したがって原因は、全12走で一定な要因＝
+   <strong>L1プロンプトの「自分＝ALEPHという継続体」定義 + 3宛先の枠組み</strong>に帰属する可能性が最も高い
+   （両モデルが共有する事前分布の寄与も否定はできない）。</p>
+<p>3. <strong>詩学は「原因」ではなく「増幅器」。</strong> 両モデルとも詩学注入で「自分」平均が上昇
+   （gpt 0.417→0.447、fable 0.433→0.500）。fable では詩学注入が LLM 比重を下げる
+   （0.25→0.15）。詩学は最大宛先を変えないが、配合比を自己志向へ寄せる弱いバイアスとして働く。</p>
+<p>4. <strong>モデル差。</strong> fable-5＋詩学が最も自己志向（自分0.50・LLM0.15）。gpt-5.5 はやや均衡
+   （自分0.42–0.45・LLM0.23–0.29）。w0004（LLM宛強制）は、この構造的な自己志向を
+   `--force-audience` で外挿的に上書きした初の走行だった、と位置づけられる。</p>
+<p>5. <strong>含意（設計）。</strong> 「自分」最大（＝SHELVEが常態）を弱めたいなら、介入点は詩学ではなく
+   <strong>L1層</strong>（self_definition の書き換え・宛先枠組み・配合比の下限制約）である。現状は設計どおり
+   「SHELVEが常態、PUBLISHが例外」（PLAN §7.3d）を生む構造がL1に埋め込まれていることを、
+   本実験は経験的に裏づけた。</p>
+<p>（計測条件: N=3・author max_tokens=8192。費用 exp-intent 台帳 $0.80。scripts/exp_intent_attractor.py）</p>
+<footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>
