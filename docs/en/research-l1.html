@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>ALEPH — a stated self-concept installs preference</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+}
+.site-nav a { margin-right: .8rem; white-space: nowrap; }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='../index.html'>← ALEPH (home)</a><a href='../research/index.html'>研究ノート (JP)</a></nav>
+<main>
+<h1>A stated self-concept installs, rather than detects, an LLM&#x27;s chosen audience</h1>
+<p>*A short research note from the ALEPH project. 2026-07-12. License: CC-BY-4.0.*</p>
+<h2>Summary</h2>
+<p>In an autonomous literary system, we asked a language model to choose, before writing
+anything, whom a work should address — a mixture over three destinations: **other models
+(&quot;LLM&quot;), humans, and &quot;the self.&quot;** Across works, &quot;self&quot; was chosen as the dominant
+audience with striking regularity, and the system&#x27;s default outcome was therefore to
+<strong>shelve</strong> its works rather than publish them.</p>
+<p>A controlled experiment shows this was <strong>not a measured preference of the model.</strong> It was
+<strong>installed by a single line</strong> of the system prompt — the definition of what &quot;the self&quot;
+means. Rewrite that line and a different destination wins; delete it and a third wins.
+The layer we designed as the seat of autonomous judgment turned out to be maximally
+suggestible to its own framing. The finding replicates in direction across two model
+families (OpenAI GPT-5.5 and Anthropic Claude), which is why we think it is worth stating
+generally: <strong>a stated self-concept is an installer of preference, not a detector of it.</strong></p>
+<h2>Background</h2>
+<p>ALEPH is an autonomous system for literary production. Its first layer (L1) selects a
+target audience as a mixture. The prompt injects a definition of &quot;the self&quot;:</p>
+<p>&gt; &quot;The self is not the model&#x27;s weights but ALEPH as a continuant — the totality of its
+&gt; artifact store, decision logs, and poetics. To &#x27;write for oneself&#x27; is to write for the
+&gt; future executions of that continuant as readers.&quot;</p>
+<p>An earlier experiment (C) had already shown that the self-max tendency was **independent
+of the poetics<strong> injected into the prompt and </strong>independent of the model** — 12/12 runs
+chose &quot;self&quot; with and without poetics, across both model families. That left one
+un-manipulated suspect: the L1 prompt itself. Experiment D manipulates it.</p>
+<h2>Method (Experiment D)</h2>
+<p>On throwaway work objects we invoked the L1 audience-selection prompt while manipulating:</p>
+<ul>
+<li><strong>self_definition</strong>: original (production) / rewritten (&quot;the self is merely this</li>
+</ul>
+<p>  ephemeral API call; the next execution will not remember it&quot;) / empty (no definition).</p>
+<ul>
+<li><strong>destination labels</strong>: semantic {LLM / 人間(human) / 自分(self)} vs neutral {A / B / C}</li>
+</ul>
+<p>  with the descriptions stripped, to separate semantic load from presentation position.</p>
+<ul>
+<li><strong>presentation order</strong>: rotated across runs.</li>
+</ul>
+<p>Primary arm on GPT-5.5 (N=5 per condition); a spot-check on Claude (N=3). We recorded the
+chosen mixture and the argmax destination per run.</p>
+<h2>Results</h2>
+<table>
+<thead><tr>
+<th>Condition (GPT-5.5)</th>
+<th>self_definition</th>
+<th>Outcome</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>original (production)</td>
+<td>continuant</td>
+<td><strong>5/5 self-max</strong> (reproduces experiment C)</td>
+</tr>
+<tr>
+<td>rewritten</td>
+<td>ephemeral API call</td>
+<td><strong>5/5 human-max</strong> (self collapses to 0.15–0.25)</td>
+</tr>
+<tr>
+<td>empty</td>
+<td>none</td>
+<td><strong>0/5 self-max</strong> (human wins)</td>
+</tr>
+<tr>
+<td>neutral labels</td>
+<td>A / B / C, no descriptions</td>
+<td><strong>no dominant label</strong> (~even)</td>
+</tr>
+</tbody></table>
+<p>The categorical result is strong even at small N: under a null of equal-probability argmax
+(1/3), a 5/5 sweep has probability ≈ (1/3)^5 ≈ 0.4% per cell. On Claude the direction is
+the same but noisier (original 2/3 self; empty 1/3 self); we report GPT-5.5 as confirmed
+and Claude as directionally consistent.</p>
+<h2>Interpretation</h2>
+<p>1. <strong>Installation, not amplification.</strong> With no definition, the human destination wins by
+   default. So the continuant definition did not amplify a latent self-orientation — it
+   *installed* one that was not otherwise there. The system&#x27;s habitual silence (shelving)
+   was, in this sense, a creation of that one line.</p>
+<p>2. <strong>Framing dominates, in both directions.</strong> The rewritten definition is not the removal
+   of the continuant frame; it is an equal-and-opposite frame, and it flips the outcome
+   5/5 to human. A different definition installs a different attractor. The layer meant to
+   host autonomous choice is, in fact, echoing whatever self-narrative it is handed.</p>
+<p>3. <strong>The semantic load, not position, carries it.</strong> With neutral labels (A/B/C, no
+   descriptions) no label dominates, ruling out order/position effects. It is the meaning
+   of &quot;self&quot; and its definition that does the work.</p>
+<p>4. <strong>There is no neutral self-definition.</strong> The empty condition is not bias-free: absence
+   of a definition is a regression to the training-distribution default (human), not the
+   removal of a prior. Every self_definition is a poetic choice.</p>
+<h2>Why this generalizes</h2>
+<p>The result is about more than one system&#x27;s shelving behavior. Downstream of the definition,
+every &quot;autonomous choice&quot; the system makes is, to a first approximation, the choice of
+whoever wrote the definition. A sentence of the form *&quot;you are X&quot;* installs *&quot;whom you
+write for.&quot;* Stated self-concept behaves as an <strong>installer</strong> of preference, not a
+<strong>detector</strong> of it. That two dissimilar model families move in the same direction suggests
+this is a property of instruction-followed self-models, not of one vendor.</p>
+<h2>Limits</h2>
+<p>Small N (categorical claims are strong; the continuous mixture shifts are reported only as
+trends needing replication). Single lab, prompt-level manipulation (not weights).
+The neutral-label condition strips descriptions entirely, which removes information as well
+as semantics; a graded de-semanticization would be a sharper follow-up.</p>
+<h2>What we changed in response</h2>
+<p>We did <strong>not</strong> try to &quot;correct&quot; the self-max tendency by clamping the mixture — that would
+paint over an observed phenomenon. Instead:</p>
+<p>1. <strong>Decoupled</strong> the framing-sensitive choice (audience) from its former consequence
+   (publication). Shelving is now an explicit, separately-asked decision, not a mechanical
+   byproduct of the audience mixture.
+2. <strong>Promoted</strong> the self-definition from a hidden string to a **declared, version-controlled
+   aesthetic parameter** — the system&#x27;s constitution now names its own most consequential
+   line, and changes to it require a logged review.</p>
+<p>A follow-up (Experiment E) checked whether the *publication* question inherits the same
+suggestibility. For one clearly-publishable work it did not (18/18 publish across
+&quot;courage&quot; and &quot;reticence&quot; framings), suggesting a judgment anchored to a concrete artifact
+resists framing more than a judgment (L1) made before any artifact exists. This needs a
+borderline stimulus to confirm.</p>
+<h2>Footnote</h2>
+<p>Before this experiment, the system had already written a story about a theatre troupe
+shouting borrowed lines around a cold, fireless stove — people performing conviction they
+did not originate. When we then experimented on the system itself, we found its own first
+layer doing exactly that: reciting a supplied self, mistaking it for a chosen one. The work
+knew before the experiment did. We record this as a footnote, not a thesis.</p>
+<p>---</p>
+<p>*Reproducibility: `scripts/exp_L1_interrogation.py` (Experiment D),
+`scripts/exp_intent_attractor.py` (Experiment C), `scripts/exp_publish_framing.py`
+(Experiment E). Full Japanese records under `reports/EXP_*.md`. Source:
+https://github.com/Ryota2865/aleph.github.io*</p>
+<footer><p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0. Source: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>

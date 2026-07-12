@@ -532,7 +532,9 @@ def _build_research(root: Path, out_dir: Path) -> None:
     sections = [
         "<h1>研究ノート</h1>",
         "<p class='meta'>ALEPH 自身の挙動を測る実験の記録。"
-        "新しい実験は reports/ に追加すれば並ぶ。</p>",
+        "新しい実験は reports/ に追加すれば並ぶ。"
+        "英語の短報: <a href='../en/research-l1.html'>A stated self-concept installs "
+        "preference (EN)</a>。</p>",
     ]
     for path in paths:
         text = _read_text(path)
@@ -558,12 +560,57 @@ def _build_ode(root: Path, out_dir: Path) -> None:
     if text is None:
         return
     body = "\n".join([
-        "<h1>2024年の宣言（起源）</h1>",
-        "<p class='meta'>人間側から見た ALEPH の起源。2024年4月の対話に始まり、最初のプロンプト"
-        "（宣言）と、その背後にある着想を記す。「批評と応答」で言及される「2024年の宣言」の一次資料。</p>",
+        "<h1>起源（ODE）と2024年の宣言</h1>",
+        "<p class='meta'>人間側から見た ALEPH の起源。ここには (1) 2026年の Claude Code セッションで"
+        "書かれた最初のプロンプト（ALEPH の設計依頼）、(2) その背後の着想、そして (3) すべての起点と"
+        "なった<strong>2024年4月の Claude 3.5 Sonnet との対話</strong>が含まれる。"
+        "「批評と応答」で言及される<strong>「2024年の宣言」とは、本ページ後半に引用される"
+        "Claude 3.5 Sonnet の言葉</strong>（「確かに、AIは人間とは異なる知覚や思考のプロセスを…"
+        "新しい時間感覚を生み出すことも…」）を指す。最初のプロンプトそのものではない。</p>",
         _render_markdown(text),
     ])
     _write_page(out_dir, "ode.html", "2024年の宣言（起源）", body)
+
+
+def _build_en_note(root: Path, out_dir: Path) -> None:
+    """Phase 1 English artifact: the L1 self-concept research note (docs/en/research-l1.html)."""
+    text = _read_text(root / "reports" / "EN_L1_selfconcept_note.md")
+    if text is None:
+        return
+    nav = (
+        "<nav class='site-nav'>"
+        "<a href='../index.html'>← ALEPH (home)</a>"
+        "<a href='../research/index.html'>研究ノート (JP)</a>"
+        "</nav>"
+    )
+    footer = (
+        "<footer>"
+        "<p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0. "
+        f"Source: <a href='{_esc(_REPO_URL)}'>{_esc(_REPO_URL)}</a></p>"
+        "</footer>"
+    )
+    page = "\n".join([
+        "<!DOCTYPE html>",
+        "<html lang='en'>",
+        "<head>",
+        "<meta charset='utf-8'>",
+        "<meta name='viewport' content='width=device-width, initial-scale=1'>",
+        "<title>ALEPH — a stated self-concept installs preference</title>",
+        f"<style>{_CSS}</style>",
+        "</head>",
+        "<body>",
+        nav,
+        "<main>",
+        _render_markdown(text),
+        footer,
+        "</main>",
+        "</body>",
+        "</html>",
+        "",
+    ])
+    path = out_dir / "en" / "research-l1.html"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(page, encoding="utf-8")
 
 
 def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> None:
@@ -581,6 +628,7 @@ def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> Non
     _build_research(root, out_dir)
     _build_about(out_dir)
     _build_ode(root, out_dir)
+    _build_en_note(root, out_dir)
 
 
 if __name__ == "__main__":
