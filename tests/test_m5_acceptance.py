@@ -107,9 +107,13 @@ def test_collaboration_triggers_and_records(work):
 
 
 # ---------------------------------------------------------------- 公開判断
-def make_gate_author(prompt_log):
+def make_gate_author(prompt_log, publish=True):
     def author(p):
         prompt_log.append(p)
+        # 公開意思の問い（0.7.15 分離）には JSON で答える。比較論述には文字列で答える。
+        if "公開するか判断" in p:
+            reason = "自己宛てだが他者が読むに値する" if publish else "まだ他者に見せるべきでない"
+            return json.dumps({"publish": publish, "reason": reason}, ensure_ascii=False)
         return "棚の既公開作と比べ、本作は形式の必然性が一段深い。ゆえに公開に値する。"
     return author
 
@@ -145,16 +149,25 @@ def test_publication_compares_against_shelf(work):
     assert any(d["layer"] == "L7" and "PUBLISH" in d["decision"] for d in decisions)
 
 
-def test_self_audience_defaults_to_shelve(work):
-    """「自分のため」の作品は公開を前提としない（PLAN §3・§7.3d）."""
+def test_self_audience_publication_follows_author_intent(work):
+    """宛先と公開の分離（0.7.15, オーナー承認）: 自分最大でも自動SHELVEせず、公開は著者の明示的意思による.
+
+    旧契約「自分最大→自動SHELVE」は、宛先（誰に向けて書くか）と公開判断（見せるか）を混同していた。
+    自己宛ては非公開を意味しない（覚悟としての自己宛ては公開しうる）。実験D（reports/
+    EXP_L1_interrogation）で「自分最大はL1定義文の産物」と判明したことも本変更の根拠。
+    """
     from aleph.meta.publication_gate import decide_publication
 
-    result = decide_publication(
-        work, audience="自分 0.9 / 人間 0.1", quality_floor_passed=True,
-        monthly_published=0, max_per_month=4,
-        shelf_summaries=[], author=make_gate_author([]), decided_by="L7-test",
+    base = dict(
+        audience="自分 0.9 / 人間 0.1", quality_floor_passed=True,
+        monthly_published=0, max_per_month=4, shelf_summaries=[], decided_by="L7-test",
     )
-    assert result["decision"] == "SHELVE"
+    # 著者が非公開を選べば SHELVE（規則ではなく選択）
+    declined = decide_publication(work, author=make_gate_author([], publish=False), **base)
+    assert declined["decision"] == "SHELVE" and "非公開を選択" in declined["reason"]
+    # 著者が公開を選び品質等を満たせば、自分最大でも PUBLISH（宛先は公開を阻まない）
+    accepted = decide_publication(work, author=make_gate_author([], publish=True), **base)
+    assert accepted["decision"] == "PUBLISH"
 
 
 # ---------------------------------------------------------------- 詩学
