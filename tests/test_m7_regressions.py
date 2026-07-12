@@ -455,3 +455,10 @@ def test_publication_gate_holds_first_publish_until_ack(tmp_path):
 
     passed = decide_publication(make(), first_publish_ack=True, **common)
     assert passed["decision"] == "PUBLISH"
+
+
+def test_cli_publish_missing_work_returns_error():
+    """aleph publish の配線（argparse + dispatch + not-found ガード）。LLM不要。"""
+    from aleph.cli import main
+
+    assert main(["publish", "--work", "wNONEXISTENT9999"]) == 1

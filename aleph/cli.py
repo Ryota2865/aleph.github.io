@@ -88,6 +88,65 @@ def _cmd_run(root: Path, args) -> int:
     return 0
 
 
+def _cmd_publish(root: Path, args) -> int:
+    """aleph publish: 棚上げ済み(または完成)作品の公開ゲートを再評価する（PLAN §9）.
+
+    初回公開の人間承認は config/policies.yaml の publication.first_publish_ack で行う。
+    SHELVE/FINISH のチェックポイントを FINISH に戻して FINISH→(PUBLISH|SHELVE) ゲートを
+    再実行する（w0004 公開で手動化していた手順の正規化。0.7.14）。
+    """
+    from aleph.core.loop import Checkpoint, State
+    from aleph.pipeline import RealDeps, run_work
+
+    config = load_config(root)
+    work = _work_for_cli(root / "works", args.work, config)
+    if not work.dir.exists():
+        print(f"publish: work not found: {work.dir}", file=sys.stderr)
+        return 1
+    try:
+        cp = Checkpoint.load(work.dir)
+    except FileNotFoundError:
+        print(f"publish: no checkpoint for {args.work}; run it to completion first", file=sys.stderr)
+        return 1
+
+    if cp.state == State.PUBLISH:
+        print(f"publish: {args.work} is already published", file=sys.stderr)
+        return 0
+    if cp.state == State.DISCARD:
+        print(f"publish: {args.work} was discarded; refusing to publish", file=sys.stderr)
+        return 1
+    if cp.state not in (State.SHELVE, State.FINISH):
+        print(
+            f"publish: {args.work} is not finished (state={cp.state.value}); run it first",
+            file=sys.stderr,
+        )
+        return 1
+
+    ack = bool(config.policies.get("publication", {}).get("first_publish_ack", False))
+    if not ack:
+        print(
+            "publish: publication.first_publish_ack=false. "
+            "初回公開は人間承認が必要です。config/policies.yaml を true にして再実行してください。",
+            file=sys.stderr,
+        )
+        return 1
+
+    # SHELVE/FINISH → FINISH に戻し、公開ゲートを再評価させる（正典遷移 FINISH→PUBLISH は有効）。
+    Checkpoint(
+        work_id=cp.work_id, state=State.FINISH, step=max(0, cp.step - 1), payload=dict(cp.payload),
+    ).save(work.dir)
+
+    logger = CallLogger(work.calls, secrets=config.secrets.values())
+    budget = Budget(config, state_path=_budget_state_path(root))
+    router = Router(config, logger, budget)
+    deps = RealDeps(
+        work, router, config=config, index_dir=root / args.index, search_fn=lambda *a, **k: [],
+    )
+    final = run_work(work, deps, decided_by="cli-publish")
+    print(f"publish: {args.work} -> {final.value}", file=sys.stderr)
+    return 0 if final == State.PUBLISH else 2
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="aleph", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -103,7 +162,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub.add_parser("status", help="予算3系統と進行中の作品を表示する")
     sub.add_parser("resume", help="クラッシュ後の再開（決定論的リプレイ）")
-    sub.add_parser("publish", help="公開ゲートを起動する（初回は人間承認必須）")
+    pub_p = sub.add_parser("publish", help="棚上げ済み作品の公開ゲートを再評価する（初回は人間承認必須）")
+    pub_p.add_argument("--work", required=True, help="作品id（works/<id>）")
+    pub_p.add_argument("--index", default="state/atlas", help="索引ディレクトリ（公開ゲートは未使用だが依存配線に必要）")
     explore = sub.add_parser("explore", help="コーパスからアトラスとニッチ候補を構築する")
     explore.add_argument("--corpus", default="corpus/aozora/works.jsonl")
     explore.add_argument("--out", default="state/atlas")
@@ -126,6 +187,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "run":
         return _cmd_run(root, args)
+    if args.command == "publish":
+        return _cmd_publish(root, args)
     if args.command == "status":
         config = load_config(root)
         budget = Budget(config, state_path=_budget_state_path(root))
