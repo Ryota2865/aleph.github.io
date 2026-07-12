@@ -75,6 +75,27 @@ git add docs/ && git commit -m "Publish w0005" && git push origin main
 - L1 の取り調べ: `uv run python scripts/exp_L1_interrogation.py`（実験D）
 - いずれも `reports/EXP_*.md` に出力。work_id は `exp-*` で予算計上。
 
+## 英語ミラー（docs/en/）と翻訳の方針
+
+`scripts/build_public_site.py` が JP と同時に `docs/en/` を生成する（Phase 2, 2026-07-13）。
+再生成は同じ1コマンド: `uv run python scripts/build_public_site.py`。
+
+**翻訳方針（将来のエージェントへの指示）:**
+
+1. **文学作品は機械翻訳して「作品」として提示しない。** 翻訳は別の芸術的行為であり、
+   著者モデル・査読を通さない英訳は作品の名義を偽る。英語ページは「文脈紹介＋日本語原文への
+   リンク」まで。抜粋の試訳を載せる場合は "unofficial excerpt translation" と明記する。
+   （全文の公式英訳を作る日が来たら、それは翻訳者役割のモデルを立て、査読を通し、
+   credits に翻訳者として記名する——制作と同じ規律で。）
+2. **研究ノートは主張の忠実性が最優先。** 強い結論（カテゴリカルな結果）と弱い結論
+   （要追試の傾向）の区別を英訳で崩さない。用語は docs/en/research-l1.html の語彙
+   （installs not detects / framing-robust / artifact-anchor 等）に揃える。
+3. **新しいコンテンツの追加手順**: JP 側（reports/CRITIQUE_*・RESPONSE_*・EXP_*）は
+   ファイル投下で自動収載。EN 側の要約は build_public_site.py の EN 定数/関数に追記
+   （codex-implement へ委任可。仕様の雛形: state/tasks/M8_phase2_en_codex_task.md）。
+4. **検証**: 再生成後、(a) EN の研究主張が JP と一致するか、(b) 言語トグルのリンク切れが
+   ないか、(c) `uv run pytest -m 'not local'` 緑、を確認してから push。
+
 ## 検証（変更のたびに）
 
 ```bash
