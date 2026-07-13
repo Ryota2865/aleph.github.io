@@ -426,6 +426,22 @@ def _credit_names(credits: object) -> list[str]:
     return names
 
 
+def _credit_text(credits: object) -> str:
+    if not isinstance(credits, dict):
+        return "記録なし"
+    items: list[str] = []
+    for role, value in credits.items():
+        if isinstance(value, list):
+            names = ", ".join(str(item) for item in value)
+        elif value is None:
+            names = ""
+        else:
+            names = str(value)
+        if names:
+            items.append(f"{role} = {names}")
+    return " / ".join(items) if items else "記録なし"
+
+
 def _nav(root_prefix: str, current_path: str = "index.html", lang: str = "ja") -> str:
     links = []
     nav_items = _EN_NAV_ITEMS if lang == "en" else _NAV_ITEMS
@@ -593,8 +609,7 @@ def _build_work(root: Path, out_dir: Path) -> None:
     """全公開作品のページを生成する（w0005 以降は自動収載）."""
     for work_id, meta, text in iter_published(root):
         title = str(meta.get("title") or work_id)
-        names = _credit_names(meta.get("credits"))
-        credit_text = ", ".join(names) if names else "記録なし"
+        credit_text = _credit_text(meta.get("credits"))
         body = "\n".join(
             [
                 f"<h1>{_esc(title)}</h1>",
