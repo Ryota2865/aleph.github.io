@@ -77,6 +77,7 @@ git add docs/ scripts/build_public_site.py site/ && git commit -m "Publish w0005
 
 再生成後は`uv run pytest tests/test_public_site.py`を実行する。説明、生成器、レポート等の
 入力を変更した場合は、生成済み`docs/`だけでなく変更した入力も同じコミットへ含める。
+トップの作品欄は5作までは全件、6作目以降は新着3作へ自動で切り替わるため、代表作を手動指定しない。
 
 ## 実験を走らせる
 
@@ -100,8 +101,9 @@ git add docs/ scripts/build_public_site.py site/ && git commit -m "Publish w0005
    （要追試の傾向）の区別を英訳で崩さない。用語は docs/en/research-l1.html の語彙
    （installs not detects / framing-robust / artifact-anchor 等）に揃える。
 3. **新しいコンテンツの追加手順**: JP 側（reports/CRITIQUE_*・RESPONSE_*・EXP_*）は
-   ファイル投下で自動収載。EN 側の要約は build_public_site.py の EN 定数/関数に追記
-   （codex-implement へ委任可。仕様の雛形: state/tasks/M8_phase2_en_codex_task.md）。
+   ファイル投下で自動収載。EN の「批評と応答」は同じ資料集合から構造索引を自動生成するため、
+   批評・応答ごとの手動追記は不要。作品紹介と研究ノートの英文要約は、主張を確認したうえで
+   build_public_site.py の EN 定数/関数に追記する。
 4. **検証**: 再生成後、(a) EN の研究主張が JP と一致するか、(b) 言語トグルのリンク切れが
    ないか、(c) `uv run pytest -m 'not local'` 緑、を確認してから push。
 

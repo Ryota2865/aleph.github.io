@@ -10,6 +10,8 @@ from scripts.build_public_site import (
     _demote_headings,
     _RESEARCH_META,
     _artifact_id,
+    _dialogue_paths,
+    _home_work_selection,
     _nav,
     _public_experiment_text,
     _verify_relative_hrefs,
@@ -215,6 +217,28 @@ def test_research_and_dialogue_are_reciprocally_linked() -> None:
         assert f"research/{Path(report_name).stem}.html" in dialogue
 
 
+def test_dialogue_surface_omits_operations_and_en_index_tracks_primary_record() -> None:
+    dialogue = (ROOT / "docs" / "dialogue.html").read_text(encoding="utf-8")
+    english = (ROOT / "docs" / "en" / "dialogue.html").read_text(encoding="utf-8")
+
+    assert "reports/ にファイルを追加すれば自動で並ぶ" not in dialogue
+    assert "synchronized structural index, not a translation" in english
+    for path in _dialogue_paths(ROOT):
+        assert f"../dialogue.html#{_artifact_id(path.name)}" in english
+
+
+def test_w0004_criteria_distinguishes_generator_from_final_author() -> None:
+    criteria = (ROOT / "docs" / "process" / "w0004-criteria.html").read_text(encoding="utf-8")
+    work = (ROOT / "docs" / "works" / "w0004.html").read_text(encoding="utf-8")
+    english = (ROOT / "docs" / "en" / "works" / "w0004.html").read_text(encoding="utf-8")
+
+    assert "基準書生成時の著者役 <strong>claude-fable-5</strong>" in criteria
+    assert "最終著者クレジットを <strong>gpt-5.5</strong>" in criteria
+    assert "基準書生成後の構成・本文と最終著者クレジットは gpt-5.5" in work
+    assert "criteria-stage author-role claude-fable-5" in english
+    assert "final author credit then passed to gpt-5.5" in english
+
+
 def test_w0004_publication_history_is_complete_and_naturally_punctuated() -> None:
     work = (ROOT / "docs" / "works" / "w0004.html").read_text(encoding="utf-8")
 
@@ -225,13 +249,29 @@ def test_w0004_publication_history_is_complete_and_naturally_punctuated() -> Non
 
 def test_surface_keeps_explanation_behind_the_work() -> None:
     home = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+    english_home = (ROOT / "docs" / "en" / "index.html").read_text(encoding="utf-8")
     work = (ROOT / "docs" / "works" / "w0004.html").read_text(encoding="utf-8")
 
     assert "作品ができるまで" not in home
     assert "なぜ古い文体なのか" not in home
     assert home.index("<h2>作品</h2>") < home.index("制作記録を検証する")
+    assert "すべての作品" not in home
+    assert "All works" not in english_home
     assert work.index("id='work-body'") < work.index("id='production-note'")
     assert "<details class='production-note'" in work
+
+
+def test_homepage_switches_from_complete_shelf_to_recent_works() -> None:
+    five = [(f"w{i:04d}", {}, "") for i in range(1, 6)]
+    six = [(f"w{i:04d}", {}, "") for i in range(1, 7)]
+
+    complete, complete_is_excerpt = _home_work_selection(five)
+    recent, recent_is_excerpt = _home_work_selection(six)
+
+    assert [work_id for work_id, _meta, _text in complete] == [f"w{i:04d}" for i in range(1, 6)]
+    assert complete_is_excerpt is False
+    assert [work_id for work_id, _meta, _text in recent] == ["w0006", "w0005", "w0004"]
+    assert recent_is_excerpt is True
 
 
 def test_machine_index_tracks_every_published_work() -> None:

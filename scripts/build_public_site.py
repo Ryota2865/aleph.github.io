@@ -759,6 +759,14 @@ def _work_fact(root: Path, work_id: str) -> dict:
     }
 
 
+def _credited_author(meta: dict) -> str:
+    credits = meta.get("credits")
+    if not isinstance(credits, dict):
+        return "記録なし"
+    author = credits.get("著")
+    return str(author) if author else "記録なし"
+
+
 def _trajectory_text(fact: dict) -> str:
     items = []
     for version, row in sorted(fact["trajectories"].items()):
@@ -776,6 +784,17 @@ def _work_card(root: Path, work_id: str, meta: dict) -> str:
         f"<p>{_esc(description)}</p>"
         "</li>"
     )
+
+
+_HOME_FULL_SHELF_LIMIT = 5
+_HOME_RECENT_WORK_COUNT = 3
+
+
+def _home_work_selection(published: list[tuple[str, dict, str]]) -> tuple[list[tuple[str, dict, str]], bool]:
+    """Return homepage works and whether they are an excerpt of the complete shelf."""
+    if len(published) <= _HOME_FULL_SHELF_LIMIT:
+        return published, False
+    return list(reversed(published[-_HOME_RECENT_WORK_COUNT:])), True
 
 
 def _production_note(root: Path, work_id: str, meta: dict) -> str:
@@ -798,6 +817,12 @@ def _production_note(root: Path, work_id: str, meta: dict) -> str:
         publication_text = "記録なし"
     best = fact["best_version"]
     best_text = f"v{best}" if isinstance(best, int) else "記録なし"
+    final_author = _credited_author(meta)
+    criteria_handoff = (
+        f" 基準書生成後の構成・本文と最終著者クレジットは {_esc(final_author)} が担当した。"
+        if final_author != "記録なし" and final_author != fact["criteria_model"]
+        else ""
+    )
     return "\n".join(
         [
             "<details class='production-note' id='production-note'>",
@@ -807,7 +832,7 @@ def _production_note(root: Path, work_id: str, meta: dict) -> str:
             f"<p><strong>採用ニッチ:</strong> {_esc(niche.get('description') or '記録なし')} "
             f"<a href='../process/{_esc(work_id)}-niche.html'>探索レポート</a></p>",
             "<p class='meta'>ニッチは発見のヒューリスティックであり、作品価値や世界初を証明するスコアではない。</p>",
-            f"<p><strong>基準書:</strong> 著者役 {_esc(fact['criteria_model'])} が、採用ニッチ、宛先、詩学第0版を入力として本文執筆前に生成。構成選抜と陪審査読の共通基準に用いた。</p>",
+            f"<p><strong>基準書:</strong> 基準書生成時の著者役 {_esc(fact['criteria_model'])} が、採用ニッチ、宛先、詩学第0版を入力として本文執筆前に生成。構成選抜と陪審査読の共通基準に用いた。{criteria_handoff}</p>",
             f"<p><strong>査読軌跡:</strong> {_trajectory_text(fact)}。採用版: {_esc(best_text)}</p>",
             f"<p><strong>擱筆:</strong> {_esc(fact['finish'].get('reason') or '記録なし')}</p>",
             f"<p><strong>公開判断:</strong> {_esc(publication_text)}</p>",
@@ -844,19 +869,25 @@ def _review_legend(root: Path, work_id: str) -> str:
 
 
 def _build_index(root: Path, out_dir: Path) -> None:
-    cards = [_work_card(root, work_id, meta) for work_id, meta, _text in iter_published(root)]
+    published = iter_published(root)
+    homepage_works, is_excerpt = _home_work_selection(published)
+    cards = [_work_card(root, work_id, meta) for work_id, meta, _text in homepage_works]
+    pathway_links = [
+        "<a href='about.html'>ALEPHとは</a>",
+        "<a href='archive.html'>制作記録を検証する</a>",
+    ]
+    if is_excerpt:
+        pathway_links.insert(0, f"<a href='works/index.html'>すべての作品（全{len(published)}作）</a>")
     body = "\n".join(
         [
             "<h1>ALEPH</h1>",
             f"<div class='home-intro'>{_render_markdown(_site_markdown(root, 'home'))}</div>",
-            "<h2>作品</h2>",
+            "<h2>新着作品</h2>" if is_excerpt else "<h2>作品</h2>",
             "<ol class='work-list'>",
             *cards,
             "</ol>",
             "<nav class='pathways' aria-label='ALEPHを辿る'>",
-            "<a href='works/index.html'>すべての作品</a>",
-            "<a href='about.html'>ALEPHとは</a>",
-            "<a href='archive.html'>制作記録を検証する</a>",
+            *pathway_links,
             "</nav>",
         ]
     )
@@ -988,15 +1019,23 @@ def _build_llms_index(root: Path, out_dir: Path) -> None:
 
 
 def _build_criteria(root: Path, out_dir: Path) -> None:
-    for work_id, _meta, _text in iter_published(root):
+    for work_id, meta, _text in iter_published(root):
         text = _read_text(root / "works" / work_id / "compositions" / "criteria.md")
         if text is None:
             continue
         fact = _work_fact(root, work_id)
+        final_author = _credited_author(meta)
+        handoff = (
+            f"<p class='meta'>この作品では、基準書生成後の構成・本文と最終著者クレジットを "
+            f"<strong>{_esc(final_author)}</strong> が担当した。そのため、基準書の生成モデルと作品ページの「著」は異なる。</p>"
+            if final_author != "記録なし" and final_author != fact["criteria_model"]
+            else ""
+        )
         body = "\n".join([
             "<h1>基準書</h1>",
             "<section class='provenance'>",
-            f"<p>この基準書は、著者役 <strong>{_esc(fact['criteria_model'])}</strong> が、採用ニッチ、宛先「{_esc(fact['audience'])}」、ALEPHの詩学第0版を入力として、本文執筆前に生成した。構成案の比較・選抜、草稿の成功条件、三モデル陪審の共通基準に使われた。</p>",
+            f"<p>この基準書は、基準書生成時の著者役 <strong>{_esc(fact['criteria_model'])}</strong> が、採用ニッチ、宛先「{_esc(fact['audience'])}」、ALEPHの詩学第0版を入力として、本文執筆前に生成した。構成案の比較・選抜、草稿の成功条件、三モデル陪審の共通基準に使われた。</p>",
+            handoff,
             "</section>",
             _render_markdown(_demote_headings(text)),
         ])
@@ -1094,23 +1133,34 @@ def _artifact_id(name: str) -> str:
     return "report-" + re.sub(r"[^a-z0-9]+", "-", Path(name).stem.lower()).strip("-")
 
 
+def _dialogue_paths(root: Path) -> list[Path]:
+    reports = root / "reports"
+    return sorted(
+        list(reports.glob("CRITIQUE_*.md")) + list(reports.glob("RESPONSE_*.md")),
+        key=lambda path: (_dialogue_date_key(path.name), path.name),
+    )
+
+
+def _dialogue_title(path: Path) -> str:
+    text = _read_text(path) or ""
+    for line in text.splitlines():
+        if line.startswith("# "):
+            return line[2:].strip()
+    return path.stem
+
+
 def _build_dialogue(root: Path, out_dir: Path) -> None:
     """批評と応答を時系列で並べる。reports/CRITIQUE_*.md と RESPONSE_*.md を自動収集する。
 
     運用（OPERATIONS.md）: 新しい批評/応答は reports/ に CRITIQUE_*.md / RESPONSE_*.md として
     投下し、build_public_site を再実行するだけで本ページに追加される（コード変更不要）。
     """
-    reports = root / "reports"
-    paths = sorted(
-        list(reports.glob("CRITIQUE_*.md")) + list(reports.glob("RESPONSE_*.md")),
-        key=lambda p: (_dialogue_date_key(p.name), p.name),
-    )
+    paths = _dialogue_paths(root)
     if not paths:
         return
     sections = [
         "<h1>批評と応答</h1>",
         "<p class='meta'>批評（チャット Fable 5）と設計者応答の往復。"
-        "新しい対話は reports/ にファイルを追加すれば自動で並ぶ。"
         "ここで生じた問いを条件操作へ移した記録は <a href='research/index.html'>研究ノート</a> で追える。"
         "本ページで言及される「2024年の宣言」は "
         "<a href='ode.html'>ODE：起源と2024年の宣言</a> を参照。</p>",
@@ -1359,8 +1409,10 @@ def _first_sentence(text: str) -> str:
 
 
 def _build_en_index(root: Path, out_dir: Path) -> None:
+    published = iter_published(root)
+    homepage_works, is_excerpt = _home_work_selection(published)
     work_items = []
-    for work_id, meta, _text in iter_published(root):
+    for work_id, meta, _text in homepage_works:
         original_title = str(meta.get("title") or work_id)
         title = _en_work_label(work_id, original_title)
         note = _en_work_note(work_id)
@@ -1370,18 +1422,22 @@ def _build_en_index(root: Path, out_dir: Path) -> None:
             f"<p>{html.escape(_first_sentence(str(note['context'])), quote=False)}</p>"
             "</li>"
         )
+    pathway_links = [
+        "<a href='about.html'>What is ALEPH?</a>",
+        "<a href='archive.html'>Inspect the records</a>",
+    ]
+    if is_excerpt:
+        pathway_links.insert(0, f"<a href='works/index.html'>All works ({len(published)})</a>")
     body = "\n".join(
         [
             "<h1>ALEPH</h1>",
             f"<div class='home-intro'>{_render_markdown(_site_markdown(root, 'home', 'en'))}</div>",
-            "<h2>Works</h2>",
+            "<h2>Recent works</h2>" if is_excerpt else "<h2>Works</h2>",
             "<ol class='work-list'>",
             *work_items,
             "</ol>",
             "<nav class='pathways' aria-label='Follow ALEPH'>",
-            "<a href='works/index.html'>All works</a>",
-            "<a href='about.html'>What is ALEPH?</a>",
-            "<a href='archive.html'>Inspect the records</a>",
+            *pathway_links,
             "</nav>",
         ]
     )
@@ -1428,6 +1484,16 @@ def _build_en_work(root: Path, out_dir: Path) -> None:
         fact = _work_fact(root, work_id)
         credits = "; ".join(credit_items) if credit_items else "Credits not recorded."
         note = _en_work_note(work_id)
+        final_author = _credited_author(meta)
+        criteria_handoff = ""
+        if (
+            fact["criteria_model"]
+            and final_author != "記録なし"
+            and fact["criteria_model"] != final_author
+        ):
+            criteria_handoff = (
+                f" Composition, drafting, and the final author credit then passed to {_esc(final_author)}."
+            )
 
         body = "\n".join(
             [
@@ -1443,7 +1509,7 @@ def _build_en_work(root: Path, out_dir: Path) -> None:
                 f"<p><strong>Origin, Japanese original:</strong> <span lang='ja'>{_esc(fact['hint'])}</span></p>" if fact["hint"] else "<p><strong>Origin:</strong> No human-supplied prose prompt.</p>",
                 f"<p><strong>Audience, recorded value:</strong> <span lang='ja'>{_esc(fact['audience'])}</span> (forced experiment condition).</p>",
                 f"<p><strong>Selected niche, Japanese original:</strong> <span lang='ja'>{_esc(fact['niche'].get('description') or '記録なし')}</span>. The English context above summarises the work; this source value is kept as a historical artifact. The niche is a discovery heuristic, not a value score or proof of a world first.</p>",
-                f"<p><strong>Criteria:</strong> generated before drafting by author-role {_esc(fact['criteria_model'])}, from the niche, audience, and Poetics v0; used for composition selection and jury review.</p>",
+                f"<p><strong>Criteria:</strong> generated before drafting by criteria-stage author-role {_esc(fact['criteria_model'])}, from the niche, audience, and Poetics v0; used for composition selection and jury review.{criteria_handoff}</p>",
                 f"<p><a href='../../process/{_esc(work_id)}-niche.html'>Niche record (Japanese)</a> / <a href='../../process/{_esc(work_id)}-reviews.html'>Five-level review (Japanese)</a></p>",
                 "<h3>Criteria in brief</h3>",
                 f"<p>{html.escape(str(note['criteria_brief']), quote=False)} "
@@ -1533,26 +1599,32 @@ def _build_en_research(root: Path, out_dir: Path) -> None:
     _write_en_page(out_dir, "en/research/index.html", "Research notes", body, "../../", description="ALEPH research tracks connecting production observations, critique, controlled experiments, and instrument repair.")
 
 
-def _build_en_dialogue(out_dir: Path) -> None:
+def _build_en_dialogue(root: Path, out_dir: Path) -> None:
+    entries = []
+    for path in _dialogue_paths(root):
+        kind = "Designer response" if path.name.startswith("RESPONSE_") else "Critique"
+        raw_date = _dialogue_date_key(path.name)
+        date = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}" if raw_date else "Date not recorded"
+        entries.append(
+            "<li class='work-entry'>"
+            f"<p class='meta'>{_esc(kind)} · {_esc(date)}</p>"
+            f"<h2><a href='../dialogue.html#{_esc(_artifact_id(path.name))}'>"
+            f"<span lang='ja'>{_esc(_dialogue_title(path))}</span></a></h2>"
+            "</li>"
+        )
     body = "\n".join(
         [
             "<h1>Critique and response</h1>",
-            "<p>The public dialogue records a critique-response loop around ALEPH's first "
-            "public sprint. Chat Fable 5 read the early system record and pointed out "
-            "concrete failures: repeated materials, saturated novelty scoring, revision "
-            "runs that made texts worse, romanticized shelving, and unused AI-specific "
-            "techniques. The designer response accepted the verified points, corrected "
-            "two mechanisms with repository evidence, and turned the critique into the "
-            "next repair contract.</p>",
-            "<p><em>Half-Breath</em> was then produced as an LLM-addressed experimental "
-            "run under that pressure. Chat Fable 5's later critique of w0004 found a real "
-            "breakthrough in the pairing of the criteria and the work, while also naming "
-            "remaining defects: the jury had not read the climax, the revision pipeline "
-            "still showed signs of damage, and the LLM-reader claims needed measurement. "
-            "That loop -- critique, implementation, and renewed critique -- is part of "
-            "the public artifact.</p>",
-            "<p>The questions produced by this dialogue are traced through controlled tests in the <a href='research/index.html'>research notes</a>.</p>",
-            "<p>Full dialogue in Japanese: <a href='../dialogue.html'>批評と応答</a>.</p>",
+            "<p class='lead'>Critique, designer responses, and the questions that became experiments.</p>",
+            "<p>The primary dialogue is published in Japanese. This page is a synchronized "
+            "structural index, not a translation; it follows the same public record without "
+            "turning each new entry into a separate English editorial task.</p>",
+            "<p>Questions carried from dialogue into controlled tests can be followed in the "
+            "<a href='research/index.html'>research notes</a>.</p>",
+            "<h2>Primary record</h2>",
+            "<ol class='work-list'>",
+            *entries,
+            "</ol>",
         ]
     )
     _write_en_page(out_dir, "en/dialogue.html", "Critique and response", body, "../")
@@ -1595,7 +1667,7 @@ def _build_en_pages(root: Path, out_dir: Path) -> None:
     _build_en_work(root, out_dir)
     _build_en_archive(root, out_dir)
     _build_en_research(root, out_dir)
-    _build_en_dialogue(out_dir)
+    _build_en_dialogue(root, out_dir)
     _build_en_poetics(root, out_dir)
     _build_en_ode(out_dir)
 
