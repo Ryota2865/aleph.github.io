@@ -130,7 +130,11 @@ def _body_to_html(text: str) -> str:
 
 
 def build_site(*, works_root: Path, out_dir: Path) -> None:
-    """表層サイトを生成する（PLAN §8 二層構造）.
+    """M6契約用の簡易表層サイトを生成する（PLAN §8 二層構造）.
+
+    GitHub Pages の正規生成器ではない。追跡対象の ``docs/`` には出力せず、公開サイトは
+    ``scripts/build_public_site.py`` で生成する。この関数は閉ループ内の小さい公開契約と
+    ``tests/test_m6_acceptance.py`` を安定させるために独立して維持する。
 
     - out_dir/index.html: 全作品のタイトル一覧
     - out_dir/works/<work_id>.html: 作品ページ（本文・credits全モデル名・CC0・制作記録リンク）

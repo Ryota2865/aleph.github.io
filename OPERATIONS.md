@@ -56,7 +56,8 @@ bash scripts/run_work_detached.sh w0005 --force-audience "LLM 0.6 / 自分 0.25 
 uv run python -m aleph.cli publish --work w0005
 # 3. 公開サイトを再生成してプッシュ
 uv run python scripts/build_public_site.py
-git add docs/ && git commit -m "Publish w0005" && git push origin main
+uv run pytest tests/test_public_site.py
+git add docs/ scripts/build_public_site.py site/ && git commit -m "Publish w0005" && git push origin main
 ```
 
 - 公開作品は `final/text.md`（最高スコア版を自動選抜）＋関与モデルの役割名義（CC0）。
@@ -65,9 +66,17 @@ git add docs/ && git commit -m "Publish w0005" && git push origin main
 
 ## サイト生成
 
-- 公開（過程込み）: `uv run python scripts/build_public_site.py` → `docs/`（追跡・公開）。
+- **GitHub Pagesの正規生成器は一つだけ**:
+  `uv run python scripts/build_public_site.py` → `docs/`（追跡・公開）。
+  表層は作品を優先し、制作記録は任意に開く深層へ置く。画面規律は
+  `designs/public-site.md`、説明ソースは`site/`、作品固有の履歴値は`works/`を正とする。
+- `aleph/publish/site.py` は閉ループとM6受入テストのための簡易表層出力。
+  **`docs/`へ向けて実行しない。** 正規公開サイトを簡易版で上書きしてしまう。
 - プライベート棚（SHELVE 含む全作品）: `uv run python scripts/build_private_shelf.py`
   → `state/site_private/`（git 管理外・非公開）。
+
+再生成後は`uv run pytest tests/test_public_site.py`を実行する。説明、生成器、レポート等の
+入力を変更した場合は、生成済み`docs/`だけでなく変更した入力も同じコミットへ含める。
 
 ## 実験を走らせる
 

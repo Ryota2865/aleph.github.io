@@ -1,8 +1,10 @@
 """棚(SHELVE作品)のプライベート読書ページ生成。
 
-公開サイト(aleph/publish/site.py)とは別物: 公開ゲートを通っていない作品を
+公開サイト(scripts/build_public_site.py)とは別物: 公開ゲートを通っていない作品を
 オーナーがローカルで読むための頁。state/site_private/ に出力(git管理外)。
 本文は査読軌跡の最高スコア版を採用する(改稿切断欠陥のため最終版が最良とは限らない)。
+
+aleph/publish/site.py は閉ループ内のM6簡易出力であり、この私的棚ともGitHub Pagesとも別物。
 
 実行: uv run python scripts/build_private_shelf.py
 """

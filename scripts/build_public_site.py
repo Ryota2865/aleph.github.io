@@ -1,8 +1,13 @@
-"""Build the public ALEPH process site into docs/.
+"""Build the canonical public ALEPH site into docs/.
 
-This script is intentionally independent from aleph.publish.site so the public
-GitHub Pages output can expose the full work process without changing the M6
-surface-site contract.
+This is the only generator that may target the tracked GitHub Pages directory.
+It implements PLAN §8 as progressive disclosure: works first, concise context
+after the text, and complete production records one level deeper.  Explanatory
+copy comes from site/, while historical work facts come from works/ artifacts.
+
+Keep this separate from aleph.publish.site, which is the small M6 contract
+surface used by the production pipeline, and from build_private_shelf.py, which
+renders non-public shelf material under state/.
 """
 
 import html
