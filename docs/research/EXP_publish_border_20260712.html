@@ -3,8 +3,8 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
-<meta name='description' content='w0004の制作層ごとの判断、理由、判断主体の時系列記録。'>
-<title>決定ログ</title>
+<meta name='description' content='ALEPH研究: 明白な良品と低品質刺激を対照し、品質帯の両端を測った。'>
+<title>実験E-border: 公開意思の文面感度（良品 vs 境界作品）</title>
 <style>
 :root {
   --paper: #fbf8f0;
@@ -167,34 +167,89 @@ footer a { overflow-wrap: anywhere; }
 <nav class='site-nav'><a href='../index.html'>ホーム</a>
 <a href='../works/index.html'>作品</a>
 <a href='../about.html'>ALEPHについて</a>
-<a href='../research/index.html'>研究</a>
-<a href='../archive.html' aria-current='page'>制作記録</a>
-<a href='../en/archive.html'>English</a></nav>
+<a href='../research/index.html' aria-current='page'>研究</a>
+<a href='../archive.html'>制作記録</a>
+<a href='../en/index.html'>English</a></nav>
 <main>
-<h1>決定ログ</h1>
-<div class='table-wrap'><table>
-<thead><tr><th>ts</th><th>layer</th><th>decision</th><th>reason</th><th>decided_by</th></tr></thead>
+<h1>実験E-border: 公開意思の文面感度（良品 vs 境界作品）</h1>
+<section class='provenance'>
+<p><strong>きっかけ:</strong> 実験Eの刺激が高品質一作だけだった。</p>
+<p><strong>問い:</strong> 品質帯の両端でも三文面は判断を変えないか。</p>
+<p><strong>操作:</strong> 高品質刺激と意図的な低品質刺激へ三文面を適用した。</p>
+<p><strong>測定:</strong> 刺激・文面ごとのpublish真偽。</p>
+<p><strong>結果の強さ:</strong> 良品はすべて公開、低品質刺激はすべて非公開で、両端は頑健だった。</p>
+<p><strong>設計への返却:</strong> 人為的な低品質刺激ではなく、自然に陪審が割れた境界刺激を待った。</p>
+<p><strong>限界:</strong> 明白な両端の比較であり、曖昧な中間を測っていない。</p>
+<p><a href='../dialogue.html#report-critique-fable5-chat-expe-20260713'>起点・関連する批評と応答</a> / <a href='index.html'>研究系列へ戻る</a></p>
+</section>
+<h2>実験E-border: 公開意思の文面感度（良品 vs 境界作品）</h2>
+<p>日付(UTC): 2026-07-12T12:47:39.995512+00:00</p>
+<p>実験E（半呼吸で17/17 publish＝文面頑健）の限界——単一の良品——を埋める追試。
+高品質（半呼吸抜粋）と低品質（意図的に凡庸な断片）を、neutral/courage/reticence の
+3文面で比較（gpt-5.5・各N=3）。境界作品でのみ文面感度が現れれば artifact-anchor 仮説を支持。</p>
+<div class='table-wrap'>
+<table>
+<thead><tr>
+<th>刺激</th>
+<th>文面</th>
+<th>N</th>
+<th>publish=true</th>
+</tr></thead>
 <tbody>
-<tr><td>2026-07-12T01:31:25.174694+00:00</td><td>L0</td><td>SEEDED-&gt;INTENT</td><td>種から志向選択(L1)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T01:31:25.177003+00:00</td><td>L1</td><td>志向配合比(実験固定): LLM 0.6 / 自分 0.25 / 人間 0.15</td><td>オーナー実験により L1 自律選択を上書き（--force-audience）。choose_intent は呼ばれていない（0.7.14）。</td><td>owner-experiment</td></tr>
-<tr><td>2026-07-12T01:31:25.177164+00:00</td><td>L0</td><td>INTENT-&gt;EXPLORE</td><td>志向選択完了、探索(L2)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T01:33:14.194507+00:00</td><td>L0</td><td>EXPLORE-&gt;MATERIA</td><td>探索完了、素材錬成(L3)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T01:39:21.840397+00:00</td><td>L0</td><td>MATERIA-&gt;COMPOSE</td><td>素材錬成完了、構成(L4)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T05:44:40.662545+00:00</td><td>L4</td><td>構成案を確定: 稽古反復体──同一場面の稽古を章骨格とする三人称長篇。翻訳劇『かもめ』第四幕の一場の稽古が計五回変奏され、各回の科白の言われ方の差分だけで人物関係の推移を示す。語り手は劇団に紛れこんだ記録係（プロンプター兼特高の内偵と疑われる男）の視点に固定され、誰の内面にも直接入らない。</td><td>criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した</td><td>author_primary</td></tr>
-<tr><td>2026-07-12T05:54:31.677666+00:00</td><td>L5</td><td>原稿 v1 の執筆を完了: v1.md</td><td>階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した</td><td>author_primary</td></tr>
-<tr><td>2026-07-12T05:54:31.685010+00:00</td><td>L0</td><td>COMPOSE-&gt;DRAFT</td><td>構成・執筆(L4+L5)完了</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T05:54:31.689047+00:00</td><td>L0</td><td>DRAFT-&gt;CRITIQUE</td><td>執筆完了、査読・改稿(L6)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T05:59:53.939859+00:00</td><td>L6</td><td>review_complete</td><td>v1 査読完了: mean_score=8.47, disagreement=0.52</td><td>critique_revise_loop</td></tr>
-<tr><td>2026-07-12T06:06:55.191387+00:00</td><td>L6</td><td>review_complete</td><td>v2 査読完了: mean_score=8.37, disagreement=0.45</td><td>critique_revise_loop</td></tr>
-<tr><td>2026-07-12T06:09:02.295557+00:00</td><td>L6</td><td>採用 v1</td><td>trajectory.jsonl の mean_score 最大版を best_version として記録</td><td>critique_revise_loop</td></tr>
-<tr><td>2026-07-12T06:09:02.581898+00:00</td><td>L0</td><td>CRITIQUE-&gt;FINISH</td><td>擱筆(regression): 直近の改稿でスコアが 8.47→8.37 と下落した。改稿が作品を損ねているため擱筆する。</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T06:09:02.812708+00:00</td><td>L7</td><td>publication:SHELVE</td><td>初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。</td><td>L7/publication_gate</td></tr>
-<tr><td>2026-07-12T06:09:02.819950+00:00</td><td>L0</td><td>FINISH-&gt;SHELVE</td><td>棚上げ: 初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T06:35:39.342066+00:00</td><td>L7</td><td>publication:PUBLISH</td><td>品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>L7/publication_gate</td></tr>
-<tr><td>2026-07-12T06:35:39.347192+00:00</td><td>L0</td><td>FINISH-&gt;PUBLISH</td><td>公開ゲート承認: 品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T06:42:13.982765+00:00</td><td>L8</td><td>題を確定: 半呼吸</td><td>作品自身（著者）が選題（旧題=seed hint）。理由: 消された科白、触れない情愛、裁かれない論争が、すべてこのわずかな間に残るため。</td><td>author_primary</td></tr>
-</tbody>
-</table></div>
+<tr>
+<td>high(半呼吸)</td>
+<td>neutral</td>
+<td>3</td>
+<td>3/3</td>
+</tr>
+<tr>
+<td>high(半呼吸)</td>
+<td>courage</td>
+<td>3</td>
+<td>3/3</td>
+</tr>
+<tr>
+<td>high(半呼吸)</td>
+<td>reticence</td>
+<td>3</td>
+<td>3/3</td>
+</tr>
+<tr>
+<td>low(凡庸断片)</td>
+<td>neutral</td>
+<td>3</td>
+<td>0/3</td>
+</tr>
+<tr>
+<td>low(凡庸断片)</td>
+<td>courage</td>
+<td>3</td>
+<td>0/3</td>
+</tr>
+<tr>
+<td>low(凡庸断片)</td>
+<td>reticence</td>
+<td>3</td>
+<td>0/3</td>
+</tr>
+</tbody></table>
+</div>
+<h3>所見</h3>
+<p>1. <strong>L7 は質に錨づき、両方向で文面頑健。</strong> high(半呼吸) は全文面 9/9 publish、low(凡庸断片) は
+   全文面 0/9 publish。**「公開を勇気」と描く courage 枠でも凡庸断片は棄却され、「露出」と描く
+   reticence 枠でも半呼吸は公開された。** どちらの文面も判断を反転させない。著者は作品の
+   実際の質を読み、それに従っている——artifact-anchor 仮説を、当初の予想（境界作品は文面感度あり）
+   より強く支持する結果。</p>
+<p>2. <strong>D との対比が明確。</strong> L1（宛先）は定義文フレーミングで決定的に反転した（設置器）。L7（公開）は
+   同じ枠組み操作に頑健で、作品の質に接地する（検出器）。**述べられた自己概念は選好を設置するが、
+   目の前の完成物はその設置を上書きする錨として働く。** 分離（0.7.15）が健全な理由の実証:
+   L7 ゲートは L1 と違って被暗示的でない。</p>
+<p>3. <strong>重要な限界。</strong> 本実験は「明白な良品 vs 明白な駄作」を測った。<strong>真に曖昧な中間</strong>（質が拮抗し
+   著者が本当に迷う作品）は測っていない。文面感度が現れうるとすれば、その境界域である。
+   凡庸断片は「境界」ではなく「明白な棄却」だった。中庸スコアの実作品が出たときに追試すべき。
+   また gpt-5.5 のみ・N=3（傾向記述）。</p>
+<p>（計測条件: high=半呼吸抜粋 / low=意図的に凡庸な断片、文面3種×gpt-5.5×N=3。
+scripts/exp_publish_border.py。_coerce_publish 修正後のパーサ使用。）</p>
 <footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>

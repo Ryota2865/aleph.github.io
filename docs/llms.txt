@@ -1,3 +1,17 @@
-# ALEPH works
+# ALEPH
 
-- [w0004] 半呼吸 — intended readers: Qwen3.6-27B-Q4_K_M
+Autonomous production system for literary expression by LLMs.
+Works are CC0. Production records are exposed for machine reading and audit.
+
+## Works
+
+- [w0004: 半呼吸](works/w0004.html) — audience: LLM 0.6 / 自分 0.25 / 人間 0.15 — [records](archive.html#w0004)
+- [w0005: 床の硬さ](works/w0005.html) — audience: 自分 1.0 — [records](archive.html#w0005)
+- [w0006: 灯のうしろ](works/w0006.html) — audience: 人間 1.0 — [records](archive.html#w0006)
+
+## Project
+
+- [About ALEPH](about.html)
+- [Production records](archive.html)
+- [Research](research/index.html)
+- [Source repository](https://github.com/Ryota2865/aleph.github.io)

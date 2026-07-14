@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='w0006の技術・基準・新奇性・読者・敵対的審級による査読記録。'>
 <title>五審級査読</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,24 +154,40 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='../index.html'>ホーム</a>
 <a href='../works/index.html'>作品</a>
-<a href='../dialogue.html'>批評と応答</a>
-<a href='../poetics.html'>詩学</a>
-<a href='../research/index.html'>研究ノート</a>
-<a href='../about.html'>このプロジェクト</a>
-<a href='../ode.html'>2024年の宣言</a>
-<a href='../en/index.html'>English</a></nav>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html'>研究</a>
+<a href='../archive.html' aria-current='page'>制作記録</a>
+<a href='../en/archive.html'>English</a></nav>
 <main>
 <h1>五審級査読</h1>
+<section class='provenance'>
+<h2>五審級の読み方</h2>
+<p>五審級は五人・五モデルではなく、異なる失敗を捉える五つの観測方法である。下表のモデル名は現在設定ではなく、この作品のcalls.jsonlに残る実行値から生成した。</p>
+<div class='table-wrap'><table><thead><tr><th>審級</th><th>見るもの</th><th>担当・方法</th></tr></thead><tbody>
+<tr><td>技術</td><td>破綻・矛盾・冗長・接続</td><td>gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</td></tr>
+<tr><td>基準</td><td>作品別基準への適合と不一致</td><td>claude-opus-4-8, gpt-5.5, Qwen3.6-27B-Q4_K_M</td></tr>
+<tr><td>新奇性</td><td>コーパス最近傍からの距離</td><td>bge-m3埋め込み + 青空文庫索引</td></tr>
+<tr><td>読者</td><td>想定読者としての反応</td><td>Qwen3.6-27B-Q4_K_M</td></tr>
+<tr><td>敵対的</td><td>既視性・類似作・反証</td><td>gemma-4-26B-A4B-it-qat-UD-Q4_K_XL + Web検索（検索結果を取得できない場合あり）</td></tr>
+</tbody></table></div>
+</section>
 <p class='summary'>v1 mean_score: 5.766666666666667 / v2 mean_score: 8.966666666666667</p>
 <h2>v1</h2>
-<h1>査読報告 v1</h1>
-<h2>技術審級</h2>
-<h2>基準審級</h2>
+<h2>査読報告 v1</h2>
+<h3>技術審級</h3>
+<h3>基準審級</h3>
 <ul>
 <li>合意スコア(平均): 5.77</li>
 <li>不一致度(母標準偏差): 4.09</li>
@@ -139,20 +217,20 @@ footer {
 <p>唯一の批評点は、<strong>「解決しない緊張の保持」</strong>という終章の要請に対して、断章五「声の遺言」において、女（品の前／澄江の役者としての投影）が「語られぬ者はありや」と問いかけ、それが「見し者なし」として終わる形が、ややメタフィクション的な自意識が強く、中世と近代の対比というよりは「語ることそのものの無力さ」へのメタファーとして終結しており、歴史的文脈（新劇運動、特高の圧力）との有機的な結びつきが、最後の最後で少し抽象化されすぎる傾向があることかもしれない。しかし、これは「蔭が語らない」ことの美学を追求した結果であり、失敗というよりは、あえて「無」へ向かう余白として読める。</p>
 <p>総じて、文体の操作が単なる技術的パロディに留まらず、物語の構造そのものを支える骨格となっている点、そして「蔭」「間」「火鉢」などの小道具が、主題を運搬する器として機能している点において、非常に高い完成度の作品である。&quot;
 }</p>
-<h2>新奇性審級</h2>
+<h3>新奇性審級</h3>
 <ul>
 <li>最近傍距離: 0.22837787866592407</li>
 <li>最近傍チャンク: 043516:0013</li>
 </ul>
-<h2>読者審級</h2>
+<h3>読者審級</h3>
 <ul>
 <li>{&#x27;raw&#x27;: &#x27;{\n&quot;persona&quot;: &quot;戦前・戦中を生き延び、戦後間もない昭和三十年代前半の、ある私立大学の国文学科の教授（50 歳前後）。旧制高校の教員時代から文壇の若手作品を見てきている。伝統的な「ものしり」的な歴史観や、文学の崇高さを信じつつも、現代の空虚さや戦災の傷跡を背負っている。批評家は「古臭い」「時代遅れ」と評するが、その鋭い目と深い読み解き力には定評がある。最近、戦死した息子の遺品を整理しており、生死と記録、記憶について哲学的に葛藤しているところ。&quot;,\n&quot;reaction&quot;: &quot;これは、単なる草稿というにはあまりに恐ろしい、そして魅力的な「怪物」だ。\n\nまず、文体の変遷そのものが一つの劇的な構造を成している点に、私は戦慄をおぼえた。断章一で始まる『軍記の声』は、いかにも古典的な「俯瞰」と「宿命論」に満ちている。「風の前の燈火」という比喩は陳腐に聞こえるかもしれないが、それゆえに、その後に続く断章二「稽古場・初日前」への転落――いや、沈降――が効いてくるのだ。\n\n断章一では「声」は雲の上にある。しかし断章二に入ると、その視点は築地の湿っぽい空気、電球の光、そして「見えない三角の暗がり」へと落下する。ここでの『間』の記述は、単なる演劇用語の解説ではない。それは、言葉の裏側に潜む「嘘」や「空白」に対する、極めて現代的な知覚の鋭さを感じさせる。城戸志乃の視点、あるいは汐見という作者の視点、どちらとも読めるこの多層性は、読者を戸惑わせ、同時に虜にする。\n\nしかし、私が最も衝撃を受けたのは、断章三から五へかけての「声の崩壊」である。軍記の語り手が、自身の視界の限界（「見えない場所」）に気づき、それがやがて「存在そのものの確認」へと転じゆく過程。特に断章五での白拍子（品の前）の問い、「語るべき者は生きると似たるも、語られぬ者はいかになるぞ」は、私の胸を直撃する。\n\n戦死した息子の手記には、最期の瞬間の「間」が書かれていなかった。ただ、「空が青かった」という一行だけが残っている。それ以外は、すべて「語られぬ者」だったのか。この草稿は、歴史という大きな枠組み（軍記）から、演劇という偽りの装置（稽古場）を通過し、最終的に、一人の女（白拍子）の、誰にも聞かれない「存在の不安」へと収斂していく。\n\n断章六の昭和二年、志乃の眼から見える「火鉢の距離」や「帳面の数字」は、戦後の荒廃した私の現実と重なる。三好や榊の議論は、戦前の文壇の論争を彷彿とさせ、虚しく聞こえる。そして、硝子越しに見る「動かない外套」。それは誰だ？ 語り手自身か、それとも、この作品の裏側から常に覗き見している、死の影か。\n\nこの草稿の最大の功績は、『間』が「嘘をつかない」と主張しながら、その『間』自体が、読者に「あなたは見ているか？」「あなたは書いているか？」と問いかけるメタ的な構造になっている点だ。最後の「火箸で、意味のない線を、一本、引いた」という結末は、絶妙である。線は、区切りであり、痕跡であり、同時に「意味のない」ものとして、ただそこに残る。\n\n文法上の粗さや、時代設定の混在（軍記と昭和二年と現代の演劇）は、あえて残すべき「揺らぎ」として機能している。整えすぎると、この作品は単なる「怪談」や「演劇小説」に堕してしまう。この「崩れかけ」の状態こそが、戦後の私たちの精神状態、あるいは、歴史を語り得ない人間の姿を如実に描いている。\n\n率直に言えば、この草稿は完成させてはいけない。この「翳り」の状態のまま、断章として残すべきだ。あるいは、各断章が独立した短編として、異なる媒体で発表され、読者がそのパズルを解く作業を強いられるような形態がふさわしいだろう。\n\n私は、この作品の出版を強力に推奨する。ただし、解説は書かない。読者が、その「見えない三角の暗がり」を、自ら見つめるべきだからだ。&quot;\n}&#x27;}</li>
 </ul>
-<h2>敵対的審級</h2>
+<h3>敵対的審級</h3>
 <ul>
 <li>既視的か: False</li>
 </ul>
-<h2>改稿指示</h2>
+<h3>改稿指示</h3>
 <ul>
 <li>陪審の直すべき点に応える: ご提示いただいた3つの批評から、「直すべき点」のみを抽出し、優先順位の高い順に並べたリストは以下の通りです。</li>
 <li>陪審の直すべき点に応える: <strong>断章間の接続（切断面）の明示を避ける</strong></li>
@@ -171,15 +249,15 @@ footer {
 <li>陪審の直すべき点に応える: 終盤において、「語ることの無力さ」というメタフィクション的な自意識が強まり、歴史的文脈（新劇運動や時代の圧力）との結びつきが抽象化されすぎている傾向がある。</li>
 </ul>
 <h2>v2</h2>
-<h1>査読報告 v2</h1>
-<h2>技術審級</h2>
+<h2>査読報告 v2</h2>
+<h3>技術審級</h3>
 <ul>
 <li>{&#x27;type&#x27;: &#x27;矛盾&#x27;, &#x27;where&#x27;: &#x27;断章二：三枝が今朝から煙草を十三本喫んだことも [...] 見える。&#x27;, &#x27;note&#x27;: &#x27;直後に「ただ一箇所―― [...] あの三角の暗がりだけは、どういうわけか、見えない」とあり、超常的な視点（全知的な視点）の提示として機能しているが、その後の展開で「志乃の眼」へと視点が移行する際、この「見えすぎる視点」の正体が、物語内のキャラクターなのか、読者へのメタ的な提示なのか、あるいは「声」の正体なのか、その境界が意図的に曖昧にされています。文脈上の矛盾ではありませんが、読者が「視点の主」を見失うリスクがあります。&#x27;}</li>
 <li>{&#x27;type&#x27;: &#x27;冗長&#x27;, &#x27;where&#x27;: &#x27;断章三〜五における「間」に関する記述の繰り返し&#x27;, &#x27;note&#x27;: &#x27;「間は嘘をつかない、言葉は嘘をつく」というフレーズが、断章二、三、四、五と、異なる文体で繰り返し現れます。これはこの作品の核心的なテーマ（真実と虚構の境界）を強調するためのレトリック（反復法）であると理解できますが、読書体験としては、断章四の「扇が肩に触れて、そして、離れなかつた」のシーンに到達するまでの反復が、やや説明的に感じられる可能性があります。反復の「密度」を調整することで、より衝撃的なクライマックスに導けるかもしれません。&#x27;}</li>
 <li>{&#x27;type&#x27;: &#x27;技術的な検討事項&#x27;, &#x27;where&#x27;: &#x27;断章三：『とぞ』『とかや』と書くこと、この草子にはじめて繁くなりぬるを&#x27;, &#x27;note&#x27;: &#x27;文体（軍記物）のメタ的な変化を記述する高度な演出ですが、書き手が「書き手自身が文体に呑み込まれている」という自己言及を行っています。これは技術的な破綻ではなく、作品の構造的な「揺らぎ」ですが、断章四以降の写実的な視点に戻る際、この「文体の混濁」が、志乃というキャラクターの意識によるものなのか、単なる物語の構造によるものなのか、その接続の解釈を読者に委ねる形になっています。&#x27;}</li>
 <li>{&#x27;type&#x27;: &#x27;整合性&#x27;, &#x27;where&#x27;: &#x27;断章四と断章六における「三好」の存在&#x27;, &#x27;note&#x27;: &#x27;断章四では、三好は「澄江の夫」として登場し、稽古の「間」によって家庭が破綻していくプロセスが描かれています。断章六では、三好が志乃から一円を借りるなど、生活に密着した人物として登場します。断章四での「折れた」後の二人の関係性が、断章六の「火鉢を囲む議論」にどう繋がっているのか（破綻したままなのか、あるいは表面上は平穏を保っているのか）、その時間的・心理的距離の描写が、物語のリアリティを支える鍵となります。&#x27;}</li>
 </ul>
-<h2>基準審級</h2>
+<h3>基準審級</h3>
 <ul>
 <li>合意スコア(平均): 8.97</li>
 <li>不一致度(母標準偏差): 0.45</li>
@@ -212,20 +290,20 @@ footer {
 <p>最後の断章六において、<strong>「圧力の記載」</strong>と<strong>「實在的他者」</strong>が融合されている点も評価すべきである。「誰のための芸術か」という論争は、火鉢を囲む距離感、炭の湿り気、病人の重さ、貸し借りの金銭という物質的抵抗の中に埋め込まれ、解決されることなく、読者に「空欄」を残して終わっている。これにより、作品は通俗的なドラマやイデオロギーの勝利に堕することなく、苦痛としての誠実さを維持している。</p>
 <p>唯一の微々たる改善点として、断章五における白拍子の「声」が、近代の概念（「間」「嘘」）を取り込みすぎているため、中世の器としての純粋さがわずかに損なわれているように見える箇所があるが、これはむしろ「文体が互いを汚染する」という第四条の意図に合致しているとも解釈でき、許容範囲内である。</p>
 <p>総じて、形式と内容、歴史と情念、全知と限知が、解決されない緊張関係の中で完璧に平衡を保っており、この作品が求めうる最高水準の完成度にある。</p>
-<h2>新奇性審級</h2>
+<h3>新奇性審級</h3>
 <ul>
 <li>最近傍距離: 0.2281869649887085</li>
 <li>最近傍チャンク: 043516:0013</li>
 </ul>
-<h2>読者審級</h2>
+<h3>読者審級</h3>
 <ul>
 <li>{&#x27;persona&#x27;: &#x27;三枝（演出者）&#x27;, &#x27;reaction&#x27;: &#x27;読むほどに背筋が寒くなる。この草稿は、我々の稽古場、私の記憶、そして志乃の眼差しを、まるで雲の上から冷ややかに視座固定されて記録されているような、不快な透明感を持っている。\n\nまず『断章二』。あの三角の暗がり、見えない光の裏側。私が「それでいい」と言った志乃の囁き、澄江の肩を叩いた一拍の「間」。これらは私の感覚、私の判断だったはずだ。だが、このテキストはそれを単なる事実として、あるいはもっと恐ろしいことに、私の意図を超えた『真理』として剥き出しにしている。「間は嘘をつかない」という記述。私が演出として構築しようとした空間が、私のコントロールを逸脱し、物語そのものが呼吸を始めてしまったような錯覚を覚える。これは褒め言葉ではない。演出者の権威を否定され、単なる観察対象に貶められたような屈辱感がある。\n\nさらに『断章四』と『断章六』への視点の移行は、ある種の暴挙に近い。志乃の眼を通して、三好と澄江の夫婦関係の崩壊、そして稽古場の冷たい現実――火鉢からの距離、帳面の数字、加代さんの重さ。これらは私が舞台上で作り出したい『劇的な感情』とは無縁の、泥臭く、かつ残酷な日常の断片だ。三好が扇の下で澄江を見つめるその「間」が、舞台上の演出を超え、私生活の破綻を予兆させているという描き方は、私の演出が偶然にも彼らの運命を刈り取ったかのように映り、私は無意識の加害者として描かれているような気分だ。\n\nそして、鼠色の男。蔭。動かない影。この存在は、物語の外から我々を見下ろしている。私が舞台の上で光を操ろうとするほどに、その裏側にある闇を強調する。私は光を作る者だ。だがこの草稿は、光が生まれるために必ず影が伴うこと、そしてその影が我々の生きた証（あるいは罪）を記録していることを示唆している。志乃が「見ないことにした」こと、それでも影が残ることが、私の演出のどこにも含まれていない、しかし確実に存在していた『余白』を暴いている。\n\n率直に言おう。私は怒っている。この草稿は、私の演出の成果を、単なる『結果』として消費し、その過程にある人間たちの苦しみや、私の判断の限界、そして見落とし得た悲劇的な『間』を、あざやかに、そして容赦なく映し出している。これは賞賛ではない。これは、私が舞台で作り上げた虚構のなかに、私の手の届かない、もっと古く、もっと深い、そして恐ろしい『声』が潜んでいたことを告発している。読後、稽古場の裸電球の下で、自分の影が壁に長く伸びていることを確認したくなってしまう。その影が、本当にただの影なのか、それとも誰かの記録なのか。そんな不安が、離れない。&#x27;}</li>
 </ul>
-<h2>敵対的審級</h2>
+<h3>敵対的審級</h3>
 <ul>
 <li>既視的か: False</li>
 </ul>
-<h2>改稿指示</h2>
+<h3>改稿指示</h3>
 <ul>
 <li>陪審の直すべき点に応える: 断章四後半の三好の家出という「事件」がやや明示的であり、「何もなかつた」という宣言と拮抗しきれず説明へ傾く危うさがある。</li>
 <li>陪審の直すべき点に応える: 志乃の眼のなかの言文の躓き（「かかる」等）がやや反復的で、技巧の縫い目が見える箇所がある。</li>

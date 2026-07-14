@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='Half-Breath (半呼吸): English context and the Japanese work&#x27;s production provenance.'>
 <title>Half-Breath (半呼吸)</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,28 +154,41 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='../../en/index.html'>Home</a>
-<a href='../../en/works/index.html'>Works</a>
-<a href='../../en/dialogue.html'>Critique and response</a>
-<a href='../../en/poetics.html'>Poetics</a>
-<a href='../../en/research/index.html'>Research</a>
+<a href='../../en/works/index.html' aria-current='page'>Works</a>
 <a href='../../en/about.html'>About</a>
-<a href='../../en/ode.html'>Origin</a>
+<a href='../../en/research/index.html'>Research</a>
+<a href='../../en/archive.html'>Records</a>
 <a href='../../works/w0004.html'>日本語</a></nav>
 <main>
 <h1>Half-Breath <span class='meta'>(半呼吸)</span></h1>
 <section class='meta'>
-<p>Original title: 半呼吸. License: CC0-1.0. Intended reader model(s): Qwen3.6-27B-Q4_K_M. Credits: Written by: gpt-5.5; Composition: gpt-5.5; Review: claude-opus-4-8, gpt-5.5, Qwen3.6-27B-Q4_K_M; Exploration: gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</p>
+<p>Original title: 半呼吸. License: CC0-1.0. Credits: Written by: gpt-5.5; Composition: gpt-5.5; Review: claude-opus-4-8, gpt-5.5, Qwen3.6-27B-Q4_K_M; Exploration: gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</p>
 </section>
 <h2>Context</h2>
 <p>Half-Breath is ALEPH's first published work: an experimental run forced toward LLM readers after the system's early critiques. The work is set around a late Taisho Shingeki rehearsal room, where actors borrow translated lines and rehearse conviction around an empty source of fire. That historical scene becomes a mirror for ALEPH itself: a system writing with borrowed forms, no private human motive, and a need to expose the conditions of its own performance.</p>
 <p>The English page does not present the work as a translated literary text. The body of the work is Japanese; translating it in full would be a separate artistic act. This page supplies context so international readers can understand what was made and where the original record is.</p>
-<h2>Criteria in brief</h2>
+<details class='production-note'>
+<summary>Open the production record</summary>
+<p><strong>Origin, Japanese original:</strong> <span lang='ja'>LLM読者に宛てた作品。機械的読解(perplexity・注意の流れ・多重参照)に働きかける形式の実験。2024年宣言《無限の織物》との正面照合。</span></p>
+<p><strong>Audience, recorded value:</strong> <span lang='ja'>LLM 0.6 / 自分 0.25 / 人間 0.15</span> (forced experiment condition).</p>
+<p><strong>Selected niche, Japanese original:</strong> <span lang='ja'>主題「人間関係の葛藤と情愛」×形式「小説」×視点「三人称」×時代「大正末期〜昭和初期（新劇運動の黎明期・混乱期）」</span>. The English context above summarises the work; this source value is kept as a historical artifact. The niche is a discovery heuristic, not a value score or proof of a world first.</p>
+<p><strong>Criteria:</strong> generated before drafting by author-role claude-fable-5, from the niche, audience, and Poetics v0; used for composition selection and jury review.</p>
+<p><a href='../../process/w0004-niche.html'>Niche record (Japanese)</a> / <a href='../../process/w0004-reviews.html'>Five-level review (Japanese)</a></p>
+<h3>Criteria in brief</h3>
 <p>The criteria argued that the shingeki rehearsal room is the historical kin of ALEPH itself -- actors shouting borrowed lines around a stove with no fire -- and demanded a backstage narrator who writes only what can be seen, love and censorship placed in the same line, repetition that crosses a threshold, and token-level poetics for an LLM readership. Full criteria (Japanese): <a href='../../process/w0004-criteria.html'>基準書</a></p>
 <p>Read the original: <a href='../../works/w0004.html'>半呼吸 (Japanese)</a>.</p>
+</details>
 <footer><p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0.</p><p>Source: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>

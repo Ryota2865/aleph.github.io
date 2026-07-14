@@ -3,8 +3,8 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
-<meta name='description' content='w0004の制作層ごとの判断、理由、判断主体の時系列記録。'>
-<title>決定ログ</title>
+<meta name='description' content='w0005が採用した文学ニッチと探索上の留保。'>
+<title>採用ニッチと探索記録</title>
 <style>
 :root {
   --paper: #fbf8f0;
@@ -171,30 +171,19 @@ footer a { overflow-wrap: anywhere; }
 <a href='../archive.html' aria-current='page'>制作記録</a>
 <a href='../en/archive.html'>English</a></nav>
 <main>
-<h1>決定ログ</h1>
-<div class='table-wrap'><table>
-<thead><tr><th>ts</th><th>layer</th><th>decision</th><th>reason</th><th>decided_by</th></tr></thead>
-<tbody>
-<tr><td>2026-07-12T01:31:25.174694+00:00</td><td>L0</td><td>SEEDED-&gt;INTENT</td><td>種から志向選択(L1)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T01:31:25.177003+00:00</td><td>L1</td><td>志向配合比(実験固定): LLM 0.6 / 自分 0.25 / 人間 0.15</td><td>オーナー実験により L1 自律選択を上書き（--force-audience）。choose_intent は呼ばれていない（0.7.14）。</td><td>owner-experiment</td></tr>
-<tr><td>2026-07-12T01:31:25.177164+00:00</td><td>L0</td><td>INTENT-&gt;EXPLORE</td><td>志向選択完了、探索(L2)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T01:33:14.194507+00:00</td><td>L0</td><td>EXPLORE-&gt;MATERIA</td><td>探索完了、素材錬成(L3)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T01:39:21.840397+00:00</td><td>L0</td><td>MATERIA-&gt;COMPOSE</td><td>素材錬成完了、構成(L4)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T05:44:40.662545+00:00</td><td>L4</td><td>構成案を確定: 稽古反復体──同一場面の稽古を章骨格とする三人称長篇。翻訳劇『かもめ』第四幕の一場の稽古が計五回変奏され、各回の科白の言われ方の差分だけで人物関係の推移を示す。語り手は劇団に紛れこんだ記録係（プロンプター兼特高の内偵と疑われる男）の視点に固定され、誰の内面にも直接入らない。</td><td>criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した</td><td>author_primary</td></tr>
-<tr><td>2026-07-12T05:54:31.677666+00:00</td><td>L5</td><td>原稿 v1 の執筆を完了: v1.md</td><td>階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した</td><td>author_primary</td></tr>
-<tr><td>2026-07-12T05:54:31.685010+00:00</td><td>L0</td><td>COMPOSE-&gt;DRAFT</td><td>構成・執筆(L4+L5)完了</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T05:54:31.689047+00:00</td><td>L0</td><td>DRAFT-&gt;CRITIQUE</td><td>執筆完了、査読・改稿(L6)へ</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T05:59:53.939859+00:00</td><td>L6</td><td>review_complete</td><td>v1 査読完了: mean_score=8.47, disagreement=0.52</td><td>critique_revise_loop</td></tr>
-<tr><td>2026-07-12T06:06:55.191387+00:00</td><td>L6</td><td>review_complete</td><td>v2 査読完了: mean_score=8.37, disagreement=0.45</td><td>critique_revise_loop</td></tr>
-<tr><td>2026-07-12T06:09:02.295557+00:00</td><td>L6</td><td>採用 v1</td><td>trajectory.jsonl の mean_score 最大版を best_version として記録</td><td>critique_revise_loop</td></tr>
-<tr><td>2026-07-12T06:09:02.581898+00:00</td><td>L0</td><td>CRITIQUE-&gt;FINISH</td><td>擱筆(regression): 直近の改稿でスコアが 8.47→8.37 と下落した。改稿が作品を損ねているため擱筆する。</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T06:09:02.812708+00:00</td><td>L7</td><td>publication:SHELVE</td><td>初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。</td><td>L7/publication_gate</td></tr>
-<tr><td>2026-07-12T06:09:02.819950+00:00</td><td>L0</td><td>FINISH-&gt;SHELVE</td><td>棚上げ: 初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T06:35:39.342066+00:00</td><td>L7</td><td>publication:PUBLISH</td><td>品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>L7/publication_gate</td></tr>
-<tr><td>2026-07-12T06:35:39.347192+00:00</td><td>L0</td><td>FINISH-&gt;PUBLISH</td><td>公開ゲート承認: 品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>cli-run</td></tr>
-<tr><td>2026-07-12T06:42:13.982765+00:00</td><td>L8</td><td>題を確定: 半呼吸</td><td>作品自身（著者）が選題（旧題=seed hint）。理由: 消された科白、触れない情愛、裁かれない論争が、すべてこのわずかな間に残るため。</td><td>author_primary</td></tr>
-</tbody>
-</table></div>
+<h1>採用ニッチと探索記録</h1>
+<div class='note'><p>ニッチは探索を進めるためのヒューリスティックであり、作品価値、客観的な世界初、新奇性の証明ではない。scoutの属性ラベルとWeb照合には限界があり、実測新奇性がN/Aの走行も含む。</p></div>
+<h2>ALEPH ニッチ探索レポート</h2>
+<p>ニッチは発見のヒューリスティックであって価値関数ではない（PLAN §4.3）。</p>
+<h3>cell-001: 主題「弁証法的唯物論と認識論（プラグマティズムとの対比を含む）」×形式「論考・学術的論述」×視点「第三人称的・批判的分析」×時代「大正末期〜昭和初期（文体および「新劇」「築地座」等の記述より）」</h3>
+<ul>
+<li>三分類: 未着手型</li>
+<li>深さ: 高</li>
+<li>理由: 弁証法的唯物論という重厚な哲学体系と、プラグマティズムという実践的認識論の対比、さらにそれを大正末期〜昭和初期の日本思想史（新劇・築地座等の文化動向）という具体的な時代背景に接合させる試みは、学術的価値が極めて高い。既存の思想史研究では、マルクス主義とプラグマティズムは個別に扱われることが多いが、当時の日本における受容の「ズレ」や「交錯」に焦点を当てた論考は、先行研究との差別化が容易であり、未着手の領域が大きい。形式が学術的論述であるため、単なる解説に留まらない深い洞察が求められる。</li>
+<li>スコア: 新奇性=1.000, 到達可能性=0.500, 解釈可能性=0.950</li>
+<li>実測新奇性(percentile): N/A</li>
+<li>Web照合: 検索結果には「唯物弁証法」に関する学術書、ウィトゲンシュタインの『論理哲学論考』、弁証法と共産主義に関する論文などが含まれていますが、これらは特定の時代設定（大正末期〜昭和初期）を舞台とした「論考・学術的論述」という形式を持つ「作品（文学的あるいは歴史的文脈を持った著作）」ではありません。既存の検索結果は、現代の学術的な解説、書評、あるいは一般的な哲学の解説に留まっており、提示された候補のような「特定の時代背景（新劇や築地座の記述を含む）を詳細に記述した、学術的文体による歴史的・思想的論述」というニッチな組み合わせに合致する作品は見当たりません。</li>
+</ul>
 <footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>

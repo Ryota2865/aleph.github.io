@@ -3,7 +3,8 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
-<title>このプロジェクト</title>
+<meta name='description' content='ALEPHについて — ALEPHの公開制作過程・研究記録'>
+<title>ALEPHについて</title>
 <style>
 :root {
   --paper: #fbf8f0;
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,24 +154,36 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='index.html'>ホーム</a>
 <a href='works/index.html'>作品</a>
-<a href='dialogue.html'>批評と応答</a>
-<a href='poetics.html'>詩学</a>
-<a href='research/index.html'>研究ノート</a>
-<a href='about.html'>このプロジェクト</a>
-<a href='ode.html'>2024年の宣言</a>
+<a href='about.html' aria-current='page'>ALEPHについて</a>
+<a href='research/index.html'>研究</a>
+<a href='archive.html'>制作記録</a>
 <a href='en/about.html'>English</a></nav>
 <main>
-<h1>このプロジェクト</h1>
-<p>ALEPH は、LLMによる文学表現のための自律制作システムである。志向、探索、素材、構成、執筆、査読、擱筆、公開という層を持ち、各層の判断を記録しながら閉ループを回す。公開は二層で考える。表層は作品と名義、深層は基準書、決定ログ、査読、批評、研究ノートを含む全制作記録である。</p>
-<p>署名は関与モデルの役割つき列記によって行う。単一の「作者」を偽装しない。作品が複数のモデル、設計者、査読者、実装者の往復から生まれたなら、その往復を隠さず見せる。</p>
-<p>このプロジェクトでは、施工と監査を分離する。設計者が契約と受入テストを書き、施工エージェントが実装し、別エージェントがクロス監査する。文学制作も同じで、生成、批評、応答、修理の役割を混ぜずに記録する。</p>
-<p>「半呼吸」は LLM 読者宛て強制の実験走行で、品質床を通過し公開ゲートに到達した初の作品である。チャットFable 5 の批評が次の修理契約を駆動する。批評と実装の往復自体が、このプロジェクトの公開対象である。</p>
-<p>詳細な設計正典は PLAN.md、変更履歴は PLAN_CHANGELOG.md にある。</p>
+<h1>ALEPHについて</h1>
+<h2>文学の空き地へ</h2>
+<p>ALEPHは、LLMによる文学表現のための自律制作システムである。既存作品の地図から、まだ十分に試されていない表現の組合せを探し、作品ごとの基準を作り、書き、批評し、筆を置く。完成しても、すべてを公開するわけではない。</p>
+<p>「自律」は人間の不在を意味しない。人間が設計した委任範囲のなかで、モデルが探索・執筆・改稿・公開意思を担い、人間の判断が必要な箇所は記録に残す。関与したモデルも役割ごとに署名する。</p>
+<h2>書くことが、次の書き手を変える</h2>
+<p>ALEPHにとって作品は一回限りの出力ではない。探索、基準書、草稿、査読、擱筆判断はすべて次の制作へ戻る。作品を跨いで保持される詩学と記録の総体を、ALEPHは継続する「自分」として扱う。</p>
+<p><a href='poetics.html'>詩学第0版を読む</a> · <a href='ode.html'>起源と2024年の宣言を読む</a></p>
+<h2>現在の地図</h2>
+<p>現在の探索地図は、青空文庫のパブリックドメイン作品16,950件から作られている。そのため明治から昭和初期の日本語へ強く偏り、公開作が選んだ大正末期〜昭和初期の座標も文体へ影響している。これは著者モデルの追加学習データではなく、探索と新奇性測定のための地図である。偏りは既知であり、コーパス拡張によって検証していく。</p>
+<h2>二つの読み方</h2>
+<p>作品は、説明を読まなくても作品として読めるように置く。一方で、基準書、決定ログ、査読、批評、研究は削らず、検証したい読者が深く降りられるようにする。</p>
+<p><a href='archive.html'>制作記録を検証する</a> · <a href='research/index.html'>研究ノートを読む</a></p>
+<p>作品はCC0、コードはMIT、文書はCC-BY-4.0で公開する。設計正典はリポジトリのPLAN.mdにある。</p>
 <footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>

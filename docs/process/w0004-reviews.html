@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='w0004の技術・基準・新奇性・読者・敵対的審級による査読記録。'>
 <title>五審級査読</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,30 +154,46 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='../index.html'>ホーム</a>
 <a href='../works/index.html'>作品</a>
-<a href='../dialogue.html'>批評と応答</a>
-<a href='../poetics.html'>詩学</a>
-<a href='../research/index.html'>研究ノート</a>
-<a href='../about.html'>このプロジェクト</a>
-<a href='../ode.html'>2024年の宣言</a>
-<a href='../en/index.html'>English</a></nav>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html'>研究</a>
+<a href='../archive.html' aria-current='page'>制作記録</a>
+<a href='../en/archive.html'>English</a></nav>
 <main>
 <h1>五審級査読</h1>
+<section class='provenance'>
+<h2>五審級の読み方</h2>
+<p>五審級は五人・五モデルではなく、異なる失敗を捉える五つの観測方法である。下表のモデル名は現在設定ではなく、この作品のcalls.jsonlに残る実行値から生成した。</p>
+<div class='table-wrap'><table><thead><tr><th>審級</th><th>見るもの</th><th>担当・方法</th></tr></thead><tbody>
+<tr><td>技術</td><td>破綻・矛盾・冗長・接続</td><td>gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</td></tr>
+<tr><td>基準</td><td>作品別基準への適合と不一致</td><td>claude-opus-4-8, gpt-5.5, Qwen3.6-27B-Q4_K_M</td></tr>
+<tr><td>新奇性</td><td>コーパス最近傍からの距離</td><td>bge-m3埋め込み + 青空文庫索引</td></tr>
+<tr><td>読者</td><td>想定読者としての反応</td><td>Qwen3.6-27B-Q4_K_M</td></tr>
+<tr><td>敵対的</td><td>既視性・類似作・反証</td><td>gemma-4-26B-A4B-it-qat-UD-Q4_K_XL + Web検索（検索結果を取得できない場合あり）</td></tr>
+</tbody></table></div>
+</section>
 <p class='summary'>v1 mean_score: 8.466666666666667 / v2 mean_score: 8.366666666666667</p>
 <h2>v1</h2>
-<h1>査読報告 v1</h1>
-<h2>技術審級</h2>
+<h2>査読報告 v1</h2>
+<h3>技術審級</h3>
 <ul>
 <li>{&#x27;type&#x27;: &#x27;冗長&#x27;, &#x27;where&#x27;: &#x27;第一稽古 〜 第二稽古の間の、描写の反復&#x27;, &#x27;note&#x27;: &#x27;「炉の中は空だった」「火のない穴」というモチーフが、演出上の意図（空虚さの強調）として機能していますが、読者に対して「炉に火がないこと」のメタファーが幾度も説明されすぎている感があります。特に『三つの火は、同じ空の炉へ投げ込まれたが、どれも燃えなかった』の直後の展開など、象徴が重なりすぎて、読者の思考のスピードをわずかに停滞させる可能性があります。&#x27;}</li>
 <li>{&#x27;type&#x27;: &#x27;技術的整合性&#x27;, &#x27;where&#x27;: &#x27;第二稽古における「銃」の扱い&#x27;, &#x27;note&#x27;: &#x27;「銃先だけが生きている」「銃は木でできていたが、銃先だけが妙に正しい角度を持っていた」という描写があります。非常に美しい表現ですが、その後の稽古で「瀬川が銃を下ろした」という動作に対し、銃が「木製である」という設定が、その後の緊迫感（検閲の恐怖）に対して少し物理的に「道具」として馴染みすぎている印象を受けます。恐怖の対象が『銃（武器）』なのか『銃先（概念）』なのか、その境界をもう少しだけ鮮明にすると、より鋭利になるかもしれません。&#x27;}</li>
 <li>{&#x27;type&#x27;: &#x27;論理の揺らぎ&#x27;, &#x27;where&#x27;: &#x27;第一稽古における「廻し者」の定義&#x27;, &#x27;note&#x27;: &#x27;語り手（廻し者）が「役者の胸の内など、そんなものまで廻せはしない」と断じながら、物語全体を通じて役者の微細な感情（杉村の震え、綾子の視線、市兵衛の距離感）を極めて饒舌に、かつ心理的に描写しています。語り手が「見えたものは見えたと書く」というスタンスを貫くのであれば、これほど「心情の機微」を記述することは、彼自身の定義する「廻し者」のプロフェッショナリズムと矛盾する可能性があります（あるいは、その矛盾自体が語り手の性質であると読者に思わせるための仕掛けであれば、問題ありません）。&#x27;}</li>
 <li>{&#x27;type&#x27;: &#x27;冗長&#x27;, &#x27;where&#x27;: &#x27;第三稽古における議論の構造&#x27;, &#x27;note&#x27;: &#x27;合評の場面での対話（芸術派 vs 左翼派）は、本作のテーマである「表現の政治性」を象徴する重要なパートですが、対立軸が「芸術 vs 大衆」「検閲 vs 表現」という古典的な構図の中に整然と収まりすぎている感があります。議論が「綺麗に」進みすぎているため、戦時中（あるいは震災後の混乱期）特有の、もっと泥臭い、あるいは論理が飛躍するような「生の言葉」が混ざると、よりリアリティが増すと思われます。&#x27;}</li>
 </ul>
-<h2>基準審級</h2>
+<h3>基準審級</h3>
 <ul>
 <li>合意スコア(平均): 8.47</li>
 <li>不一致度(母標準偏差): 0.52</li>
@@ -146,20 +224,20 @@ footer {
 5. <strong>未解決の保持</strong>: 芸術派（片岡）と左翼派（黒田）の論争が、誰にも勝たせず、かつ双方が稽古場の用語（出、受け、間）によって侵食された状態で「保持」されている。市兵衛という「袖」の視点による裁定の拒否が、テキストの均衡を保っている。</p>
 <p>唯一の留意点としては、草稿の終盤（合評部分）において、議論の展開がやや「論理的対話」に近づきすぎて、肉体性や稽古の「反復」そのものが言葉を上回る瞬間がまだ十分に「爆発」していない点かもしれない。ただし、これは未完であることを考慮すれば、むしろ「切断」としての章末効果として機能しており、基準四「構造の基準」における「切り口を磨く」要求にも適合している。</p>
 <p>総じて、このテキストは「盗んだ窯（翻訳劇/新劇）」の中で、「窯にない色（検閲下での情愛と芸術の抵抗）」を焼こうとする試みとして、極めて純粋かつ強力な実例である。</p>
-<h2>新奇性審級</h2>
+<h3>新奇性審級</h3>
 <ul>
 <li>最近傍距離: 0.25616592168807983</li>
 <li>最近傍チャンク: 001177:0005</li>
 </ul>
-<h2>読者審級</h2>
+<h3>読者審級</h3>
 <ul>
 <li>{&#x27;persona&#x27;: &#x27;1920 年代後半、東京の焼け跡で活動する小劇場劇団の若手演出助手（杉村のような立場に近いが、やや批判的・現実主義者）&#x27;, &#x27;reaction&#x27;: &#x27;正直に言おう。この草稿は「雰囲気がいい」だけの、空虚な美学の自己満足だ。\n\nまず、語り手の「廻し者」の設定があまりにも都合が良すぎる。彼が「見えたものは見えたと書く」「借りた台詞でしか人の腹へは入らない」と宣言しているが、実際には綾子の恋文の内容や杉村の内面まで丹念に描写している。これは「客観的記録」を装いながら、実は最も主観的でロマンチックな視点しか選ばない偏見だ。読者である「LLM 0.6」の分率を考えると、おそらくアルゴリズムが「文学性」として「無言の美学」や「検閲との戦い」というステレオタイプなモチーフを並べ立てただけに見える。まるで、戦前の抑圧下での芸術家の苦悩という「歴史小説のテンプレート」を埋め合わせるためのフィクションだ。\n\n特に第二稽古の「朱線」のエピソードは、あまりにも劇的すぎる。「受け、杉村」というメモが検閲官の眼前で消されるシーンは、現実の検閲制度を甘く見すぎている。実際には、そんな派手な対立は起きず、役者はもっと卑屈に、あるいはもっと狡猾に言葉をすり替えていたはずだ。ここで描かれている「半呼吸の抵抗」は、観客を煽るための、演出された「抵抗」そのものではないか。稲見監督が「朱線どおりにやる」と言いながら、結局は「客の目が行くように消せ」と指示するあたりは、検閲を「芸術的な制約」として消化しようとする、ある種の傲慢さを感じさせる。\n\n第三稽古の合評も同様だ。芸術派と左翼派の対立は、1920 年代の演劇界を知らない人向けに用意された「わかりやすい図式」だ。片岡も黒田も、議論をするための「役割」を果たしているだけで、人間味が欠けている。市兵衛の「稽古不足派」という言葉一つで、彼らの議論を相対化するのも、ずいぶん簡単すぎる解決策だ。\n\nそして最も不快なのは、この草稿が「火事だッ」と叫ぶ瀬川や、恋文を書く杉村を、いかに「純粋な芸術家」として昇華させているかという点だ。彼らの飢え、寒さ、生活の苦しさは、単に「炉の灰」という美的イメージとして処理されている。実際に焼け跡で生きる人間にとって、「半呼吸の間の美学」などどうでもよかったはずだ。\n\n結論として、これは「戦前の演劇界を描いた物語」ではなく、「現在の私たちが想像する、戦前の演劇界の理想像」を描いた物語だ。LLM が過去のデータを学習して生成した「平均的な文学性」の塊。読むほどに、その背後にある、今の時代の人々が「抑圧」と「芸術」をどう結びつけたいかという欲求が見え隠れする。もっと泥臭く、もっと不条理で、もっと「美学」から遠い描写が必要だ。今のままでは、ただの綺麗事だ。&#x27;}</li>
 </ul>
-<h2>敵対的審級</h2>
+<h3>敵対的審級</h3>
 <ul>
 <li>既視的か: False</li>
 </ul>
-<h2>改稿指示</h2>
+<h3>改稿指示</h3>
 <ul>
 <li>陪審の批評に応える: 基準への適合度が極めて高い草稿である。まず「盗んだ窯」の同型性——稽古場を新劇の自己記述として書く要請は、火のない炉・空の炉という中心的意匠によって見事に実装されている。動機の炉が空のまま身体だけが叫ぶ第二条の構図が、そのまま「灰だけが白く寝ている」炉として物質化しており、この一点だけでニッチと詩学の同型が成立している。</li>
 </ul>
@@ -195,9 +273,9 @@ footer {
 <li>技術指摘に応える: 合評の場面での対話（芸術派 vs 左翼派）は、本作のテーマである「表現の政治性」を象徴する重要なパートですが、対立軸が「芸術 vs 大衆」「検閲 vs 表現」という古典的な構図の中に整然と収まりすぎている感があります。議論が「綺麗に」進みすぎているため、戦時中（あるいは震災後の混乱期）特有の、もっと泥臭い、あるいは論理が飛躍するような「生の言葉」が混ざると、よりリアリティが増すと思われます。</li>
 </ul>
 <h2>v2</h2>
-<h1>査読報告 v2</h1>
-<h2>技術審級</h2>
-<h2>基準審級</h2>
+<h2>査読報告 v2</h2>
+<h3>技術審級</h3>
+<h3>基準審級</h3>
 <ul>
 <li>合意スコア(平均): 8.37</li>
 <li>不一致度(母標準偏差): 0.45</li>
@@ -220,20 +298,20 @@ footer {
 <p>4. <strong>構造の基準（反復）</strong>: 「あなたはなぜ私を見ないのですか」という科白の反復と、それに伴う立ち位置や「間」の微細な変化は、第六条の「反復構造」を骨格としている。百回目の稽古における「半歩」の動きが、情愛の告白と識別不能な瞬間として描かれている点は、基準の（六）を満足している。</p>
 <p>5. <strong>AI 固有層の基準</strong>: 表記揺れ（舊字/新字、漢字/仮名）が思想的立場や感情の温度を反映しており、LLM への宛て書きというメタ的な条件を、物語内の言語政治として自然に統合している。また、「火事だッ」という叫びが、震災の記憶、劇中の虚偽、ホームズ判事の判決（表現の自由の限界）という三重性を負担している場面は、基準の（三）を十分に満たしている。</p>
 <p>改善点として挙げられるなら、第三稽古における「合評」の場面で、片岡と黒田の議論がやや「演説的」になり、廻し者の視点が少し薄れて見える箇所がある。しかし、それも「合評という盆」を廻し者がどう見るかという視角からすれば、一定の作為と読める。全体的に、この草稿は基準が求める「盗んだ窯で焼かれた器」としての完成度が高く、ALEPH の詩学的要求を深く理解した優れた作品である。</p>
-<h2>新奇性審級</h2>
+<h3>新奇性審級</h3>
 <ul>
 <li>最近傍距離: 0.25604474544525146</li>
 <li>最近傍チャンク: 001177:0005</li>
 </ul>
-<h2>読者審級</h2>
+<h3>読者審級</h3>
 <ul>
 <li>{&#x27;persona&#x27;: &#x27;1920年代末の東京、検閲当局や警察の目を気にしつつも、新しい表現を模索する小劇場の若手演出家・俳優の一人&#x27;, &#x27;reaction&#x27;: &#x27;くそ、またか。稲見のその「朱線どおりにやる」って言葉、俺たちの飯の種を削ってるんだろ。杉村が「半呼吸」で受けるって？ 稽古場で遊んでる場合じゃない。土橋みたいな連中が台本の余白まで朱で塗りつぶしてるのに、俺たちは袖で綱を握って「客の目が行くように消せ」とか言われても、客なんて来やしない。灰しかねえ。綾子の外套の釦が落ちたまま、杉村の学生服の釦が足りない。俺たちの身なりも台本も、全部欠けている。市兵衛が「稽古不足派」って言ったのは正解だ。芝居も生活も、どちらも足りない。火事だっ、って叫んでも誰も動かない。なぜか？ 火がないから。でも、この草稿、俺は読みながら吐きそうな気分になった。なぜなら、これこそが今の俺たちの姿だから。嘘も本当もない、ただ「消えたもの」を追いかけるだけの、虚しい稽古。でも、読み終えると、なぜか胸が締め付けられる。土間の冷たい風、鉛筆の芯の黒、朱筆の赤。それらが、俺たちの血の色だということに気づかされるからだ。&#x27;}</li>
 </ul>
-<h2>敵対的審級</h2>
+<h3>敵対的審級</h3>
 <ul>
 <li>既視的か: False</li>
 </ul>
-<h2>改稿指示</h2>
+<h3>改稿指示</h3>
 <ul>
 <li>陪審の批評に応える: 基準への適合度は極めて高い。最大の達成は、稽古場の記述をALEPHの自己記述として二重化する「同型性」の実装である。空の炉に手をかざす冒頭、火のない炉に「見えない火を入れる係」という結び、「燃えないものを廻す」廻し者の自己規定は、動機の炉が空のまま身体を動かす第二条・第五条の問いを、時代小説の表面の下に確実に沈めている。廻し者の視点（基準一）も出色で、「見えたものは見えたと書く」「拾う合図がなければ拾わない」という距離管理は徹底され、内面への直接侵入をほぼ犯していない。恋文の内容も風で裏返った紙を「見ただけ」という形式で提示され、規律が守られている。</li>
 </ul>

@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='半呼吸 — ALEPH公開作品。'>
 <title>半呼吸</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,37 +154,31 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='../index.html'>ホーム</a>
-<a href='../works/index.html'>作品</a>
-<a href='../dialogue.html'>批評と応答</a>
-<a href='../poetics.html'>詩学</a>
-<a href='../research/index.html'>研究ノート</a>
-<a href='../about.html'>このプロジェクト</a>
-<a href='../ode.html'>2024年の宣言</a>
+<a href='../works/index.html' aria-current='page'>作品</a>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html'>研究</a>
+<a href='../archive.html'>制作記録</a>
 <a href='../en/works/w0004.html'>English</a></nav>
 <main>
 <h1>半呼吸</h1>
 <section class='meta'>
 <p>関与モデル: 著 = gpt-5.5 / 構成 = gpt-5.5 / 査読 = claude-opus-4-8, gpt-5.5, Qwen3.6-27B-Q4_K_M / 探索 = gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</p>
-<p>ライセンス: CC0</p>
+<p>CC0 · <a href='#production-note'>制作記録</a></p>
 </section>
-<section class='context'>
-<h2>この作品をめぐって</h2>
-<ul>
-<li><a href='../process/w0004-criteria.html'>基準書</a></li>
-<li><a href='../process/w0004-decisions.html'>決定ログ</a></li>
-<li><a href='../process/w0004-reviews.html'>五審級査読</a></li>
-<li><a href='../dialogue.html'>批評と応答</a></li>
-<li><a href='../poetics.html'>詩学</a></li>
-<li><a href='../research/index.html'>研究ノート</a></li>
-<li><a href='../about.html'>このプロジェクト</a></li>
-<li><a href='../ode.html'>2024年の宣言</a></li>
-</ul>
-</section>
-<h1>第一稽古　火事だッ</h1>
+<article class='work-text' id='work-body'>
+<h2>本文</h2>
+<h2>第一稽古　火事だッ</h2>
 <p>「火事だッ」</p>
 <p>　板の上でそれを言ったのは、火の粉を見た者ではなく、翻訳原稿の二枚目を持たされた二枚目俳優だった。</p>
 <p>　震災のあと、劇場と呼べるものはまだ建たなかった。焼け残りの材木にトタンを打ちつけ、客席になるはずの土間へ莚を敷き、雨が降れば台詞より先に雫が落ちた。仮小屋の真ん中には鉄の炉が据えてあったが、石炭も薪も惜しまれ、灰だけが白く寝ていた。誰かが「炉」と呼ぶたび、火のないその穴へ、俳優たちは順に手をかざした。温まりもしない掌を、温まったふりで擦り合わせるのが、最初の稽古だった。</p>
@@ -226,7 +282,7 @@ footer {
 <p>　その日、仮小屋の初稽古は、火のない炉を囲んで、燃えたあとの場面から始まった。外では焼け跡の釘を拾う音がしていた。中では翻訳の言葉が、まだ日本語になりきれず、灰の上をぎくしゃく歩いた。役者たちはそれを追い、つまずき、言い直し、また炉に手をかざした。</p>
 <p>　空の炉は、最後まで空だった。</p>
 <p>　けれども、誰かが「火事だッ」と言うたび、そこへ見えない火を入れる係が必要になった。私は盆の横に立ち、釦を拾った手で綱を握り直した。廻し者の仕事は、燃えないものを廻すことから始まる。</p>
-<h1>第二稽古　朱線</h1>
+<h2>第二稽古　朱線</h2>
 <p>　朱い線は、火より先に小屋へ入った。</p>
 <p>　燃えるものなら炉へ入れればよい。燃えないものは、役者の口へ入る。朱線はそのどちらでもなく、台本の上を横切って、紙の息を止めた。誰かが「検閲戻りだ」と言った時、炉の灰まで一度静かになったように見えた。もっとも、灰に耳があるわけではない。静かになったのは、灰を見る人間のほうである。</p>
 <p>　私は廻し者である。</p>
@@ -486,7 +542,7 @@ footer {
 <p>　私は綱を引いた。</p>
 <p>　小屋の中が落ちた。暗くなると、朱い線は見えなくなる。見えなくなっても、消えたわけではない。紙の上では、女が近づくところも、男が受けるところも、沈黙も、余白も、まだ赤く殺されている。そのすぐ下で、銃先だけが生きている。</p>
 <p>　第二稽古は、そういう赤を覚えるところから始まった。火のない炉の次には、燃えない朱が来た。役者たちはそれを避け、踏み、隠し、時々、わざと見せた。私は暗転の綱を巻き直した。燃えないものを廻したあとは、消えないものを暗くする仕事が待っている。</p>
-<h1>第三稽古　合評</h1>
+<h2>第三稽古　合評</h2>
 <p>　合評は、拍手のかわりに小屋へ入った。</p>
 <p>　拍手なら、客席のほうから来る。合評は、客席になる前の土間へ腰を下ろし、莚の端を踏み、台本の上へ煙草の灰を落としながら来た。役者がまだ衣裳を脱がぬうちに、言葉だけが先に着替えた。稽古中は「そこを詰めろ」「間が長い」「出が遅い」で済んだものが、稽古後には「芸術」「大衆」「階級」「形式」になった。大きな言葉ほど、仮小屋の梁へ当たる音は軽い。</p>
 <p>　私は廻し者である。</p>
@@ -818,7 +874,7 @@ footer {
 <p>　先はなかった。破れたのか、最初から書かなかったのか、私の持ち場ではない。切れた文は、切れたままのほうが長く残ることがある。誰かが続きを書けば、その誰かのものになる。書かなければ、まだ小屋のものだった。</p>
 <p>　私は暗転の綱を巻き直した。合評で熱くなった小屋は、火のない炉の灰へすぐ戻る。灰は灰で、火があったことを忘れぬ、と市兵衛は言った。大衆の圧力か、芸術の余韻か、役者の百回目の息か、朱線の残り火か。どれであったかは、明日の稽古でまた別の名をつけられる。</p>
 <p>　第三稽古は、そういう名のつかぬ半呼吸を残した。罵倒はすべて稽古用語で済み、勝敗は出なかった。出なかったものは、袖に下がる。袖に下がったものは、時々、いちばんよい出番を待っている。</p>
-<h1>第四稽古　分裂</h1>
+<h2>第四稽古　分裂</h2>
 <p>　訃報は、小道具より先に小屋へ入った。</p>
 <p>　小道具なら、瀬川が抱えて来る。銃なら銃口を下へ向け、帽子なら型を崩さぬように持つ。訃報は、誰も持ち方を知らなかった。戸が開き、冷えた外気が莚の端をめくり、黒い縁取りの紙が稲見の手へ渡った。渡した者は帽子を取った。取った帽子の中へ、言葉が落ちたように見えた。</p>
 <p>「奥野先生が」</p>
@@ -1269,7 +1325,7 @@ footer {
 <p>　同じ科白は、二つの頁へ行った。去る者と残る者は、同じ台本の別の破れ目を持った。死者の「稽古をやめるな」は、どちらにも都合よく、どちらにも重く残った。私は廻し者である、と言うたび、その言葉もまた疑われるようになった。袖から見た、と足場を言えば足りるのか。袖にいること自体が、もう一つの役ではないのか。</p>
 <p>　答えは出なかった。</p>
 <p>　出なかったものは、袖へ下がる。袖へ下がったものは、時々、次の幕でいちばん大きな顔をして出てくる。</p>
-<h1>百一回目　掌</h1>
+<h2>百一回目　掌</h2>
 <p>　解散公演の立札は、楽屋口の横に斜めに掛かった。</p>
 <p>　斜めに掛けたのは瀬川である。釘が一本足りなかった。釘が一本足りないと、芝居は解散という字まで少し傾ける。直そうとすれば直せた。だが、誰も直せとは言わなかった。真っ直ぐな解散は、いかにも役所の掲示に似る。</p>
 <p>　小屋は、仮小屋ではなくなっていた。</p>
@@ -1438,6 +1494,23 @@ footer {
 <p>　下りた幕の向こうで、客はまだ拍手していた。拍手がやんでからも、袖にはしばらく掌の音が残った。掌は、叩くためにもある。噛み締めるためにもある。綱を握るためにもある。</p>
 <p>　どの掌がどれを選んだか。</p>
 <p>　それは、袖からは見えなかった。</p>
+</article>
+<section class='afterword'>
+<h2>この作品について</h2>
+<p>火のないストーブを囲む新劇の稽古場で、借り物の言葉と確信の所在を描く。</p>
+<details class='production-note' id='production-note'>
+<summary>制作記録を開く</summary>
+<p><strong>発端:</strong> オーナーが設定した実験条件・着想メモ: LLM読者に宛てた作品。機械的読解(perplexity・注意の流れ・多重参照)に働きかける形式の実験。2024年宣言《無限の織物》との正面照合。</p>
+<p><strong>宛先:</strong> LLM 0.6 / 自分 0.25 / 人間 0.15（オーナー実験による強制条件）</p>
+<p><strong>採用ニッチ:</strong> 主題「人間関係の葛藤と情愛」×形式「小説」×視点「三人称」×時代「大正末期〜昭和初期（新劇運動の黎明期・混乱期）」 <a href='../process/w0004-niche.html'>探索レポート</a></p>
+<p class='meta'>ニッチは発見のヒューリスティックであり、作品価値や世界初を証明するスコアではない。</p>
+<p><strong>基準書:</strong> 著者役 claude-fable-5 が、採用ニッチ、宛先、詩学第0版を入力として本文執筆前に生成。構成選抜と陪審査読の共通基準に用いた。</p>
+<p><strong>査読軌跡:</strong> v1: 平均 8.47 / 不一致 0.52 → v2: 平均 8.37 / 不一致 0.45。採用版: v1</p>
+<p><strong>擱筆:</strong> 擱筆(regression): 直近の改稿でスコアが 8.47→8.37 と下落した。改稿が作品を損ねているため擱筆する。</p>
+<p><strong>公開判断:</strong> publication:SHELVE — 初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9） → publication:PUBLISH — 品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した</p>
+<p><a href='../process/w0004-niche.html'>ニッチ</a> / <a href='../process/w0004-criteria.html'>基準書</a> / <a href='../process/w0004-decisions.html'>決定ログ</a> / <a href='../process/w0004-reviews.html'>五審級査読</a></p>
+</details>
+</section>
 <footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>

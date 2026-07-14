@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='w0006の作品別美的基準、その生成モデル・入力・用途。'>
 <title>基準書</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,47 +154,55 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='../index.html'>ホーム</a>
 <a href='../works/index.html'>作品</a>
-<a href='../dialogue.html'>批評と応答</a>
-<a href='../poetics.html'>詩学</a>
-<a href='../research/index.html'>研究ノート</a>
-<a href='../about.html'>このプロジェクト</a>
-<a href='../ode.html'>2024年の宣言</a>
-<a href='../en/index.html'>English</a></nav>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html'>研究</a>
+<a href='../archive.html' aria-current='page'>制作記録</a>
+<a href='../en/archive.html'>English</a></nav>
 <main>
 <h1>基準書</h1>
-<h1>切り口と蔭——この作品が満たすべき美的基準について</h1>
-<h2>序 なぜこの組み合わせは偶然ではないのか</h2>
+<section class='provenance'>
+<p>この基準書は、著者役 <strong>claude-fable-5</strong> が、採用ニッチ、宛先「人間 1.0」、ALEPHの詩学第0版を入力として、本文執筆前に生成した。構成案の比較・選抜、草稿の成功条件、三モデル陪審の共通基準に使われた。</p>
+</section>
+<h2>切り口と蔭——この作品が満たすべき美的基準について</h2>
+<h3>序 なぜこの組み合わせは偶然ではないのか</h3>
 <p>主題「時代の変遷に伴う人間模様と情念」、形式「中世歴史物語から近代文学への変遷を含む断章」、視点「全知から特定人物への変遷」、時代「大正末期から昭和初期、新劇運動の黎明」。この四つの与件は、一見ばらばらの制約に見えて、実は一つの問いを四方から囲んでいる。すなわち——<strong>語りの権威が崩れるとき、人間の情念はどこへ流れ込むのか</strong>、という問いである。以下、この作品が満たすべき基準を、ALEPHの詩学に照らして論じる。</p>
-<h2>一 切断面の美学——断章は接着してはならない</h2>
+<h3>一 切断面の美学——断章は接着してはならない</h3>
 <p>第三条「切断について」が最初の基準を与える。中世歴史物語の断章と近代小説の断章とを並べるとき、作者が最も犯しやすい罪は、両者のあいだに<strong>橋を架けること</strong>である。「かくて時は流れ——」式の接続、あるいは骨董品を発見する現代人という額縁。これらはすべて切り口に完結を捏造する行為であり、この作品においては禁じ手とせねばならない。</p>
 <p>時代の変遷は、断章と断章のあいだの<strong>空白そのもの</strong>によって示されるべきである。軍記調の擬古文が「從」で切れ、次の頁で言文一致の稽古場の描写が始まる——その落差の断面こそが作品の表面である。読者が味わうべきは物語の連続ではなく、文体が死んで別の文体が生まれるまでの、書かれなかった数百年の手触りである。切り口は磨かれていなければならない。つまり、各断章は「途中で切れている」ことが偶然ではなく必然に見える箇所で切れていなければならない。</p>
-<h2>二 視点の降下——全知の死を歴史として書くこと</h2>
+<h3>二 視点の降下——全知の死を歴史として書くこと</h3>
 <p>視点の与件は単なる技法の選択ではない。全知的観察者とは、物語る声の権威、すなわち共同体が共有する「上から見渡す眼」の残存である。中世歴史物語がこの眼で語られるのは当然だ。だが大正末期、その眼はもはや維持できない。近代とは、全知が一人の登場人物の限られた視界へと<strong>転落する</strong>過程である。</p>
 <p>したがって基準はこうなる。視点の変遷は、切り替えとしてではなく<strong>喪失として</strong>感じられねばならない。全知の声は一挙に消えるのではなく、断章を追うごとに翳り、揺らぎ、ついに一人の——たとえば新劇の稽古場に通う一人の——人物の眼の高さまで降りてくる。そのとき読者は、世界の全体が見えなくなったという不安を、その人物とともに引き受ける。この不安こそが「時代の変遷に伴う情念」の器である。全知を失った人間だけが、嫉妬し、疑い、舞台の袖から他人の演技を盗み見る。</p>
-<h2>三 器と毒——文体模倣は運搬手段である</h2>
+<h3>三 器と毒——文体模倣は運搬手段である</h3>
 <p>第四条「毒殺の方法論」は、この作品の文体戦略を規定する。中世の断章は、本物の歴史物語と見紛う擬古文で焼かれねばならない。稚拙なパスティーシュは毒殺に失敗した毒である。読者の口に入るのは見慣れた器——軍記の調子、草子の呼吸——でなければならない。</p>
 <p>だが効くべきは、その中に溶かされた見慣れないものである。すなわち、中世の語彙で語られながら、そこに流れる情念は近代のそれ——所有への渇き、自我の孤独、演じることと生きることの区別のつかなさ——でなければならない。逆に近代の断章には、中世の物語の残響が毒として溶けている必要がある。廻し者は盗んだ窯で、窯にまだない色を焼く。この作品における「まだない色」とは、二つの時代の文体が互いを汚染し合った混色である。</p>
-<h2>四 菜の花と銃先——大正の叙情には昭和の蔭を</h2>
+<h3>四 菜の花と銃先——大正の叙情には昭和の蔭を</h3>
 <p>第五条は、この時代設定に対して最も直接的な倫理を課す。大正末期の描写——カフェーの灯、築地の小劇場の初日、恋文、モガの断髪——は、それ自体として美しく書かれてよい。だが<strong>美しい丘を書くな、丘の蔭を持つ丘を書け</strong>。震災の焼け跡はまだ冷えていない。治安維持法は既に施行され、稽古場の窓の外には来るべき時代の銃先が、まだ気づかれぬまま覗いている。</p>
 <p>基準はこうである。叙情的な場面のすべてに、登場人物自身は気づいていない不吉な隣接物が一つ、置かれていなければならない。それは説明されてはならない。特高の影を「特高の影」と書いた瞬間、蔭は蔭でなくなる。舞台照明の裏の暗がり、乾杯の席の隅の無口な男、幕間に配られる一枚の紙——蔭は物として置かれ、意味は読者の側で熟すべきである。</p>
-<h2>五 火のない火事——劇中劇の効力について</h2>
+<h3>五 火のない火事——劇中劇の効力について</h3>
 <p>新劇運動を舞台とすることの意味は、第二条「火事だッ」の詩学によって初めて明確になる。演劇とは、火のない場所で「火事だッ」と叫び、それでも観客の身体を動かす装置である。この作品は、その装置そのものを主題化する機会を持つ。</p>
 <p>ゆえに基準——作中に少なくとも一度、<strong>虚構の情念が現実の人間模様を不可逆に変える瞬間</strong>が書かれねばならない。舞台の上で演じられた愛憎が、稽古場の外の関係を実際に壊す、あるいは結ぶ。演技と真情の区別不能点。「こんなことが嘘ッ八でいえるものですか」という告発が、演技への賛辞と紙一重になる場所。そこにおいてこの小説は、自らが虚構でありながら読者を動かそうとする装置であることを、隠さずに引き受けることになる。</p>
-<h2>六 基礎の調子——情念を天才から奪回すること</h2>
+<h3>六 基礎の調子——情念を天才から奪回すること</h3>
 <p>第六条に従い、この作品は情念を天賦のものとして描いてはならない。新劇の稽古場とは反復の場所である。「基礎となる調子から学んで、練習が、たいへんなのだ」。台詞は百回繰り返され、百一回目に、反復が反復でないものを吐き出す——<strong>かもしれない</strong>。</p>
 <p>情念もまた同じ構造を持つ。恋も憎悪も、この作品においては稽古のように、日々の反復の中から漏れ出すものとして書かれるべきである。一目惚れの雷ではなく、毎日同じ時刻に同じ稽古場で同じ人間と顔を合わせることの、閾を越えた蓄積として。この「かもしれない」を確信の筆致で書いた瞬間、小説は通俗に堕ちる。</p>
-<h2>七 圧力の記載——空欄を空欄のまま</h2>
+<h3>七 圧力の記載——空欄を空欄のまま</h3>
 <p>第八条が求めるのは、誠実の一形式である。新劇運動の黎明期とは、「誰のための芸術か」という問い——民衆芸術論争、やがて来るプロレタリア演劇との緊張——が最も生々しかった時代である。「多少とも本当の大衆からの圧力または——」で切れる断片のように、この問いは作中で<strong>解決されてはならない</strong>。</p>
 <p>登場人物の一人がこの問いに答えを出したかに見える場面を書くことは許される。だが作品全体は、その答えを追認してはならない。空欄を空欄のまま提出すること。芸術の動機の底が抜けているという腑に落ちなさを、登場人物と読者とに等しく引き受けさせること。それがこの時代を書く者の誠実である。</p>
-<h2>八 實在的他者——情念の基礎層は飯と部屋である</h2>
+<h3>八 實在的他者——情念の基礎層は飯と部屋である</h3>
 <p>最後に第九条。「一切の根源に位し生のあらゆる形態を支へる基礎的層は自然的生である」。人間模様と情念は、観念の空中戦として書かれてはならない。それは主体と實在的他者との<strong>直接的交渉</strong>——狭い下宿の部屋、月末の金の貸し借り、稽古のあとの一杯の飯、病んだ身体の看病——において成立する。</p>
 <p>中世の断章においても近代の断章においても、情念が動く場面には必ず物質の抵抗がなければならない。「愛及び共同の觀點」は、抽象としてではなく、火鉢を囲む距離の近さとして書かれるべきである。</p>
-<h2>終 解決しない緊張の保持を、この作品の様式と呼ぶ</h2>
+<h3>終 解決しない緊張の保持を、この作品の様式と呼ぶ</h3>
 <p>以上八つの基準は、突き詰めれば二つの緊張に帰着する。中世の器と近代の毒、全知の声とひとりの眼。この作品が最終的に満たすべき基準は、<strong>この緊張を解決しないまま最後の頁まで保持する腕力</strong>である。中世が近代に「発展した」物語を書けば失敗であり、近代が中世への郷愁に回収されても失敗である。二つの時代は、断章の切り口を挟んで、互いを照らし、互いを告発し合ったまま、綴じられねばならない。</p>
 <p>幕は上がる。火はない。それでも客席の身体が動くかどうか——賭けられているのは、その一点である。</p>
 <footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>

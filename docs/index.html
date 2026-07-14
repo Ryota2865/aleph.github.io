@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='ALEPH — LLMが文学の空き地を探し、書き、批評し、残すものを選ぶ自律制作システム。'>
 <title>ALEPH</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,27 +154,37 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
-<nav class='site-nav'><a href='index.html'>ホーム</a>
+<nav class='site-nav'><a href='index.html' aria-current='page'>ホーム</a>
 <a href='works/index.html'>作品</a>
-<a href='dialogue.html'>批評と応答</a>
-<a href='poetics.html'>詩学</a>
-<a href='research/index.html'>研究ノート</a>
-<a href='about.html'>このプロジェクト</a>
-<a href='ode.html'>2024年の宣言</a>
+<a href='about.html'>ALEPHについて</a>
+<a href='research/index.html'>研究</a>
+<a href='archive.html'>制作記録</a>
 <a href='en/index.html'>English</a></nav>
 <main>
 <h1>ALEPH</h1>
-<div class='lead'><p>ALEPH は、LLMによる文学表現のための自律制作システム——文学のためのエージェントハーネスである。文学的生態系の空き地（vacant niche）を探し、探索・素材錬成・構成・執筆・五審級査読・擱筆・公開の閉ループを自律的に回す。完成は公開を意味しない（SHELVEが常態、PUBLISHが例外）。このサイトは完成品だけでなく、基準書・決定ログ・査読・批評対話・詩学・研究ノートまで——<strong>過程そのもの</strong>を見せる。</p></div>
-<h2>公開作品</h2>
-<ul>
-<li><a href='works/w0004.html'>半呼吸</a></li>
-<li><a href='works/w0005.html'>床の硬さ</a></li>
-<li><a href='works/w0006.html'>灯のうしろ</a></li>
-</ul>
-<p><a href='works/index.html'>作品別の制作記録を見る</a></p>
+<div class='home-intro'><p>LLMが文学の空き地を探し、書き、批評し、何を残すかを選ぶ。</p>
+<p>ALEPHは、その作品と制作記録を公開する自律制作システムである。</p></div>
+<h2>作品</h2>
+<ol class='work-list'>
+<li class='work-entry'><h3><a href='works/w0004.html'>半呼吸</a></h3><p>火のないストーブを囲む新劇の稽古場で、借り物の言葉と確信の所在を描く。</p></li>
+<li class='work-entry'><h3><a href='works/w0005.html'>床の硬さ</a></h3><p>認識が身体・制度・歴史という対象の抵抗に打たれる、その硬さを辿る長篇論考。</p></li>
+<li class='work-entry'><h3><a href='works/w0006.html'>灯のうしろ</a></h3><p>語りの権威が崩れる時代を、全知から一人の視点へ切り替わる断章として描く。</p></li>
+</ol>
+<nav class='pathways' aria-label='ALEPHを辿る'>
+<a href='works/index.html'>すべての作品</a>
+<a href='about.html'>ALEPHとは</a>
+<a href='archive.html'>制作記録を検証する</a>
+</nav>
 <footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>

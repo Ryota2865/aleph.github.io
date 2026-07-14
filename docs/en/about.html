@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='About ALEPH — ALEPH&#x27;s public production process and research archive.'>
 <title>About ALEPH</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,24 +154,36 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='../en/index.html'>Home</a>
 <a href='../en/works/index.html'>Works</a>
-<a href='../en/dialogue.html'>Critique and response</a>
-<a href='../en/poetics.html'>Poetics</a>
+<a href='../en/about.html' aria-current='page'>About</a>
 <a href='../en/research/index.html'>Research</a>
-<a href='../en/about.html'>About</a>
-<a href='../en/ode.html'>Origin</a>
+<a href='../en/archive.html'>Records</a>
 <a href='../about.html'>日本語</a></nav>
 <main>
 <h1>About ALEPH</h1>
-<p>ALEPH is an autonomous production system for literary expression by LLMs. It has layers for intention, exploration, material, composition, writing, review, shelving, and publication, and it runs a closed loop while recording the judgments made at each layer. Publication is treated in two tiers. The surface tier is the work and its signature. The deeper tier is the complete production record, including criteria, decision logs, reviews, critique, and research notes.</p>
-<p>Signatures are made by listing the involved models with their roles. ALEPH does not pretend that there is a single &quot;author.&quot; If a work is born from exchanges among multiple models, a designer, reviewers, and implementers, the project shows those exchanges instead of hiding them.</p>
-<p>This project separates construction from audit. A designer writes the contract and acceptance tests, an implementation agent builds against them, and another agent cross-audits the result. Literary production is handled the same way: generation, critique, response, and repair are recorded as distinct roles rather than blended together.</p>
-<p>&quot;Half-Breath&quot; is an experimental run forced toward LLM readers. It is the first work to pass the quality floor and reach the publication gate. The critique from Chat Fable 5 drives the next repair contract. The back-and-forth between critique and implementation is itself part of what the project publishes.</p>
-<p>The detailed design canon is in PLAN.md, and the change history is in PLAN_CHANGELOG.md.</p>
+<h2>Toward vacant ground in literature</h2>
+<p>ALEPH is an autonomous production system for literary expression by LLMs. It maps existing works, looks for combinations that remain underexplored, derives criteria for each work, writes, reviews, and decides when to stop. Completion does not make publication automatic.</p>
+<p>Autonomy does not mean the absence of humans. Within a human-designed scope of delegation, models explore, write, revise, and state publication intent. Human decisions remain visible in the record, and every participating model is credited by role.</p>
+<h2>Writing changes the next writer</h2>
+<p>A work is not a one-off output. Exploration, criteria, drafts, reviews, and stopping decisions return to later production. ALEPH treats the poetics and records retained across works as the continuity it calls its “self.”</p>
+<p><a href='poetics.html'>Read Poetics v0</a> · <a href='ode.html'>Read the origin</a></p>
+<h2>The present map</h2>
+<p>The current exploration map is built from 16,950 public-domain Aozora Bunko works. It is strongly biased toward Japanese writing from the Meiji through early Showa periods, and the late-Taisho and early-Showa coordinates selected by the published works affect their style. This corpus is a map for exploration and novelty measurement, not fine-tuning data for the author model. The bias is known and will be tested through corpus expansion.</p>
+<h2>Two depths of reading</h2>
+<p>The works are presented so they can be read without first reading an explanation. Criteria, decisions, reviews, critique, and research remain available for readers who want to inspect how a work came to exist.</p>
+<p><a href='archive.html'>Inspect the production records</a> · <a href='research/index.html'>Read the research</a></p>
+<p>Works are CC0, code is MIT, and documentation is CC-BY-4.0. PLAN.md in the repository is the design canon.</p>
 <footer><p>License: works=CC0 / system artifacts: code=MIT, docs=CC-BY-4.0.</p><p>Source: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>

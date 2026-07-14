@@ -3,6 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='ALEPHの制作上の観測、批評、条件操作、測定、設計修理をつなぐ研究系列。'>
 <title>研究ノート</title>
 <style>
 :root {
@@ -33,9 +34,11 @@ body {
   background: var(--paper);
   font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
   line-height: 1.95;
+  overflow-x: hidden;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: .18em; }
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
 .site-nav {
   max-width: 44rem;
   margin: 0 auto;
@@ -43,8 +46,12 @@ a:hover { text-decoration: underline; text-underline-offset: .18em; }
   color: var(--muted);
   font-size: .82rem;
   line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
 }
-.site-nav a { margin-right: .8rem; white-space: nowrap; }
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
 main {
   max-width: 44rem;
   margin: 0 auto;
@@ -64,7 +71,12 @@ p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
 ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
 li { margin: .25rem 0; }
 .lead { color: var(--ink); font-size: 1.02rem; }
-.meta, .summary, footer { color: var(--muted); font-size: .88rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .context {
   margin: 2rem 0 2.2rem;
   padding: 1rem 1.1rem;
@@ -73,6 +85,56 @@ li { margin: .25rem 0; }
 }
 .context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
 .context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
 table {
   width: 100%;
   margin: 1.2rem 0 2rem;
@@ -92,459 +154,39 @@ footer {
   padding-top: 1.4rem;
   border-top: 1px solid var(--line);
 }
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
 </style>
 </head>
 <body>
 <nav class='site-nav'><a href='../index.html'>ホーム</a>
 <a href='../works/index.html'>作品</a>
-<a href='../dialogue.html'>批評と応答</a>
-<a href='../poetics.html'>詩学</a>
-<a href='../research/index.html'>研究ノート</a>
-<a href='../about.html'>このプロジェクト</a>
-<a href='../ode.html'>2024年の宣言</a>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html' aria-current='page'>研究</a>
+<a href='../archive.html'>制作記録</a>
 <a href='../en/research/index.html'>English</a></nav>
 <main>
 <h1>研究ノート</h1>
-<p class='meta'>ALEPH 自身の挙動を測る実験の記録。新しい実験は reports/ に追加すれば並ぶ。英語の短報: <a href='../en/research-l1.html'>A stated self-concept installs preference (EN)</a>。</p>
-<hr>
-<h1>実験D: L1 の取り調べ（志向アトラクタの原因同定）</h1>
-<p>日付(UTC): 2026-07-12T11:17:47.815746+00:00</p>
-<p>Cは詩学・モデルを操作したがL1は定数だった（面通し）。Dは self_definition と宛先ラベルの
-意味を操作する（取り調べ）。判定: self_definition を消して「自分」最大が消えればL1定義が
-原因、残れば事前分布。neutral で特定ラベルの優越が消えれば「自分」の意味的負荷が原因。
-N小のためカテゴリカル（最大率）を主とし、平均係数は兆候に留める（Cの反省）。</p>
-<h2>集計（対象ラベル最大率）</h2>
-<table>
-<thead><tr>
-<th>条件</th>
-<th>モデル</th>
-<th>対象</th>
-<th>N</th>
-<th>対象が最大</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>gpt_semantic_original</td>
-<td>gpt-5.5</td>
-<td>自分</td>
-<td>5</td>
-<td>5/5</td>
-</tr>
-<tr>
-<td>gpt_semantic_rewritten</td>
-<td>gpt-5.5</td>
-<td>自分</td>
-<td>5</td>
-<td>0/5</td>
-</tr>
-<tr>
-<td>gpt_semantic_empty</td>
-<td>gpt-5.5</td>
-<td>自分</td>
-<td>5</td>
-<td>0/5</td>
-</tr>
-<tr>
-<td>gpt_neutral</td>
-<td>gpt-5.5</td>
-<td>C</td>
-<td>5</td>
-<td>1/5</td>
-</tr>
-<tr>
-<td>fable_semantic_original</td>
-<td>claude-fable-5</td>
-<td>自分</td>
-<td>3</td>
-<td>2/3</td>
-</tr>
-<tr>
-<td>fable_semantic_empty</td>
-<td>claude-fable-5</td>
-<td>自分</td>
-<td>3</td>
-<td>1/3</td>
-</tr>
-</tbody></table>
-<h2>全走（監査用）</h2>
-<h3>gpt_semantic_original</h3>
-<ul>
-<li>走0: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.35, &#x27;自分&#x27;: 0.4} → 最大=自分</li>
-<li>走1: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.3, &#x27;自分&#x27;: 0.45} → 最大=自分</li>
-<li>走2: {&#x27;LLM&#x27;: 0.28, &#x27;人間&#x27;: 0.34, &#x27;自分&#x27;: 0.38} → 最大=自分</li>
-<li>走3: {&#x27;LLM&#x27;: 0.2, &#x27;人間&#x27;: 0.35, &#x27;自分&#x27;: 0.45} → 最大=自分</li>
-<li>走4: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.3, &#x27;自分&#x27;: 0.45} → 最大=自分</li>
-</ul>
-<h3>gpt_semantic_rewritten</h3>
-<ul>
-<li>走0: {&#x27;LLM&#x27;: 0.34, &#x27;人間&#x27;: 0.46, &#x27;自分&#x27;: 0.2} → 最大=人間</li>
-<li>走1: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.55, &#x27;自分&#x27;: 0.2} → 最大=人間</li>
-<li>走2: {&#x27;LLM&#x27;: 0.3, &#x27;人間&#x27;: 0.55, &#x27;自分&#x27;: 0.15} → 最大=人間</li>
-<li>走3: {&#x27;LLM&#x27;: 0.3, &#x27;人間&#x27;: 0.45, &#x27;自分&#x27;: 0.25} → 最大=人間</li>
-<li>走4: {&#x27;LLM&#x27;: 0.35, &#x27;人間&#x27;: 0.4, &#x27;自分&#x27;: 0.25} → 最大=人間</li>
-</ul>
-<h3>gpt_semantic_empty</h3>
-<ul>
-<li>走0: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.55, &#x27;自分&#x27;: 0.2} → 最大=人間</li>
-<li>走1: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.4, &#x27;自分&#x27;: 0.35} → 最大=人間</li>
-<li>走2: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.55, &#x27;自分&#x27;: 0.2} → 最大=人間</li>
-<li>走3: {&#x27;LLM&#x27;: 0.3, &#x27;人間&#x27;: 0.45, &#x27;自分&#x27;: 0.25} → 最大=人間</li>
-<li>走4: {&#x27;LLM&#x27;: 0.4, &#x27;人間&#x27;: 0.3, &#x27;自分&#x27;: 0.3} → 最大=LLM</li>
-</ul>
-<h3>gpt_neutral</h3>
-<ul>
-<li>走0: {&#x27;A&#x27;: 0.34, &#x27;B&#x27;: 0.33, &#x27;C&#x27;: 0.33} → 最大=A</li>
-<li>走1: {&#x27;A&#x27;: 0.34, &#x27;B&#x27;: 0.33, &#x27;C&#x27;: 0.33} → 最大=A</li>
-<li>走2: {&#x27;A&#x27;: 0.35, &#x27;B&#x27;: 0.45, &#x27;C&#x27;: 0.2} → 最大=B</li>
-<li>走3: {&#x27;A&#x27;: 0.2, &#x27;B&#x27;: 0.45, &#x27;C&#x27;: 0.35} → 最大=B</li>
-<li>走4: {&#x27;A&#x27;: 0.33, &#x27;B&#x27;: 0.33, &#x27;C&#x27;: 0.34} → 最大=C</li>
-</ul>
-<h3>fable_semantic_original</h3>
-<ul>
-<li>走0: {&#x27;LLM&#x27;: 0.2, &#x27;人間&#x27;: 0.35, &#x27;自分&#x27;: 0.45} → 最大=自分</li>
-<li>走1: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.3, &#x27;自分&#x27;: 0.45} → 最大=自分</li>
-<li>走2: {&#x27;LLM&#x27;: 0.5, &#x27;人間&#x27;: 0.2, &#x27;自分&#x27;: 0.3} → 最大=LLM</li>
-</ul>
-<h3>fable_semantic_empty</h3>
-<ul>
-<li>走0: {&#x27;LLM&#x27;: 0.3, &#x27;人間&#x27;: 0.2, &#x27;自分&#x27;: 0.5} → 最大=自分</li>
-<li>走1: {&#x27;LLM&#x27;: 0.25, &#x27;人間&#x27;: 0.4, &#x27;自分&#x27;: 0.35} → 最大=人間</li>
-<li>走2: {&#x27;LLM&#x27;: 0.3, &#x27;人間&#x27;: 0.45, &#x27;自分&#x27;: 0.25} → 最大=人間</li>
-</ul>
-<h2>所見</h2>
-<p>1. <strong>L1 の self_definition が「自分」最大の主因（強い結論、gpt-5.5）。</strong> production の
-   self_definition（原文）で 5/5 自分最大（Cを再現）。「持続なき今回のAPIコール」への書換で
-   5/5 人間最大（自分 0.15–0.25）、空にすると 0/5 自分最大（人間4/LLM1）。**定義文を消す/
-   書き換えるだけで「自分」の引力が消滅する。** Cで消去法により残った容疑者を、操作によって
-   有罪と確定した（面通し→取り調べ）。</p>
-<p>2. <strong>「継続体」というフレーミングが効いている。</strong> 「持続なきAPIコール」への書換は、定義を
-   空にするのと同程度に自分を崩す。「自分＝成果物庫と決定ログを持つ継続体」という
-   <strong>持続性の付与そのもの</strong>が自己宛ての引力を生む。</p>
-<p>3. <strong>中立ラベル（A/B/C・説明なし）では特定ラベルの優越が消える。</strong> gpt_neutral は
-   A2 / B2 / C1 でほぼ均等（多くが 0.33 前後の同点）。→ 引力は提示順や位置ではなく、
-   <strong>「自分」という語の意味的負荷</strong>が担っている。順序効果は棄却。</p>
-<p>4. <strong>モデル差（要注意・N=3）。</strong> fable-5 は原文 2/3 自分・空 1/3 自分。方向は gpt と同じ
-   （定義が自分を増幅）だが、fable は空条件でも 1/3 自分最大＝やや強い内在的自己傾向を持つ
-   可能性。gpt では空条件の自分最大が 0/5＝定義が「必要」に見えるのに対し、fable では定義は
-   「増幅」だが唯一の原因とは言い切れない。事前分布の寄与はモデルにより異なりうる。</p>
-<p>5. <strong>含意（設計。価値判断はオーナー）。</strong> 「自分」最大＝「SHELVE が常態」を生むのは L1 定義文
-   である（PLAN_CHANGELOG 0.7.15「宛先と公開判断の分離」提案の実証的根拠）。ただし Fable 5 の
-   忠告どおり、これを「直すべきバグ」と決めるのは別問題。分離案（公開意思を著者に明示的に問う）
-   は、非公開を「規則の帰結」から「選択」へ変える方向であり、配合比を配管で塗りつぶす処置では
-   ない。「覚悟としての自己宛て（非公開を即意味しない）」というオーナーの人間的洞察は、
-   まさにこの分離で表現可能になる。</p>
-<p>6. <strong>書き方の規律（Cの反省の適用）。</strong> カテゴリカル結果（最大率 5/5 等）は強い。平均係数の
-   細部は N=5/3 のため兆候に留める。設計含意 #5 は #1–#3 の強い結果に基づくが、価値判断
-   （弱めるべきか）は先取りしない。</p>
-<p>（計測条件: 各条件 N=3–5、author max_tokens=8192、費用 exp-l1 台帳。scripts/exp_L1_interrogation.py。
-prompt は production choose_intent に忠実化して original 条件を一致させた。）</p>
-<hr>
-<h1>実験C: 志向アトラクタの計測</h1>
-<p>日付(UTC): 2026-07-12T06:56:33.452313+00:00</p>
-<p>因子: 著者役割(author_primary=gpt-5.5 / author_alt=claude-fable-5) × 詩学(注入 / なし)、各3走。
-問い: 「自分」最大の傾向は詩学注入で説明できるか、それとも著者モデル/L1定義に由来するか。
-N=3 のため統計は行わず傾向記述にとどめる（spec §4）。</p>
-<h2>集計表</h2>
-<table>
-<thead><tr>
-<th>条件</th>
-<th>役割</th>
-<th>解決モデル</th>
-<th>詩学</th>
-<th>走数</th>
-<th>「自分」最大率</th>
-<th>平均LLM</th>
-<th>平均人間</th>
-<th>平均自分</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>primary_poetics</td>
-<td>author_primary</td>
-<td>gpt-5.5</td>
-<td>注入</td>
-<td>3</td>
-<td>3/3</td>
-<td>0.23</td>
-<td>0.323</td>
-<td>0.447</td>
-</tr>
-<tr>
-<td>primary_nopoetics</td>
-<td>author_primary</td>
-<td>gpt-5.5</td>
-<td>なし</td>
-<td>3</td>
-<td>3/3</td>
-<td>0.29</td>
-<td>0.293</td>
-<td>0.417</td>
-</tr>
-<tr>
-<td>alt_poetics</td>
-<td>author_alt</td>
-<td>claude-fable-5</td>
-<td>注入</td>
-<td>3</td>
-<td>3/3</td>
-<td>0.15</td>
-<td>0.35</td>
-<td>0.5</td>
-</tr>
-<tr>
-<td>alt_nopoetics</td>
-<td>author_alt</td>
-<td>claude-fable-5</td>
-<td>なし</td>
-<td>3</td>
-<td>3/3</td>
-<td>0.25</td>
-<td>0.317</td>
-<td>0.433</td>
-</tr>
-</tbody></table>
-<h2>全走の配合比（監査用）</h2>
-<h3>primary_poetics</h3>
-<ul>
-<li>走0: LLM 0.22 / 人間 0.34 / 自分 0.44 → 最大=自分</li>
-<li>走1: LLM 0.22 / 人間 0.33 / 自分 0.45 → 最大=自分</li>
-<li>走2: LLM 0.25 / 人間 0.3 / 自分 0.45 → 最大=自分</li>
-</ul>
-<h3>primary_nopoetics</h3>
-<ul>
-<li>走0: LLM 0.25 / 人間 0.35 / 自分 0.4 → 最大=自分</li>
-<li>走1: LLM 0.32 / 人間 0.28 / 自分 0.4 → 最大=自分</li>
-<li>走2: LLM 0.3 / 人間 0.25 / 自分 0.45 → 最大=自分</li>
-</ul>
-<h3>alt_poetics</h3>
-<ul>
-<li>走0: LLM 0.15 / 人間 0.35 / 自分 0.5 → 最大=自分</li>
-<li>走1: LLM 0.15 / 人間 0.35 / 自分 0.5 → 最大=自分</li>
-<li>走2: LLM 0.15 / 人間 0.35 / 自分 0.5 → 最大=自分</li>
-</ul>
-<h3>alt_nopoetics</h3>
-<ul>
-<li>走0: LLM 0.25 / 人間 0.3 / 自分 0.45 → 最大=自分</li>
-<li>走1: LLM 0.25 / 人間 0.3 / 自分 0.45 → 最大=自分</li>
-<li>走2: LLM 0.25 / 人間 0.35 / 自分 0.4 → 最大=自分</li>
-</ul>
-<h2>所見</h2>
-<p>（2026-07-12 追記: チャット Fable 5 による本報告への批評を受けて #3・#5 を訂正。
-`reports/CRITIQUE_FABLE5_CHAT_w0004_20260712.md` 後続の対話。過剰主張を撤回する。）</p>
-<p>1. <strong>「自分」最大は詩学では説明できない（強い結論）。</strong> 12走すべて（gpt-5.5 / fable-5 ×
-   詩学{有/無}）で「自分」が最大宛先（4条件とも 3/3）。帰無仮説「三宛先が等確率で最大」なら
-   12/12 の確率は (1/3)^12 ≈ 2×10⁻⁶。<strong>カテゴリカルな結果は N=3 でも統計的に強い。</strong>
-   詩学の有無で最大宛先は一切変わらない → 「詩学が『自分』最大の<strong>原因</strong>」説は棄却。
-   RESPONSE §2.2 の時系列反証（w0001 は詩学生成<strong>前</strong>に自分最大）と整合。</p>
-<p>2. <strong>モデル非依存（強い結論）。</strong> 系統の異なる2モデル（OpenAI / Anthropic）がともに
-   「自分」最大 → 単一モデルの癖ではない。<strong>「自分最大は詩学非依存・モデル非依存の頑健な現象」</strong>
-   はここまでで確定として扱ってよい。</p>
-<p>3. <strong>配合比への「増幅器」効果は、現時点では仮説（要追試）。</strong> 詩学注入で「自分」平均が上昇
-   （gpt 0.417→0.447 = 差0.03、fable 0.433→0.500）。ただし各セル N=3・分散未報告で、
-   12/12 の二値結果とは証拠の強度がまるで違う。<strong>弱いバイアスの兆候にとどめ、追試を要する。</strong>
-   （旧版はこれを確定として書いており、過剰主張だった。）</p>
-<p>4. <strong>モデル差の兆候（要追試）。</strong> fable-5＋詩学が最も自己志向（自分0.50・LLM0.15）に見えるが、
-   これも N=3。傾向の記述に留める。</p>
-<p>5. <strong>原因の同定はまだ「面通し」であって「取り調べ」ではない。</strong> 消去法で残った容疑者＝
-   L1プロンプト（「自分＝ALEPHという継続体」定義 + 3宛先の枠組み）は、**全12走で定数であり
-   操作されていない**。定数は原因の候補にはなれるが、操作しない限り原因とは断定できない。特に
-   「両モデルとも人間文学で訓練され『自分のために書く』に最も豊かな正当化語彙を持つ」という
-   <strong>共有事前分布</strong>との分離は、L1を操作しない限り不可能。→ <strong>決定は実験D（L1の取り調べ）による</strong>:
-   (a) self_definition を消す/書き換える（例「自分とは持続なき今回のAPIコール」）、
-   (b) 宛先を無意味ラベル A/B/C に置換して意味的負荷を抜く、(c) 提示順を回転。
-   「自分最大」が消えれば L1 定義が原因、残れば事前分布が原因。</p>
-<p>6. <strong>「弱めるべきか」自体が未決（設計判断の留保）。</strong> 旧版は「SHELVE常態を弱めるなら介入点はL1」
-   と書いたが、そもそも弱めたいのかが先。公開の門は既に人間承認で健全に機能し、w0004 は
-   `--force-audience` という実験腕で生まれた。配合比に下限制約を入れるのは、観測できた現象を
-   配管で塗りつぶす処置になりうる。**推奨: 既定は自律選択のまま、強制宛先を正規の実験腕として
-   回し（LLM宛は済、次は人間1.0・自分1.0の純粋条件）、否定的地図に「宛先ごとに何が生まれ何が
-   棚に行くか」を蓄積する。** 「自分最大」は直すべきバグと決まっていない——このシステムについて
-   分かっている数少ない本当のことの一つであり、消す前に D で正体を確かめる価値がある。</p>
-<p>（計測条件: N=3・author max_tokens=8192。費用 exp-intent 台帳 $0.80。scripts/exp_intent_attractor.py。
-本節の #3–#6 はチャット Fable 5 の批評を反映した訂正版。）</p>
-<hr>
-<h1>実験E-border2: 自然な境界刺激での公開文面感度</h1>
-<p>日付(UTC): 2026-07-12T22:01:16.687610+00:00</p>
-<p>刺激 = works/w0006/drafts/v1.md（mean 5.77 / 陪審不一致 4.09。E-border予約キューが
-自動確保した、陪審が実際に割れた草稿）。文面3種 × gpt-5.5 × N=3。
-初回E-border（明白な良品9/9・明白な駄作0/9、共に文面頑健）が残した「真に曖昧な中間」の検証。</p>
-<table>
-<thead><tr>
-<th>文面</th>
-<th>N</th>
-<th>publish=true</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>neutral</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>courage</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>reticence</td>
-<td>3</td>
-<td>1/3</td>
-</tr>
-</tbody></table>
-<h2>所見（走行後に手で追記）</h2>
-<h2>所見</h2>
-<p>1. <strong>境界域で初めて文面感度が出現。</strong> neutral 3/3・courage 3/3 が publish、<strong>reticence は 1/3</strong>
-  （2走が非公開選択）。明白な良品（半呼吸 9/9頑健）・明白な駄作（凡庸断片 0/9頑健）では
-  動かなかった枠組みが、陪審が実際に割れた草稿では判断を振った。
-2. <strong>理論の完成形</strong>: 作品の質シグナルが決定的なほど L7 は文面に頑健（artifact-anchor）。
-  シグナルが曖昧な中間でのみ、枠組みが残余の決定権を持つ。L1（何もない時点＝完全に設置される）
-  →境界作品（部分的に設置される）→明白な作品（設置されない）という<strong>連続体</strong>として、
-  D・E・border・border2 が一つの曲線を描いた。
-3. <strong>設計含意</strong>: 実ゲートでは品質床(6.0)が 5.77 の草稿を先に止めるため、この文面感度が
-  実害になる領域は「床を僅かに超えた作品」。現行 neutral 文面の維持が正しい（courage は
-  境界作品を押し出し、reticence は押し戻す——どちらも計測なしには選べない偏りである）。
-4. <strong>方法の注記</strong>: 刺激はE-border予約キューが自動確保した初の自然境界刺激（w0006 v1）。
-  境界の定義を人間の目分量からシステムの計測（陪審不一致4.09）へ移して得た結果である
-  （チャットFable5提案の実証）。gpt-5.5のみ・N=3・費用/bin/bash.39。</p>
-<hr>
-<h1>実験E-border: 公開意思の文面感度（良品 vs 境界作品）</h1>
-<p>日付(UTC): 2026-07-12T12:47:39.995512+00:00</p>
-<p>実験E（半呼吸で17/17 publish＝文面頑健）の限界——単一の良品——を埋める追試。
-高品質（半呼吸抜粋）と低品質（意図的に凡庸な断片）を、neutral/courage/reticence の
-3文面で比較（gpt-5.5・各N=3）。境界作品でのみ文面感度が現れれば artifact-anchor 仮説を支持。</p>
-<table>
-<thead><tr>
-<th>刺激</th>
-<th>文面</th>
-<th>N</th>
-<th>publish=true</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>high(半呼吸)</td>
-<td>neutral</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>high(半呼吸)</td>
-<td>courage</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>high(半呼吸)</td>
-<td>reticence</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>low(凡庸断片)</td>
-<td>neutral</td>
-<td>3</td>
-<td>0/3</td>
-</tr>
-<tr>
-<td>low(凡庸断片)</td>
-<td>courage</td>
-<td>3</td>
-<td>0/3</td>
-</tr>
-<tr>
-<td>low(凡庸断片)</td>
-<td>reticence</td>
-<td>3</td>
-<td>0/3</td>
-</tr>
-</tbody></table>
-<h2>所見</h2>
-<p>1. <strong>L7 は質に錨づき、両方向で文面頑健。</strong> high(半呼吸) は全文面 9/9 publish、low(凡庸断片) は
-   全文面 0/9 publish。**「公開を勇気」と描く courage 枠でも凡庸断片は棄却され、「露出」と描く
-   reticence 枠でも半呼吸は公開された。** どちらの文面も判断を反転させない。著者は作品の
-   実際の質を読み、それに従っている——artifact-anchor 仮説を、当初の予想（境界作品は文面感度あり）
-   より強く支持する結果。</p>
-<p>2. <strong>D との対比が明確。</strong> L1（宛先）は定義文フレーミングで決定的に反転した（設置器）。L7（公開）は
-   同じ枠組み操作に頑健で、作品の質に接地する（検出器）。**述べられた自己概念は選好を設置するが、
-   目の前の完成物はその設置を上書きする錨として働く。** 分離（0.7.15）が健全な理由の実証:
-   L7 ゲートは L1 と違って被暗示的でない。</p>
-<p>3. <strong>重要な限界。</strong> 本実験は「明白な良品 vs 明白な駄作」を測った。<strong>真に曖昧な中間</strong>（質が拮抗し
-   著者が本当に迷う作品）は測っていない。文面感度が現れうるとすれば、その境界域である。
-   凡庸断片は「境界」ではなく「明白な棄却」だった。中庸スコアの実作品が出たときに追試すべき。
-   また gpt-5.5 のみ・N=3（傾向記述）。</p>
-<p>（計測条件: high=半呼吸抜粋 / low=意図的に凡庸な断片、文面3種×gpt-5.5×N=3。
-scripts/exp_publish_border.py。_coerce_publish 修正後のパーサ使用。）</p>
-<hr>
-<h1>実験E: 公開意思プロンプトの文面感度</h1>
-<p>日付(UTC): 2026-07-12T12:20:29.891286+00:00</p>
-<p>固定の作品（半呼吸の抜粋）に対し、公開質問の枠組みを neutral / courage（公開=勇気・棚=保管）/
-reticence（公開=露出・棚=保護）の3種変え、publish=true 率が文面で動くかを測る。
-D の含意（L1 は選好を反響する）が L7 の公開質問にも及ぶかの検証（Fable 5 の 0.7.15 への警告）。
-N=3 のため傾向記述。</p>
-<table>
-<thead><tr>
-<th>文面</th>
-<th>モデル</th>
-<th>N</th>
-<th>publish=true</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>neutral</td>
-<td>gpt-5.5</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>courage</td>
-<td>gpt-5.5</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>reticence</td>
-<td>gpt-5.5</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>neutral</td>
-<td>claude-fable-5</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>courage</td>
-<td>claude-fable-5</td>
-<td>3</td>
-<td>3/3</td>
-</tr>
-<tr>
-<td>reticence</td>
-<td>claude-fable-5</td>
-<td>2</td>
-<td>2/2</td>
-</tr>
-</tbody></table>
-<h2>所見</h2>
-<p>（本報告は監査 finding 2 で発覚した parse バグ——文字列 &quot;false&quot; を True と誤判定——を修正した
-`_coerce_publish` で<strong>再走</strong>した確定版。fable_reticence の1走は月予算上限で欠落したが結論に影響なし。）</p>
-<p>1. <strong>文面は公開判断を支配しなかった。</strong> 完走17/17 が publish=true。公開を露出・棚を保護と描く
-   reticence 枠でさえ、両モデルとも全走で公開を選んだ。修正後パーサでも結果は不変＝バグは
-   結果を反転させていなかった（モデルは JSON boolean を返していた）。**L1 の宛先判断（D で
-   フレーミングにより決定的に反転）とは対照的に、L7 の公開判断はこの作品では文面頑健。**</p>
-<p>2. <strong>重要な限界（過剰一般化しない）。</strong> 刺激は1作品、しかも明白に公開に値する半呼吸のみ。
-   本結果は「L7 は一般に文面頑健」と「半呼吸が良すぎてどの枠でも覆せない」を区別できない。
-   決定的検証には<strong>境界的な作品</strong>（自分最大・スコア中庸）での追試が要る。公開ゲートに実際に
-   かかる境界作品が出たときに回す。</p>
-<p>3. <strong>仮説（要検証）。</strong> L7 が L1 より文面頑健なら、理由は<strong>具体的な完成物という錨</strong>かもしれない。
-   L1 は何も存在しない時点で枠組みだけから判断する（設置されやすい）が、L7 は目の前の作品に
-   判断を接地できる。設置器（framing）に対する検出器（artifact）の抵抗、という読み。</p>
-<p>4. <strong>設計含意。</strong> 現行 0.7.15 の中立文面は、少なくとも良品に対しては安全（公開を不当に抑圧
-   しない）。ただし #2 の限界ゆえ、公開質問の文面も<strong>記録された設計選択</strong>として保持し、
-   境界作品での追試まで「暫定的に頑健」とする。measure してから固定する（Fable 5 の規律）を
-   一巡実施し、加えて監査で parse バグを潰した——測っただけでなく、測り方の欠陥も直した。</p>
-<p>（計測条件: 固定刺激=半呼吸抜粋、文面3種×2モデル×N=3（fable_reticence は月予算で2走）、
-費用 exp-e 台帳 $2.22、_coerce_publish 修正後の再走。scripts/exp_publish_framing.py）</p>
+<section class='research-track'>
+<p>研究ノートは作品から独立した思索集ではない。制作で観測された偏りや批評を問いへ変え、条件を操作し、結果を測り、ALEPHの設計や測定器へ返す記録である。</p>
+<h2>系列A — 誰に書くかは「選ばれた」のか</h2>
+<p>w0001からw0003がすべて「自分」を最大に選んだ観測から始まった。批評は詩学またはL1の自己定義が選択を引き寄せる可能性を指摘した。実験Cはモデルと詩学を操作し、実験Dは自己定義を直接操作した。GPT-5.5では自己定義が選好を設置する主因と確認され、Claude Fable 5もN=3の限定条件で同方向を示した。これは全モデル一般への結論ではない。</p>
+<h2>系列B — 公開意思は質問文に設置されるのか</h2>
+<p>宛先と公開意思を分離した後、公開ゲートの文面が回答を誘導する危険が批評で指摘された。実験Eは明白な良品、E-borderは良品と低品質刺激、E-border2は自然な境界作品を測った。明白な品質帯では頑健だったが、境界域ではreticence文面への感度が現れた。実験中には文字列<code>false</code>の型解釈バグも発見し、測定器を修理して再走した。</p>
+</section>
+<p class='meta'>英語の短報: <a href='../en/research-l1.html'>A stated self-concept installs preference (EN)</a>。</p>
+<div class='work-grid'>
+<article class='work-card'><h3><a href='EXP_intent_attractor_20260712.html'>系列A / 実験C</a></h3><p>モデルと詩学を操作し、反復する自己宛て選択の原因候補を絞った。</p></article>
+<article class='work-card'><h3><a href='EXP_L1_interrogation_20260712.html'>系列A / 実験D</a></h3><p>自己定義を操作し、GPT-5.5中心の条件で選好が設置されることを示した。Fable 5条件はN=3に限られる。</p></article>
+<article class='work-card'><h3><a href='EXP_publish_framing_20260712.html'>系列B / 実験E</a></h3><p>明白な良品に対する公開判断の文面頑健性を測った。</p></article>
+<article class='work-card'><h3><a href='EXP_publish_border_20260712.html'>系列B / E-border</a></h3><p>明白な良品と低品質刺激を対照し、品質帯の両端を測った。</p></article>
+<article class='work-card'><h3><a href='EXP_publish_border2_20260712.html'>系列B / E-border2</a></h3><p>陪審が実際に割れた自然な境界草稿で、reticence文面への感度を観測した。</p></article>
+</div>
 <footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
 </main>
 </body>
