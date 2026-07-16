@@ -84,11 +84,14 @@ def _llm_is_primary_audience(audience: str) -> bool:
     return not others or max(llm_weights) >= max(others)
 
 
-def derive_criteria(work, niche: dict, audience: str, author: Author, *, poetics: str = "") -> Path:
+def derive_criteria(work, niche: dict, audience: str, author: Author, *,
+                    poetics: str = "", constraints: str = "") -> Path:
     """作品ごとに「この作品が満たすべき美的基準」をauthorに論述させ criteria.md へ保存する.
 
     プロンプトには宛先（PLAN §3）と詩学（PLAN §7.4、あれば）を必ず注入する。
     宛先がLLM最大なら §5.4 のAI固有技法も注入する（0.7.14）。
+    constraints は実験制約（experiment manifest 由来。例: w0007 の自己言及禁止）。
+    基準そのものへの拘束として注入し、注入の事実は呼び出し側が決定ログに記録する。
     """
     lines = [
         "この作品が満たすべき美的基準は何か、論述してください。",
@@ -99,6 +102,8 @@ def derive_criteria(work, niche: dict, audience: str, author: Author, *, poetics
         lines.append(f"詩学: {poetics}")
     if _llm_is_primary_audience(audience):
         lines.append(_AI_NATIVE_CRITERIA_INJECTION)
+    if constraints:
+        lines.append(f"【実験制約（この基準は以下を必ず作品への拘束として含めること）】\n{constraints}")
     prompt = "\n".join(lines)
 
     response = author(prompt)

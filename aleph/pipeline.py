@@ -579,12 +579,33 @@ class RealDeps:
         return cards
 
     # -- L4+L5 構成・執筆（M3 pipeline_to_draft） ----------------------------
+    def _experiment_manifest(self, work) -> dict:
+        """seed.json の experiment manifest（仮説・介入・対照・観測。DESIGNER_INSIGHTS §6）を読む."""
+        try:
+            seed = json.loads(work.seed.read_text(encoding="utf-8"))
+            manifest = seed.get("experiment")
+            return manifest if isinstance(manifest, dict) else {}
+        except (OSError, json.JSONDecodeError):
+            return {}
+
     def compose_and_draft(self, work, niche, audience, materials):
         from aleph.draft.write import pipeline_to_draft
 
+        # 実験制約（例 w0007: 自己言及的告白の出口封鎖）。注入の事実を決定ログに残す。
+        manifest = self._experiment_manifest(work)
+        constraints = str(manifest.get("criteria_constraints", "") or "")
+        if constraints:
+            work.append_decision({
+                "ts": _now_iso(), "layer": "L4",
+                "decision": "実験制約を基準書へ注入",
+                "reason": f"experiment manifest（{manifest.get('id', 'unnamed')}）の criteria_constraints を"
+                          f" derive_criteria に拘束として渡した: {constraints[:120]}",
+                "decided_by": "owner-experiment",
+            })
         return pipeline_to_draft(
             work, niche, audience, self._author, self._scout,
             generations=2, poetics=self._poetics(), materials=materials,
+            criteria_constraints=constraints,
         )
 
     # -- L6 査読・改稿ループ（M4 critique_revise_loop） ----------------------

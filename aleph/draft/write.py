@@ -127,6 +127,7 @@ def pipeline_to_draft(
     generations: int = 2,
     poetics: str = "",
     materials: list | None = None,
+    criteria_constraints: str = "",
 ) -> Path:
     """ニッチ報告→criteria→3案→進化→drafts/v1.md を全自動でつなぐ（PLAN §10 M3）.
 
@@ -138,7 +139,8 @@ def pipeline_to_draft(
 
     criteria_path = work.compositions / "criteria.md"
     if not criteria_path.exists():
-        criteria_path = derive_criteria(work, niche, audience, author, poetics=poetics)
+        extra = {"constraints": criteria_constraints} if criteria_constraints else {}
+        criteria_path = derive_criteria(work, niche, audience, author, poetics=poetics, **extra)
     else:
         print("pipeline_to_draft: reusing criteria.md", file=sys.stderr)
     criteria_text = criteria_path.read_text(encoding="utf-8")

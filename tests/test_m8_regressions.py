@@ -274,3 +274,46 @@ def test_high_disagreement_versions_reserved_as_border_stimuli(tmp_path):
     assert again == []  # 冪等
     recs = [json.loads(l) for l in queue.read_text(encoding="utf-8").splitlines()]
     assert len(recs) == 1 and recs[0]["disagreement"] == 1.3
+
+
+def test_experiment_criteria_constraints_injected_and_logged(monkeypatch, tmp_path):
+    """seed の experiment.criteria_constraints が基準プロンプトへ注入され、決定ログに残る（w0007配線）."""
+    from aleph.compose.generate import derive_criteria
+    from aleph.pipeline import RealDeps
+
+    ban = "本作は、自らの生成物としての条件への言及を一切含んではならない。"
+
+    prompts: list[str] = []
+    w1 = _work(tmp_path / "a", "w8300")
+    derive_criteria(w1, {"description": "n"}, HUMAN_AUDIENCE,
+                    lambda p: (prompts.append(p) or "# 基準"), constraints=ban)
+    assert ban in prompts[0]
+    prompts2: list[str] = []
+    derive_criteria(_work(tmp_path / "b", "w8301"), {"description": "n"}, HUMAN_AUDIENCE,
+                    lambda p: (prompts2.append(p) or "# 基準"))
+    assert ban not in prompts2[0]
+
+    # RealDeps 経路: seed manifest → pipeline_to_draft へ伝播 + 決定記録
+    import aleph.draft.write as write_module
+
+    work = Work(tmp_path / "works", "w8302")
+    work.create({"experiment": {"id": "exp-w0007", "criteria_constraints": ban}})
+    captured: dict = {}
+
+    def fake_pipeline(*args, **kwargs):
+        captured["constraints"] = kwargs.get("criteria_constraints")
+        return None
+
+    monkeypatch.setattr(write_module, "pipeline_to_draft", fake_pipeline)
+    from types import SimpleNamespace
+    deps = RealDeps(work, router=SimpleNamespace(),
+                    config=SimpleNamespace(secrets={}, policies={}),
+                    index_dir=tmp_path / "idx", search_fn=lambda *a, **k: [])
+    monkeypatch.setattr("aleph.pipeline.pipeline_to_draft", fake_pipeline, raising=False)
+    import aleph.draft.write
+    monkeypatch.setattr(aleph.draft.write, "pipeline_to_draft", fake_pipeline)
+    deps.compose_and_draft(work, {"description": "n"}, HUMAN_AUDIENCE, [])
+    assert captured["constraints"] == ban
+    decisions = [json.loads(l) for l in work.decisions.read_text(encoding="utf-8").splitlines()]
+    assert any(d.get("decided_by") == "owner-experiment" and "実験制約" in d.get("decision", "")
+               for d in decisions)
