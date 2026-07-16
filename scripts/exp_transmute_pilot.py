@@ -10,11 +10,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable
 
 import numpy as np
 
@@ -23,27 +22,20 @@ from aleph.core.config import load_config
 from aleph.core.llm import CallLogger, Message, Router
 from aleph.core.local import LocalRuntime
 from aleph.explore.corpus import LlamaServerEmbedder
-from aleph.materia.transmute import transmute
+from aleph.materia.transmute import (
+    extract_structure_features,
+    retained_feature_ratio,
+    structural_fidelity as form_fidelity,
+    transmute,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORKS = ROOT / "corpus" / "secondary" / "works.jsonl"
 WORK_ID = "exp-s2"
 
-LAW_FEATURE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("law.article", re.compile(r"(?:第[一二三四五六七八九十百千〇零0-9０-９]+条)")),
-    ("law.paragraph", re.compile(r"(?m)^[ \t　]*(?:[0-9０-９]+)[ \t　]")),
-    ("law.item", re.compile(r"(?m)^[ \t　]*[一二三四五六七八九十]+[ \t　]")),
-    ("law.definition", re.compile(r"「[^」]{1,80}」(?:と|を)は?|「[^」]{1,80}」[^。\n]{0,80}をいう")),
-    ("law.proviso", re.compile(r"(?:ただし|但し)")),
-)
-
-RFC_FEATURE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("rfc.must", re.compile(r"\bMUST(?:\s+NOT)?\b")),
-    ("rfc.should", re.compile(r"\bSHOULD(?:\s+NOT)?\b")),
-    ("rfc.may", re.compile(r"\bMAY\b")),
-    ("rfc.section", re.compile(r"(?m)^\s*\d+(?:\.\d+)*\.\s+\S")),
-    ("rfc.abstract", re.compile(r"(?mi)^\s*Abstract\s*$")),
-)
+# 検出器の実体は aleph/materia/transmute.py に一本化した（この二軸パイロットが検証した
+# regexを、そのままtransmute()の第二軸ゲート(min_form_fidelity)にも使うため）。ここでは
+# extract_structure_features / retained_feature_ratio / form_fidelity を re-export するのみ。
 
 
 @dataclass(frozen=True)
@@ -57,33 +49,6 @@ class PilotResult:
     generated_features: tuple[str, ...]
     generated_chars: int
     final_cos: float | None
-
-
-def extract_structure_features(form_type: str, text: str) -> set[str]:
-    """Extract detector feature names for a secondary corpus form type."""
-    if form_type == "law":
-        patterns = LAW_FEATURE_PATTERNS
-    elif form_type == "rfc":
-        patterns = RFC_FEATURE_PATTERNS
-    else:
-        return set()
-    return {name for name, pattern in patterns if pattern.search(text)}
-
-
-def retained_feature_ratio(source_features: Iterable[str], generated_features: Iterable[str]) -> float:
-    """Return the share of source structure features that remain in generated text."""
-    source = set(source_features)
-    if not source:
-        return 0.0
-    generated = set(generated_features)
-    return len(source & generated) / len(source)
-
-
-def form_fidelity(form_type: str, source_text: str, generated_text: str) -> float:
-    """Measure retained structure using the detector for the source form type."""
-    source_features = extract_structure_features(form_type, source_text)
-    generated_features = extract_structure_features(form_type, generated_text)
-    return retained_feature_ratio(source_features, generated_features)
 
 
 def embedding_cosine(embedder: Callable[[list[str]], np.ndarray], source_text: str, generated_text: str) -> float:
@@ -139,6 +104,8 @@ def run_pilot(
     llm: Callable[[str], str],
     embedder: Callable[[list[str]], np.ndarray],
     limit: int | None = None,
+    max_iters: int = 1,
+    min_form_fidelity: float | None = None,
 ) -> list[PilotResult]:
     results = []
     for work in load_works(works_path, limit=limit):
@@ -150,6 +117,7 @@ def run_pilot(
             "author": work.get("author"),
             "corpus": work.get("corpus"),
             "form_type": form_type,
+            "kind": form_type,  # transmute()のゲートはsource_biblio["kind"]で検出器を選ぶ
             "meta": work.get("meta", {}),
         }
         card = transmute(
@@ -157,8 +125,9 @@ def run_pilot(
             theme,
             llm,
             embedder,
-            max_iters=1,
+            max_iters=max_iters,
             source_biblio=source_biblio,
+            min_form_fidelity=min_form_fidelity,
         )
         generated = str(card.get("content", ""))
         source_features = extract_structure_features(form_type, source_text)
@@ -305,6 +274,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--theme", default="観測と記憶", help="theme passed to transmute")
     parser.add_argument("--limit", type=int, default=None, help="limit works processed")
+    parser.add_argument(
+        "--max-iters",
+        type=int,
+        default=1,
+        help="transmute() max_iters per work (1 = pure measurement, matches the 2026-07-17 pilot report)",
+    )
+    parser.add_argument(
+        "--min-form-fidelity",
+        type=float,
+        default=None,
+        help="enable transmute()'s structural fidelity gate at this threshold (requires --max-iters > 1 to retry)",
+    )
     return parser
 
 
@@ -318,6 +299,8 @@ def main(argv: list[str] | None = None) -> int:
         llm=llm,
         embedder=embedder,
         limit=args.limit,
+        max_iters=args.max_iters,
+        min_form_fidelity=args.min_form_fidelity,
     )
     write_report(results, args.out, source_path=args.works, theme=args.theme)
     print(f"wrote report for {len(results)} works to {args.out}")
