@@ -91,3 +91,41 @@ ISO 8601文字列に変換済み。
   `inspect_aozora_dataset3.py` — データセットのスキーマ・フラグ分布・
   マークアップ残留・文字数分布を調べたスパイク（使い捨て調査用。削除せず
   保持しているが再実行は必須ではない）
+
+## corpus/secondary/works.jsonl — 二次コーパス極小パイロット（S-2、法令+RFC）
+
+- **目的**: 大量取得（designs/corpus-expansion.md S-2以降）の前に、
+  `aleph/materia/transmute.py` の換骨奪胎測定器（embedding cosine単独ゲート）が
+  「骨格保存」という本来の目的と噛み合っているかを、法令文体・RFC文体の
+  小規模母材（各20件）で検証する（`reports/EXP_transmute_pilot_20260717.md`）。
+- **取得元・取得方法**: `scripts/build_secondary_corpus.py`
+  - `law`: e-Gov 法令API Version 1（`laws.e-gov.go.jp/api/1/lawlists/{type}` →
+    `lawdata/{lawId}`）から短めの現行法令を取得し、法令XMLから本文を抽出。
+  - `rfc`: RFC Editor（`https://www.rfc-editor.org/rfc/rfcNNNN.txt`）から
+    代表的なプロトコル文書20件を取得。
+  - ネットワーク不可環境では `--sample` で各3件の短い同梱断片を書き出せる。
+- **取得日**: 2026-07-17。件数: 法令20件・RFC20件（計40件）。
+- **`--max-chars`**: RFC=20000（既定のまま）。法令=**8000**（既定20000から下げた）。
+  実測で法令テキスト（漢字密度が高い）は文字数がbge-m3のn_ctx=8192の安全な代理指標に
+  ならず、19,638字の法令1件がトークン換算13,122で embeddings 500エラーを起こした
+  （詳細は EXP report 参照）。CJKテキストを二次コーパスに追加する際は毎回この換算を
+  再確認すること。
+- **スキーマ**: 青空文庫と同じ `id/title/author/text/meta` に加え、
+  `corpus: "secondary"` と `form_type: "law" | "rfc"` を持つ。
+
+### ライセンス・権利根拠メモ
+
+- **日本法令（e-Gov）**: 法令本文は著作権法13条の「憲法その他の法令」に該当する
+  ものとして、著作権の目的とならない資料として扱う。`meta.source_url` に個別
+  API URL を保持。
+- **RFC**: Public Domain とは扱わない。RFC Editor / IETF Trust の Legal Provisions
+  Relating to IETF Documents および各RFCのCopyright Noticeに従う資料として、
+  パイロット用の内部コーパスに限定して保持する。公開サイト・作品本文・配布物へ
+  RFC全文をそのまま転載しない。
+
+### パイロットの結果（要旨。詳細は `reports/EXP_transmute_pilot_20260717.md`）
+
+content_distance（現行ゲート）と form_fidelity（骨格保存の実測）の相関は
+Pearson r=0.1791（n=40、ほぼ無相関）。ゲート帯域を通過しつつ骨格が完全に
+失われる反例が5件あり、現行の cosine 単独ゲートは骨格喪失を検出しない
+ことを確認した。大量取得前に測定器側の設計判断が必要（債務として記録）。
