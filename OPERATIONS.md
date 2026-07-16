@@ -112,6 +112,8 @@ git add docs/ scripts/build_public_site.py site/ && git commit -m "Publish w0005
 新作の PUBLISH → docs 再生成のあと、build_public_site.py の EN 定数に次の3点を**必ず**追加する
 （追加せずに再生成すると、EN index に日本語題が混ざり、EN 作品ページが汎用文のままになる）:
 
+0. `_JP_WORK_NOTES` に日本語の一行説明（w0007で漏れてフォールバック文が公開された反省——
+   「作中で自己言及を禁じられた唯一の作品が、公開の場では出自しか語られていない」Fable5）。
 1. `_EN_TITLES` に英語題（題の翻訳は司令塔=Claude が行う。作品の本文翻訳ではないので可）。
 2. `_EN_WORK_NOTES[work_id]` に **context**（何字・宛先条件・制作上の事実——スコア軌跡・
    公開選択など decisions/trajectory から正確に）と **criteria_brief**（基準書冒頭を読んで
