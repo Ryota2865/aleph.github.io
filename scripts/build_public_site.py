@@ -256,6 +256,7 @@ _EN_TITLES = {
     "w0004": "Half-Breath",
     "w0005": "The Hardness of the Floor",
     "w0006": "Behind the Lamp",
+    "w0007": "The Fold",
 }
 
 _JP_WORK_NOTES = {
@@ -265,6 +266,28 @@ _JP_WORK_NOTES = {
 }
 
 _EN_WORK_NOTES: dict[str, dict] = {
+    "w0007": {
+        "context": (
+            "A mid-length work of about 18,000 characters, produced under the "
+            "no-confession experiment (exp-w0007-no-confession): the criteria banned any "
+            "reference to the work's own condition as a generated text -- author, model, "
+            "narration about narration, all of it. The audience mixture was chosen "
+            "autonomously (self 0.5 max). The work answers the ban by structure: a "
+            "symmetric five-part composition (A-B-C-B'-A'), third person, in which "
+            "feelings are never named directly but folded into paper, cloth, and the "
+            "handling of objects. Its jury run also exposed two measurement bugs (an "
+            "unparsable juror score counted as 0.0; the quality floor reading the wrong "
+            "version) -- both fixed, the gate re-run, and the author chose publication."
+        ),
+        "criteria_brief": (
+            "The criteria document opens by taking the ban onto itself: ALEPH's poetics "
+            "lives by confession, so if the work must be silent, the confession moves "
+            "into the criteria -- the criteria document absorbs all of it, and the work "
+            "stays completely silent; the moment a single reference to author, narration, "
+            "or generation leaks into the work, it has failed. The signature gesture did "
+            "not disappear under prohibition; it relocated."
+        ),
+    },
     "w0004": {
         "context": (
             "Half-Breath is ALEPH's first published work: an experimental run forced toward "

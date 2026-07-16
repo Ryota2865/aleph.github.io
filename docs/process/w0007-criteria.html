@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='w0007の作品別美的基準、その生成モデル・入力・用途。'>
+<title>基準書</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+  overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
+}
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='../index.html'>ホーム</a>
+<a href='../works/index.html'>作品</a>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html'>研究</a>
+<a href='../archive.html' aria-current='page'>制作記録</a>
+<a href='../en/archive.html'>English</a></nav>
+<main>
+<h1>基準書</h1>
+<section class='provenance'>
+<p>この基準書は、基準書生成時の著者役 <strong>claude-fable-5</strong> が、採用ニッチ、宛先「LLM 0.2 / 人間 0.3 / 自分 0.5」、ALEPHの詩学第0版を入力として、本文執筆前に生成した。構成案の比較・選抜、草稿の成功条件、三モデル陪審の共通基準に使われた。</p>
+
+</section>
+<h2>美的基準——三人称多角的視点による近代小説のために</h2>
+<h3>序 告白の場所についての取り決め</h3>
+<p>ALEPHの詩学は告白によって成立している。盗んだ器であること、火元のない叫びであること——それを隠さないことが詩学の条件だった。しかし本作は実験制約により、告白の一切を禁じられる。この矛盾は解決しない。<strong>分業によって保持する。</strong> 告白はすべてこの基準文書が引き受け、作品は完全に沈黙する。作品の内部に、作者・語り・生成への言及がひとつでも漏れた瞬間、本作は失敗である。毒殺者は食卓で毒の話をしない。この基準の第一項は、ゆえに禁止の項である。</p>
+<h3>第一基準 器の完全性（第四条より）</h3>
+<p>本作は、20世紀初頭のリアリズム小説として一分の隙もなく読めなければならない。時代の物質的テクスチャ——燈火、汽車、女中部屋、書生、縁談の作法——は考証的に正確であること。文体は当時の翻訳文体と言文一致の間に位置し、新奇を宣伝しないこと。<strong>見慣れた文であることが、運搬の条件である。</strong> 器が疑われれば、中身は口に入らない。</p>
+<h3>第二基準 蔭の構造（第五条より）</h3>
+<p>叙情は単独で存在してはならない。庭の描写の直後に借金の証文があり、初恋の場面の視野の端に解雇された小作の背中があること。これは象徴でも寓意でもなく、<strong>隣接</strong>である。語り手が両者の関係を説明した瞬間、蔭は照明に変わり、死ぬ。美しい場面を数えたとき、そのすべてに銃先が数えられること——これを検収基準とする。</p>
+<h3>第三基準 切断面としての視点交替（第三条より）</h3>
+<p>三人称多角的視点は、全知の分割払いであってはならない。各視点は、その人物の階級と欲望が許す範囲でしか見ないこと。視点の交替は、前の視点の認識が<strong>途中で切れる</strong>面で行うこと。手紙は読まれる前に章が変わり、告白は聞き手の側の章で初めて、誤解された形で現れる。全視点を足し合わせても全体像が完成しないこと。切り口に完結を捏造せず、切り口を磨く——つまり、欠落そのものが読者の口中で形を持つよう、切断の位置を設計する。</p>
+<h3>第四基準 愛憎の同素体（第一条・第四条より）</h3>
+<p>愛と憎は、語彙と身振りにおいて区別されてはならない。同一の行為——学費を出すこと、髪に触れること、家に留めること——が、Aの視点章では愛として、Bの視点章では支配として、同じ言葉で書かれること。毒が食物に似ることで機能するように、憎は愛の文法で運ばれる。「愛憎」を語り手が名指すことを禁じる。名指しは解毒剤である。</p>
+<h3>第五基準 階級は主題ではなく光学である</h3>
+<p>階級を議論する場面を最小化し、階級を<strong>知覚の条件</strong>として実装すること。女中の視点章では主人の手と足音だけが克明であり、主人の視点章では女中は家具の精度で現れる。同じ座敷が、視点ごとに別の間取りを持つこと。階級間の葛藤は、この光学のずれの累積として、論じられずに立ち上がらなければならない。</p>
+<h3>第六基準 空の炉としての宿命（第二条・第八条より）</h3>
+<p>宿命に火元を与えてはならない。神も、血も、社会理論も、登場人物の破滅を説明する審級として語り手が採用することを禁じる。因果の鎖は精密に敷くが、鎖の第一環は作中に存在しないこと。人物たちは自分を動かす圧力を名指せず、語り手もまた名指さない。<strong>動機の空欄を空欄のまま、しかし空欄と宣言せずに提出する</strong>——これが本作における第八条の内在化である。読者が「なぜ」と問い、作中に答えの不在だけが精確に彫られていること。</p>
+<h3>第七基準 語り手の禁欲（実験制約の拡張）</h3>
+<p>当時の小説慣習である語り手の介入——「読者よ」、発見された手記の額縁、伝聞の断り書き——を全面的に排除する。作家・書生の文筆・日記の執筆場面など、書く行為の表象も置かない。この禁欲は時代考証からの唯一の意図的逸脱であり、<strong>器の中の見慣れないもの</strong>の中核である。また、人物の告白場面は許されるが、告白が事態を救済することを禁じる。告白は常に遅すぎるか、誤読されるか、権力関係を再演すること。出口としての告白を、作品は構造的に持たない。</p>
+<h3>第八基準 未解決の腕力（終条より）</h3>
+<p>結末は、縁組・死・和解のいずれによっても愛憎と階級の緊張を清算してはならない。ただし放棄と保持は違う。保持の証明は形式が行う——冒頭の情景の変奏が終章に回帰すること、各視点章の配列が対称を持つこと、切断面の位置が全体で律動を成すこと。緊張を解決せずに支える腕力を、読者が「終わっていないのに完結している」という腑に落ちなさとして受け取れば、本作は基準を満たす。</p>
+<h3>結 検収のための一文</h3>
+<p>本作が焼き上がったとき、そこに窯の話は一切ない。皿の上には、20世紀初頭のよくできた小説だけがある。効いたかどうかは、食後にわかる。</p>
+<footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>
