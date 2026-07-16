@@ -317,3 +317,52 @@ def test_experiment_criteria_constraints_injected_and_logged(monkeypatch, tmp_pa
     decisions = [json.loads(l) for l in work.decisions.read_text(encoding="utf-8").splitlines()]
     assert any(d.get("decided_by") == "owner-experiment" and "実験制約" in d.get("decision", "")
                for d in decisions)
+
+
+def test_unparsable_juror_scores_excluded_not_zero():
+    """score欠落/範囲外の陪審員は平均から除外（0.0計上しない）。w0007の偽退行の回帰."""
+    from aleph.critique.review import _criteria_review
+
+    jury = [
+        lambda p: json.dumps({"score": 9.0, "critique": "a"}),
+        lambda p: json.dumps({"score": 8.0, "critique": "b"}),
+        lambda p: json.dumps({"critique": "採点を差し控える"}),  # score欠落
+    ]
+    result = _criteria_review(jury, "基準", "本文")
+    assert result["mean_score"] == pytest.approx(8.5)
+    assert result["disagreement"] == pytest.approx(0.5)
+    assert result["invalid_jurors"] == 1
+    assert len(result["critiques"]) == 3  # 批評文は全員分保持
+
+
+def test_quality_floor_anchors_to_best_version(monkeypatch, tmp_path):
+    """品質床は採用版(best)のスコアを見る。w0007(v1=8.53採用なのにv2=5.57で床SHELVE)の回帰."""
+    from types import SimpleNamespace
+    from aleph.pipeline import RealDeps
+
+    work = _work(tmp_path / "works", "w8400")
+    reviews = work.dir / "reviews"
+    reviews.mkdir(exist_ok=True)
+    rows = [
+        {"version": 1, "mean_score": 8.53, "disagreement": 0.41, "instructions": []},
+        {"version": 2, "mean_score": 5.57, "disagreement": 3.95, "instructions": []},
+    ]
+    (reviews / "trajectory.jsonl").write_text(
+        "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    work.draft_path(1).write_text("本文", encoding="utf-8")
+
+    captured = {}
+    def fake_gate(work_, **kwargs):
+        captured.update(kwargs)
+        return {"decision": "SHELVE", "reason": "t"}
+    import aleph.meta.publication_gate as gate_module
+    monkeypatch.setattr(gate_module, "decide_publication", fake_gate)
+
+    deps = RealDeps(work, router=SimpleNamespace(),
+                    config=SimpleNamespace(secrets={}, policies={},
+                                           budgets={"publish": {"max_per_month": 4}},
+                                           models={"roles": {}}),
+                    index_dir=tmp_path / "idx", search_fn=lambda *a, **k: [])
+    monkeypatch.setattr(deps, "_ensure_title", lambda w: None)
+    deps.decide_publication(work, "人間 1.0")
+    assert captured["quality_floor_passed"] is True

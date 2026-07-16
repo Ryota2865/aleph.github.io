@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -107,9 +108,15 @@ def _technical_review(scout: Callable[[str], str], draft_text: str) -> dict:
 
 
 def _criteria_review(jury: list[Callable[[str], str]], criteria: str, draft_text: str) -> dict:
-    """基準審級: 陪審の各員が独立に採点+論評する。合意(平均)と不一致度(母標準偏差)を必ず併記する."""
+    """基準審級: 陪審の各員が独立に採点+論評する。合意(平均)と不一致度(母標準偏差)を必ず併記する.
+
+    パース不能な陪審員は平均・不一致から**除外**する（w0007実ラン: score欠落を0.0として計上した
+    結果、同一テキストが8.53→5.57へ暴落し偽の退行擱筆を誘発した。0.0は「判定不能」であって
+    「最低評価」ではない——曖昧さは安全側に倒す）。除外数は invalid_jurors として併記。
+    """
     scores: list[float] = []
     critiques: list[str] = []
+    invalid = 0
     for juror in jury:
         prompt = (
             "以下の基準に照らして草稿を採点し、論評してください。"
@@ -118,16 +125,24 @@ def _criteria_review(jury: list[Callable[[str], str]], criteria: str, draft_text
         )
         response = juror(prompt)
         parsed = _extract_json_object(response) or {}
-        try:
-            score = float(parsed.get("score", 0.0))
-        except (TypeError, ValueError):
-            score = 0.0
         critique = str(parsed.get("critique", response))
-        scores.append(score)
         critiques.append(critique)
+        raw = parsed.get("score", None)
+        try:
+            score = float(raw)
+        except (TypeError, ValueError):
+            invalid += 1
+            print(f"criteria_review: juror score unparsable (excluded): {str(raw)[:60]}", file=sys.stderr)
+            continue
+        if not (0.0 <= score <= 10.0):
+            invalid += 1
+            print(f"criteria_review: juror score out of range (excluded): {score}", file=sys.stderr)
+            continue
+        scores.append(score)
     mean_score = float(np.mean(scores)) if scores else 0.0
     disagreement = float(np.std(scores)) if scores else 0.0  # 母標準偏差(ddof=0)
-    return {"mean_score": mean_score, "disagreement": disagreement, "critiques": critiques}
+    return {"mean_score": mean_score, "disagreement": disagreement,
+            "critiques": critiques, "invalid_jurors": invalid}
 
 
 def novelty_review(draft_text: str, embedder: Callable[[list[str]], np.ndarray], index_dir: str | Path) -> dict:

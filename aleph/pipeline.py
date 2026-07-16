@@ -655,16 +655,18 @@ class RealDeps:
         # 完成時に作品自身へ題を聞く（フロー化, 0.7.14）。公開/棚の双方が title.txt を読む。
         self._ensure_title(work)
 
-        # 完成度の床: 直近の査読合意スコア（二段階選抜の第一段。PLAN §7.1・§14.3-8）
+        # 完成度の床: **採用される版（mean_score最大）**の査読合意スコア（PLAN §7.1・§14.3-8）。
+        # w0007実ラン: 床が「最後の版」(退行v2=5.57)を見て、公開対象のbest版(v1=8.53)と
+        # 錨が食い違いSHELVEした。棚・公開・床は同じ版を見るべき（測定の一貫性）。
         traj_path = work.dir / "reviews" / "trajectory.jsonl"
         score = 0.0
         if traj_path.exists():
             rows = [json.loads(l) for l in traj_path.read_text(encoding="utf-8").splitlines() if l.strip()]
-            if rows:
+            for row in rows:
                 try:
-                    score = float(rows[-1].get("mean_score", 0.0))
+                    score = max(score, float(row.get("mean_score", 0.0)))
                 except (TypeError, ValueError):
-                    score = 0.0
+                    continue
         quality_floor_passed = score >= 6.0
 
         # 今月の公開数と棚の要約を works/ 直下から集計
