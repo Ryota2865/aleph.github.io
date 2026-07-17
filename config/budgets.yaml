@@ -14,7 +14,9 @@ local:
   swap_cost_seconds: 90      # モデル交換コスト。実測81秒（2026-07-09、26B→27B Q4、RTX 3090実機）に余裕を持たせ校正
 
 publish:                     # 公開の規律（PLAN §7.3d・§14.3-7）
-  max_per_month: 4           # 週刊連載のリズム。周期性の維持自体が設計目標
+  max_per_month: 999         # 2026-07限定でオーナーが撤廃（PLAN_CHANGELOG 0.7.18-2）。
+                             # 理由: Fable5の批評が7/19のサブスク失効前に貴重なため、今月は
+                             # 週刊連載のリズムより公開数を優先。8月は既定の4へ戻すこと。
   cadence: weekly
   full_novel_per_month: 1    # 完成長編の一括公開の目安
 
