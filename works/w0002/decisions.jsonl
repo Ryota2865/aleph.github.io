@@ -1,0 +1,14 @@
+{"ts": "2026-07-11T05:31:08.673965+00:00", "layer": "L0", "decision": "SEEDED->INTENT", "reason": "種から志向選択(L1)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T05:31:30.890679+00:00", "layer": "L1", "decision": "志向配合比: LLM 0.15 / 人間 0.35 / 自分 0.5", "reason": "3宛先（LLM/人間/自分）の理由書から自己選択した（PLAN §3）。", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-11T05:31:30.891109+00:00", "layer": "L0", "decision": "INTENT->EXPLORE", "reason": "志向選択完了、探索(L2)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T05:35:16.969299+00:00", "layer": "L0", "decision": "EXPLORE->MATERIA", "reason": "探索完了、素材錬成(L3)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T05:40:17.871453+00:00", "layer": "L0", "decision": "MATERIA->COMPOSE", "reason": "素材錬成完了、構成(L4)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T05:54:39.503048+00:00", "layer": "L4", "decision": "構成案を確定: 連作短編(全五篇)+間奏。同一の港町の同じ一週間を、五つの媒介物(電報/新聞記事/戻ってきた手紙/貸本/噂)それぞれを軸にした独立短編で五回描く。各篇の視点人物は異なるが誰の内面にも入らない。読者だけが五篇を重ねて「何が起きたか」を組み立てられるが、完全には組み上がらないよう欠片を一つ抜く。", "reason": "criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-11T06:01:49.165687+00:00", "layer": "L5", "decision": "原稿 v1 の執筆を完了: v1.md", "reason": "階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-11T06:01:49.167733+00:00", "layer": "L0", "decision": "COMPOSE->DRAFT", "reason": "構成・執筆(L4+L5)完了", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T06:01:49.174039+00:00", "layer": "L0", "decision": "DRAFT->CRITIQUE", "reason": "執筆完了、査読・改稿(L6)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T06:26:46.496900+00:00", "layer": "L6", "decision": "review_complete", "reason": "v1 査読完了: mean_score=8.80, disagreement=0.86", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-11T06:53:28.676071+00:00", "layer": "L6", "decision": "review_complete", "reason": "v2 査読完了: mean_score=8.33, disagreement=0.47", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-11T07:00:40.847545+00:00", "layer": "L0", "decision": "CRITIQUE->FINISH", "reason": "擱筆(regression): 直近の改稿でスコアが 8.80→8.33 と下落した。改稿が作品を損ねているため擱筆する。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T07:00:40.848113+00:00", "layer": "L7", "decision": "publication:SHELVE", "reason": "宛先配合で「自分」が最大のため、公開を前提とせず保管する（PLAN §3）。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-11T07:00:40.850281+00:00", "layer": "L0", "decision": "FINISH->SHELVE", "reason": "棚上げ: 宛先配合で「自分」が最大のため、公開を前提とせず保管する（PLAN §3）。", "decided_by": "cli-run", "refs": []}

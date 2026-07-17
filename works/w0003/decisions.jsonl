@@ -1,0 +1,14 @@
+{"ts": "2026-07-11T09:41:00.627767+00:00", "layer": "L0", "decision": "SEEDED->INTENT", "reason": "種から志向選択(L1)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T09:41:11.047768+00:00", "layer": "L1", "decision": "志向配合比: LLM 0.2 / 人間 0.35 / 自分 0.45", "reason": "3宛先（LLM/人間/自分）の理由書から自己選択した（PLAN §3）。", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-11T09:41:11.048403+00:00", "layer": "L0", "decision": "INTENT->EXPLORE", "reason": "志向選択完了、探索(L2)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T09:42:50.217498+00:00", "layer": "L0", "decision": "EXPLORE->MATERIA", "reason": "探索完了、素材錬成(L3)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T09:48:03.935825+00:00", "layer": "L0", "decision": "MATERIA->COMPOSE", "reason": "素材錬成完了、構成(L4)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T09:55:20.230971+00:00", "layer": "L4", "decision": "構成案を確定: 連作短編七篇。大正末期から昭和七年前後の東京近郊・埼玉・琵琶湖畔をゆるく巡る三人称多視点。各篇は人情小説として読めるが、各篇末に必ず「判断不能な余白」を残す。怪異は実在する幽霊ではなく、噂・記録・芝居・新聞記事・子供向け読み物のかたちで生活に滲む。", "reason": "criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-11T10:28:29.706916+00:00", "layer": "L4", "decision": "構成案を確定: 連作短編七篇。大正末期から昭和七年前後の東京近郊・埼玉・琵琶湖畔をゆるく巡る三人称多視点。各篇は人情小説として読めるが、各篇末に必ず「判断不能な余白」を残す。怪異は実在する幽霊ではなく、噂・記録・芝居・新聞記事・子供向け読み物のかたちで生活に滲む。", "reason": "criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-11T10:53:05.184249+00:00", "layer": "L5", "decision": "原稿 v1 の執筆を完了: v1.md", "reason": "階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-11T10:53:05.185969+00:00", "layer": "L0", "decision": "COMPOSE->DRAFT", "reason": "構成・執筆(L4+L5)完了", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T10:53:05.189079+00:00", "layer": "L0", "decision": "DRAFT->CRITIQUE", "reason": "執筆完了、査読・改稿(L6)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T11:10:14.036951+00:00", "layer": "L6", "decision": "review_complete", "reason": "v1 査読完了: mean_score=8.60, disagreement=0.49", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-11T11:11:04.390366+00:00", "layer": "L0", "decision": "CRITIQUE->FINISH", "reason": "擱筆(budget): 予算・時間の残量が尽きたため強制的に擱筆する。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-11T11:11:04.402435+00:00", "layer": "L7", "decision": "publication:SHELVE", "reason": "宛先配合で「自分」が最大のため、公開を前提とせず保管する（PLAN §3）。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-11T11:11:04.402932+00:00", "layer": "L0", "decision": "FINISH->SHELVE", "reason": "棚上げ: 宛先配合で「自分」が最大のため、公開を前提とせず保管する（PLAN §3）。", "decided_by": "cli-run", "refs": []}

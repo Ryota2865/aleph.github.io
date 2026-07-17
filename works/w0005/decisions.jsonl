@@ -1,0 +1,18 @@
+{"ts": "2026-07-12T16:35:05.501801+00:00", "layer": "L0", "decision": "SEEDED->INTENT", "reason": "種から志向選択(L1)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T16:35:05.502048+00:00", "layer": "L1", "decision": "志向配合比(実験固定): 自分 1.0", "reason": "オーナー実験により L1 自律選択を上書き（--force-audience）。choose_intent は呼ばれていない（0.7.14）。", "decided_by": "owner-experiment", "refs": []}
+{"ts": "2026-07-12T16:35:05.502168+00:00", "layer": "L0", "decision": "INTENT->EXPLORE", "reason": "志向選択完了、探索(L2)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T16:35:45.558839+00:00", "layer": "L0", "decision": "EXPLORE->MATERIA", "reason": "探索完了、素材錬成(L3)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T16:35:52.103115+00:00", "layer": "L0", "decision": "MATERIA->COMPOSE", "reason": "素材錬成完了、構成(L4)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T16:40:34.936542+00:00", "layer": "L4", "decision": "構成案を確定: 批判的論考型：『模写・構成・実践――認識論に於ける弁証法的唯物論の位置』。大正末期から昭和初期の学術論文を思わせる硬質な章立てを採り、カント認識論、構成主義、プラグマティズム、社会的実践、新劇の場を順に媒介しながら、結論を未完の問いとして閉じる。", "reason": "criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T16:49:26.376205+00:00", "layer": "L5", "decision": "原稿 v1 の執筆を完了: v1.md", "reason": "階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T16:49:26.378757+00:00", "layer": "L0", "decision": "COMPOSE->DRAFT", "reason": "構成・執筆(L4+L5)完了", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T16:49:26.381567+00:00", "layer": "L0", "decision": "DRAFT->CRITIQUE", "reason": "執筆完了、査読・改稿(L6)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T16:54:32.448984+00:00", "layer": "L6", "decision": "review_complete", "reason": "v1 査読完了: mean_score=8.40, disagreement=0.43", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-12T17:09:25.061197+00:00", "layer": "L6", "decision": "review_complete", "reason": "v2 査読完了: mean_score=9.07, disagreement=0.09", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-12T17:13:41.246778+00:00", "layer": "L6", "decision": "採用 v2", "reason": "trajectory.jsonl の mean_score 最大版を best_version として記録", "decided_by": "critique_revise_loop", "best_version": 2, "refs": []}
+{"ts": "2026-07-12T17:19:04.290977+00:00", "layer": "L6", "decision": "review_complete", "reason": "v1 査読完了: mean_score=8.40, disagreement=0.43", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-12T17:25:37.891744+00:00", "layer": "L0", "decision": "CRITIQUE->FINISH", "reason": "擱筆(budget): 予算・時間の残量が尽きたため強制的に擱筆する。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T17:25:42.440536+00:00", "layer": "L8", "decision": "題を確定: 床の硬さ", "reason": "作品自身（著者）が完成時に選題。認識が観念の構成にも単なる反映にも尽きず、身体・制度・歴史を通じてなお対象の抵抗に打たれるという本稿の核を、舞台の比喩の奥にある実在の感触として凝縮するため。", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T17:27:52.787001+00:00", "layer": "L7", "decision": "publication:PUBLISH", "reason": "著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-12T17:27:52.789427+00:00", "layer": "L0", "decision": "FINISH->PUBLISH", "reason": "公開ゲート承認: 著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T21:27:26.519632+00:00", "layer": "L8", "decision": "final/text.md の融着見出し7箇所を復元", "reason": "平滑化パスが節見出し前の改行を食い「出発する。## 第一節」と融着（チャットFable5指摘 2026-07-13）。本文の字句は不変、改行のみ復元。根本原因(write_draftの縫目平滑化)は改善債務。", "decided_by": "designer-edit", "refs": []}

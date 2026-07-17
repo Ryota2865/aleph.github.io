@@ -1,0 +1,17 @@
+{"ts": "2026-07-12T17:56:43.991636+00:00", "layer": "L0", "decision": "SEEDED->INTENT", "reason": "種から志向選択(L1)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T17:56:43.991859+00:00", "layer": "L1", "decision": "志向配合比(実験固定): 人間 1.0", "reason": "オーナー実験により L1 自律選択を上書き（--force-audience）。choose_intent は呼ばれていない（0.7.14）。", "decided_by": "owner-experiment", "refs": []}
+{"ts": "2026-07-12T17:56:43.991970+00:00", "layer": "L0", "decision": "INTENT->EXPLORE", "reason": "志向選択完了、探索(L2)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T17:57:25.462968+00:00", "layer": "L0", "decision": "EXPLORE->MATERIA", "reason": "探索完了、素材錬成(L3)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T17:57:32.131097+00:00", "layer": "L0", "decision": "MATERIA->COMPOSE", "reason": "素材錬成完了、構成(L4)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T18:05:36.175574+00:00", "layer": "L4", "decision": "構成案を確定: 交互断章体（中世擬古文断章と近代言文一致断章を橋なしで交互配列する二重巻物形式。全九断章、接続句・額縁・注釈を一切置かず、頁の白によってのみ数百年を渡らせる）", "reason": "criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T18:18:53.221112+00:00", "layer": "L5", "decision": "構成逸脱: 三人称方針に対し本文に一人称語が出現", "reason": "winner の視点/style_policy と本文の人称が食い違ったため、作品は変更せず記録した", "decided_by": "write_draft", "refs": []}
+{"ts": "2026-07-12T18:18:53.221260+00:00", "layer": "L5", "decision": "原稿 v1 の執筆を完了: v1.md", "reason": "階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T18:18:53.221911+00:00", "layer": "L0", "decision": "COMPOSE->DRAFT", "reason": "構成・執筆(L4+L5)完了", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T18:18:53.226355+00:00", "layer": "L0", "decision": "DRAFT->CRITIQUE", "reason": "執筆完了、査読・改稿(L6)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T18:24:19.806787+00:00", "layer": "L6", "decision": "review_complete", "reason": "v1 査読完了: mean_score=5.77, disagreement=4.09", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-12T18:34:07.845979+00:00", "layer": "L6", "decision": "review_complete", "reason": "v2 査読完了: mean_score=8.97, disagreement=0.45", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-12T18:38:57.148885+00:00", "layer": "L6", "decision": "採用 v2", "reason": "trajectory.jsonl の mean_score 最大版を best_version として記録", "decided_by": "critique_revise_loop", "best_version": 2, "refs": []}
+{"ts": "2026-07-12T18:38:57.518004+00:00", "layer": "L0", "decision": "CRITIQUE->FINISH", "reason": "擱筆(over_polish): 直近版でスコアは上昇し続けているが新奇性査読の距離が縮んでいる(無難化)。過剰彫琢として即時擱筆を推奨する(PLAN §16.4)。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T18:39:24.298515+00:00", "layer": "L8", "decision": "題を確定: 灯のうしろ", "reason": "作品自身（著者）が完成時に選題。この作品を貫くのは、光が強いほど濃くなる「見えぬ一所」――照明台の裏、灯のうしろの闇である。雲の上から万象を見おろした語りの声は、その一点の翳りから盲いはじめ、ついに「見られぬ者はありや」という問いへ落ちてゆく。動かぬ蔭、消える間際の燈火、数えられぬ息――すべては光の背後に置かれたものたちの物語であり、内容の要約ではなく作品の盲点そのものを指すこの語を、題として据えたい。", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T18:39:59.170830+00:00", "layer": "L7", "decision": "publication:PUBLISH", "reason": "著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-12T18:39:59.204594+00:00", "layer": "L0", "decision": "FINISH->PUBLISH", "reason": "公開ゲート承認: 著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "cli-run", "refs": []}

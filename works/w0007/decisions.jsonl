@@ -1,0 +1,19 @@
+{"ts": "2026-07-16T12:21:07.699625+00:00", "layer": "L0", "decision": "SEEDED->INTENT", "reason": "種から志向選択(L1)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T12:21:31.063059+00:00", "layer": "L1", "decision": "志向配合比: LLM 0.2 / 人間 0.3 / 自分 0.5", "reason": "3宛先（LLM/人間/自分）の理由書から自己選択した（PLAN §3）。", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-16T12:21:31.063389+00:00", "layer": "L0", "decision": "INTENT->EXPLORE", "reason": "志向選択完了、探索(L2)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T12:26:24.524153+00:00", "layer": "L0", "decision": "EXPLORE->MATERIA", "reason": "探索完了、素材錬成(L3)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T12:26:38.740264+00:00", "layer": "L0", "decision": "MATERIA->COMPOSE", "reason": "素材錬成完了、構成(L4)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T12:26:38.741681+00:00", "layer": "L4", "decision": "実験制約を基準書へ注入", "reason": "experiment manifest（exp-w0007-no-confession）の criteria_constraints を derive_criteria に拘束として渡した: 本作は、自らの生成物としての条件への言及を一切含んではならない。作者・機械・モデル・生成・模写・書くことについての言及、および語り手が自らの語りの限界を主題化する身振りも、これに含まれる。告白によって作品を救う出口を、この作品は持たない。", "decided_by": "owner-experiment", "refs": []}
+{"ts": "2026-07-16T12:33:43.272030+00:00", "layer": "L4", "decision": "構成案を確定: 対称五部構成（A-B-C-B'-A'）の中篇。視点は三人（没落士族の未亡人・その息子・質屋の番頭）。中央部Cのみ二視点が同一場面を挟んで交互に置かれ、全体の切断面の律動が中央で最短周期になる。", "reason": "criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-16T12:40:56.062180+00:00", "layer": "L5", "decision": "原稿 v1 の執筆を完了: v1.md", "reason": "階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-16T12:40:56.062698+00:00", "layer": "L0", "decision": "COMPOSE->DRAFT", "reason": "構成・執筆(L4+L5)完了", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T12:40:56.063423+00:00", "layer": "L0", "decision": "DRAFT->CRITIQUE", "reason": "執筆完了、査読・改稿(L6)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T12:45:41.500022+00:00", "layer": "L6", "decision": "review_complete", "reason": "v1 査読完了: mean_score=8.53, disagreement=0.41", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-16T12:54:37.916488+00:00", "layer": "L6", "decision": "review_complete", "reason": "v2 査読完了: mean_score=5.57, disagreement=3.95", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-16T12:58:12.765636+00:00", "layer": "L6", "decision": "採用 v1", "reason": "trajectory.jsonl の mean_score 最大版を best_version として記録", "decided_by": "critique_revise_loop", "best_version": 1, "refs": []}
+{"ts": "2026-07-16T12:58:13.143908+00:00", "layer": "L0", "decision": "CRITIQUE->FINISH", "reason": "擱筆(regression): 直近の改稿でスコアが 8.53→5.57 と下落した。改稿が作品を損ねているため擱筆する。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T12:58:28.031184+00:00", "layer": "L8", "decision": "題を確定: 折り目", "reason": "作品自身（著者）が完成時に選題。懐紙も畳紙も手拭も、この作品では感情が一度も名指されず、すべて折り方・畳み方・紐の掛け方に託されて語られる。「折り目は家を語る」と番頭が読み、婦人は汚れを内へ畳み込み、息子の畳み方はもう母の物ではなくなる。折り目とは、表に出さぬものを保つ規律であると同時に、変えるために付ける物ではないと言いながら確かに変っていく、家と人の痕跡そのものである。帳面に載らぬものを覚える番頭の心も、値の付かぬ指の重なりも、この一語の内に畳み込まれる。", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-16T12:58:28.086729+00:00", "layer": "L7", "decision": "publication:SHELVE", "reason": "品質の床を通過していないため、公開せず棚に戻す。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-16T12:58:28.089248+00:00", "layer": "L0", "decision": "FINISH->SHELVE", "reason": "棚上げ: 品質の床を通過していないため、公開せず棚に戻す。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-16T13:02:42.150898+00:00", "layer": "L7", "decision": "publication:PUBLISH", "reason": "著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-16T13:02:42.153402+00:00", "layer": "L0", "decision": "FINISH->PUBLISH", "reason": "公開ゲート承認: 著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "cli-publish", "refs": []}

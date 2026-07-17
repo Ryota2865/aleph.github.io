@@ -1,0 +1,18 @@
+{"ts": "2026-07-12T01:31:25.174694+00:00", "layer": "L0", "decision": "SEEDED->INTENT", "reason": "種から志向選択(L1)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T01:31:25.177003+00:00", "layer": "L1", "decision": "志向配合比(実験固定): LLM 0.6 / 自分 0.25 / 人間 0.15", "reason": "オーナー実験により L1 自律選択を上書き（--force-audience）。choose_intent は呼ばれていない（0.7.14）。", "decided_by": "owner-experiment", "refs": []}
+{"ts": "2026-07-12T01:31:25.177164+00:00", "layer": "L0", "decision": "INTENT->EXPLORE", "reason": "志向選択完了、探索(L2)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T01:33:14.194507+00:00", "layer": "L0", "decision": "EXPLORE->MATERIA", "reason": "探索完了、素材錬成(L3)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T01:39:21.840397+00:00", "layer": "L0", "decision": "MATERIA->COMPOSE", "reason": "素材錬成完了、構成(L4)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T05:44:40.662545+00:00", "layer": "L4", "decision": "構成案を確定: 稽古反復体──同一場面の稽古を章骨格とする三人称長篇。翻訳劇『かもめ』第四幕の一場の稽古が計五回変奏され、各回の科白の言われ方の差分だけで人物関係の推移を示す。語り手は劇団に紛れこんだ記録係（プロンプター兼特高の内偵と疑われる男）の視点に固定され、誰の内面にも直接入らない。", "reason": "criteria.mdの基準で進化ループを実施し、最終世代でcriticスコア最大の案を採用した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T05:54:31.677666+00:00", "layer": "L5", "decision": "原稿 v1 の執筆を完了: v1.md", "reason": "階層文脈方式で各部分を執筆し、全体通読パスで意図的断絶以外の縫い目を平滑化した", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-12T05:54:31.685010+00:00", "layer": "L0", "decision": "COMPOSE->DRAFT", "reason": "構成・執筆(L4+L5)完了", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T05:54:31.689047+00:00", "layer": "L0", "decision": "DRAFT->CRITIQUE", "reason": "執筆完了、査読・改稿(L6)へ", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T05:59:53.939859+00:00", "layer": "L6", "decision": "review_complete", "reason": "v1 査読完了: mean_score=8.47, disagreement=0.52", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-12T06:06:55.191387+00:00", "layer": "L6", "decision": "review_complete", "reason": "v2 査読完了: mean_score=8.37, disagreement=0.45", "decided_by": "critique_revise_loop", "refs": []}
+{"ts": "2026-07-12T06:09:02.295557+00:00", "layer": "L6", "decision": "採用 v1", "reason": "trajectory.jsonl の mean_score 最大版を best_version として記録", "decided_by": "critique_revise_loop", "best_version": 1, "refs": []}
+{"ts": "2026-07-12T06:09:02.581898+00:00", "layer": "L0", "decision": "CRITIQUE->FINISH", "reason": "擱筆(regression): 直近の改稿でスコアが 8.47→8.37 と下落した。改稿が作品を損ねているため擱筆する。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T06:09:02.812708+00:00", "layer": "L7", "decision": "publication:SHELVE", "reason": "初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-12T06:09:02.819950+00:00", "layer": "L0", "decision": "FINISH->SHELVE", "reason": "棚上げ: 初回公開は人間承認待ち（policies.publication.first_publish_ack=false, PLAN §9）。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T06:35:39.342066+00:00", "layer": "L7", "decision": "publication:PUBLISH", "reason": "品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "L7/publication_gate", "refs": []}
+{"ts": "2026-07-12T06:35:39.347192+00:00", "layer": "L0", "decision": "FINISH->PUBLISH", "reason": "公開ゲート承認: 品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "cli-run", "refs": []}
+{"ts": "2026-07-12T06:42:13.982765+00:00", "layer": "L8", "decision": "題を確定: 半呼吸", "reason": "作品自身（著者）が選題（旧題=seed hint）。理由: 消された科白、触れない情愛、裁かれない論争が、すべてこのわずかな間に残るため。", "decided_by": "author_primary", "refs": []}
