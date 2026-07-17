@@ -82,6 +82,7 @@ def _cmd_run(root: Path, args) -> int:
         work, router, config=config, index_dir=root / args.index,
         search_fn=search_fn, embedder=embedder,
         force_audience=getattr(args, "force_audience", None),
+        poetics_dir=root / "poetics",
     )
     final = run_work(work, deps, decided_by="cli-run")
     print(f"run: {args.work} -> {final.value}", file=sys.stderr)
@@ -141,6 +142,7 @@ def _cmd_publish(root: Path, args) -> int:
     router = Router(config, logger, budget)
     deps = RealDeps(
         work, router, config=config, index_dir=root / args.index, search_fn=lambda *a, **k: [],
+        poetics_dir=root / "poetics",
     )
     final = run_work(work, deps, decided_by="cli-publish")
     print(f"publish: {args.work} -> {final.value}", file=sys.stderr)

@@ -240,11 +240,12 @@ def run_work(work, deps, *, decided_by: str) -> State:
                 go(
                     State.FINISH,
                     f"擱筆({stop.get('path', '')}): {stop.get('reason', '')}",
+                    payload={"stop_path": stop.get("path")},
                 )
                 break
             guard += 1
             if guard >= 5:  # 無限ループ防止（REVISE経路の予算外の安全網）
-                go(State.FINISH, "改稿上限に到達、擱筆")
+                go(State.FINISH, "改稿上限に到達、擱筆", payload={"stop_path": "guard_limit"})
                 break
 
     # --- FINISH → PUBLISH | SHELVE | DISCARD（完成≠公開, PLAN §7.3d）
@@ -257,11 +258,79 @@ def run_work(work, deps, *, decided_by: str) -> State:
             _finalize_publish(work, deps)
             go(State.PUBLISH, f"公開ゲート承認: {reason}")
         elif decision == "DISCARD":
+            _record_termination_failure(work, deps, ctx, reason, decided_by)
             go(State.DISCARD, f"廃棄: {reason}")
         else:
+            _record_termination_failure(work, deps, ctx, reason, decided_by)
             go(State.SHELVE, f"棚上げ: {reason}")
+        _reflect_poetics_if_available(work, deps, decided_by)
 
     return state
+
+
+def _classify_termination(stop_path: str | None, reason: str) -> str:
+    """SHELVE/DISCARDの理由をsol提案の4分類へ落とす（PLAN_CHANGELOG 0.7.18 問2）.
+
+    aesthetic_failureのみ否定的地図（annotate_failure）へ渡す。resource_stop・
+    publication_choiceは探索座標を罰しない（sol提案の趣旨）。safety_or_rightsは
+    現状これを自動生成する経路が存在しない（将来の手動介入用に予約）。
+    """
+    if stop_path in ("budget", "guard_limit"):
+        return "resource_stop"
+    if "上限" in reason or "人間承認待ち" in reason:
+        return "resource_stop"
+    if "著者が非公開を選択した" in reason:
+        return "publication_choice"
+    return "aesthetic_failure"
+
+
+def _record_termination_failure(work, deps, ctx: dict, reason: str, decided_by: str) -> None:
+    """SHELVE/DISCARD時、理由を4分類のいずれかとしてdecisions.jsonlへ記録し、
+    aesthetic_failureのみ否定的地図（deps.annotate_failure）へ渡す
+    （PLAN_CHANGELOG 0.7.18 問2。annotate_failure未対応のdepsでは記録のみ行い、地図は更新しない）。
+    """
+    category = _classify_termination(ctx.get("stop_path"), reason)
+    work.append_decision({
+        "ts": _now_iso(),
+        "layer": "L7",
+        "decision": f"failure_category:{category}",
+        "reason": reason,
+        "decided_by": decided_by,
+    })
+    if category != "aesthetic_failure":
+        return
+    annotate_failure = getattr(deps, "annotate_failure", None)
+    if annotate_failure is None:
+        return
+    niche_desc = str((ctx.get("niche") or {}).get("description", ""))
+    try:
+        annotate_failure(work, niche_desc, reason)
+    except Exception as exc:  # 否定的地図の更新失敗で作品終端そのものは止めない
+        print(f"annotate_failure failed for {work.work_id}: {exc}", file=sys.stderr)
+
+
+def _reflect_poetics_if_available(work, deps, decided_by: str) -> None:
+    """終端（PUBLISH/SHELVE/DISCARDいずれも）後、詩学の自己改訂を検討する（PLAN §7.4）.
+
+    deps.reflect_poetics未対応（例: M6契約のFakeDeps）では何もしない。
+    """
+    reflect_poetics = getattr(deps, "reflect_poetics", None)
+    if reflect_poetics is None:
+        return
+    try:
+        result = reflect_poetics(work)
+    except Exception as exc:  # 詩学リフレクションの失敗で作品終端そのものは止めない
+        print(f"poetics reflection failed for {work.work_id}: {exc}", file=sys.stderr)
+        return
+    if not result:
+        return
+    work.append_decision({
+        "ts": _now_iso(),
+        "layer": "L8",
+        "decision": "詩学改訂を適用" if result.get("applied") else "詩学改訂は反駁され不適用",
+        "reason": str(result.get("diff_reason", "")),
+        "decided_by": decided_by,
+    })
 
 
 def _remaining_api_budget(budget, work_id: str) -> float | None:
@@ -341,11 +410,13 @@ class RealDeps:
     """
 
     def __init__(self, work, router, *, config, index_dir: str | Path,
-                 search_fn, embedder=None, force_audience: str | None = None) -> None:
+                 search_fn, embedder=None, force_audience: str | None = None,
+                 poetics_dir: str | Path = "poetics") -> None:
         self.work = work
         self.router = router
         self.config = config
         self.index_dir = Path(index_dir)
+        self.poetics_dir = Path(poetics_dir)
         self.search_fn = search_fn
         self.embedder = embedder
         self.force_audience = force_audience  # 実験: L1自律選択を上書き（0.7.14）
@@ -353,6 +424,19 @@ class RealDeps:
         # credits / intended_reader_models は publish時の meta.json に反映
         self.credits: dict = {}
         self.intended_reader_models: list[str] = []
+
+    # -- 終端後フック（PLAN_CHANGELOG 0.7.18: 作成済み・未接続だった機能の実配線） -----
+    def annotate_failure(self, work, niche_desc: str, reason: str) -> None:
+        """SHELVE/DISCARD時、aesthetic_failure分類の座標を否定的地図へ記録する（PLAN §4.3）."""
+        from aleph.explore.atlas import annotate_failure as _annotate_failure
+
+        _annotate_failure(self.index_dir, work_id=self._work_id, niche_desc=niche_desc, reason=reason)
+
+    def reflect_poetics(self, work) -> dict:
+        """終端後、詩学の自己改訂を検討する（PLAN §7.4）。author=著者役、adversary=reader役で反駁."""
+        from aleph.meta.poetics import reflect
+
+        return reflect(self.poetics_dir, work, self._author, self._reader)
 
     # -- 役割呼び出しヘルパ（work_id で作品別予算を効かせる） -----------------
     def _author(self, prompt: str) -> str:
