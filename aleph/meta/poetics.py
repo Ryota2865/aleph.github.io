@@ -10,6 +10,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+def current_version(poetics_dir: Path) -> int:
+    """現在の詩学バージョン（PLAN_CHANGELOG 0.7.18-1、Fable5審査 問7-1）.
+
+    第0版（history.jsonl が空 or 無い）は0。reflect()で改訂が適用される（rebutted=False）
+    たびにhistory.jsonlへ1行追記されるため、行数がそのままバージョン番号になる
+    （1行目適用後=第1版、以後同様）。この番号を各作品のL1決定へ刻印することで、
+    「どの詩学の下で書かれた作品か」を棚が縦断比較できるようにする。
+    """
+    path = Path(poetics_dir) / "history.jsonl"
+    if not path.exists():
+        return 0
+    return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+
+
 def _extract_json_object(text: str) -> dict | None:
     """応答文字列中の最初のJSONオブジェクトを頑健に取り出す（aleph/explore/niche.py と同方式）."""
     decoder = json.JSONDecoder()

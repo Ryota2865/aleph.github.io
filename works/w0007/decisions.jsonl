@@ -17,3 +17,4 @@
 {"ts": "2026-07-16T12:58:28.089248+00:00", "layer": "L0", "decision": "FINISH->SHELVE", "reason": "棚上げ: 品質の床を通過していないため、公開せず棚に戻す。", "decided_by": "cli-run", "refs": []}
 {"ts": "2026-07-16T13:02:42.150898+00:00", "layer": "L7", "decision": "publication:PUBLISH", "reason": "著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "L7/publication_gate", "refs": []}
 {"ts": "2026-07-16T13:02:42.153402+00:00", "layer": "L0", "decision": "FINISH->PUBLISH", "reason": "公開ゲート承認: 著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "cli-publish", "refs": []}
+{"ts": "2026-07-17T04:54:48.051949+00:00", "layer": "L1", "decision": "poetics_version:0", "reason": "遡及注釈（PLAN_CHANGELOG 0.7.18-1、Fable 5審査 問7-1）。本作は詩学第0版（poetics/poetics.md、2026-07-11生成の第0版から一度も改訂されていない期間）の下で書かれた。以後の詩学改訂と作品を縦断比較できるよう、通常配線（RealDeps._stamp_poetics_version）が新規作品へ自動的に刻むものを、本改修以前の作品へ遡って追記する。", "decided_by": "retroactive-annotation-0.7.18-1", "refs": []}

@@ -547,7 +547,7 @@ class RealDeps:
         return callables
 
     def _poetics(self) -> str:
-        path = self.work.dir.parent.parent / "poetics" / "poetics.md"
+        path = self.poetics_dir / "poetics.md"
         try:
             return path.read_text(encoding="utf-8")
         except FileNotFoundError:
@@ -578,7 +578,22 @@ class RealDeps:
         audience = choose_intent(
             work, self._author, self._policies(), poetics=self._poetics(),
         )
+        self._stamp_poetics_version(work)
         return audience
+
+    def _stamp_poetics_version(self, work) -> None:
+        """作品がどの詩学バージョンの下で書かれたかをL1決定へ刻印する
+        （PLAN_CHANGELOG 0.7.18-1、Fable5審査 問7-1: 改訂後の棚を縦断比較可能にする）."""
+        from aleph.meta.poetics import current_version
+
+        version = current_version(self.poetics_dir)
+        work.append_decision({
+            "ts": _now_iso(),
+            "layer": "L1",
+            "decision": f"poetics_version:{version}",
+            "reason": f"本作は詩学第{version}版の下で書かれた（{self.poetics_dir / 'poetics.md'}）。",
+            "decided_by": "system",
+        })
 
     # -- L2 探索（niche 上位1件） --------------------------------------------
     def explore(self, work):

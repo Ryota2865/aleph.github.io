@@ -16,3 +16,4 @@
 {"ts": "2026-07-12T06:35:39.342066+00:00", "layer": "L7", "decision": "publication:PUBLISH", "reason": "品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "L7/publication_gate", "refs": []}
 {"ts": "2026-07-12T06:35:39.347192+00:00", "layer": "L0", "decision": "FINISH->PUBLISH", "reason": "公開ゲート承認: 品質の床と公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。", "decided_by": "cli-run", "refs": []}
 {"ts": "2026-07-12T06:42:13.982765+00:00", "layer": "L8", "decision": "題を確定: 半呼吸", "reason": "作品自身（著者）が選題（旧題=seed hint）。理由: 消された科白、触れない情愛、裁かれない論争が、すべてこのわずかな間に残るため。", "decided_by": "author_primary", "refs": []}
+{"ts": "2026-07-17T04:54:48.047444+00:00", "layer": "L1", "decision": "poetics_version:0", "reason": "遡及注釈（PLAN_CHANGELOG 0.7.18-1、Fable 5審査 問7-1）。本作は詩学第0版（poetics/poetics.md、2026-07-11生成の第0版から一度も改訂されていない期間）の下で書かれた。以後の詩学改訂と作品を縦断比較できるよう、通常配線（RealDeps._stamp_poetics_version）が新規作品へ自動的に刻むものを、本改修以前の作品へ遡って追記する。", "decided_by": "retroactive-annotation-0.7.18-1", "refs": []}
