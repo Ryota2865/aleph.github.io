@@ -173,26 +173,46 @@ def _cluster_entries(atlas) -> list[dict]:
     )
 
 
+def _persisted_cluster_labels(atlas) -> list[dict]:
+    """永続化済みのクラスタ属性注釈があれば読む（PLAN_CHANGELOG 0.7.18 問4・C-1）.
+
+    atlas.index_dir を持たない偽装アトラス（テスト等）や、まだ annotate_clusters が
+    一度も実行されていない場合は空リストを返し、呼び出し側は従来どおり scout への
+    その場ラベリングにフォールバックする。
+    """
+    from aleph.explore.atlas import load_cluster_annotations
+
+    index_dir = getattr(atlas, "index_dir", None)
+    if index_dir is None:
+        return []
+    annotations = load_cluster_annotations(index_dir)
+    return [record["attributes"] for record in annotations if record.get("attributes")]
+
+
 def _cell_candidates(atlas, scout: Callable[[str], str], top_n: int, context: str) -> list[dict]:
     chunk_by_id = {
         chunk.get("chunk_id"): chunk
         for chunk in getattr(atlas, "chunks", [])
     }
-    labelled: list[dict] = []
-    for cluster in _cluster_entries(atlas)[:8]:
-        excerpts = [
-            chunk_by_id.get(chunk_id, {}).get("text", "")[:1500]
-            for chunk_id in cluster.get("exemplars", [])
-        ]
-        response = scout(
-            "クラスタ代表例を主題・形式・視点・時代で属性ラベリングしてください。"
-            'JSON {"theme":"...","form":"...","viewpoint":"...","era":"..."} だけを返してください。\n'
-            + "\n---\n".join(excerpts)
-            + context
-        )
-        parsed = _extract_json_object(response)
-        if parsed and all(parsed.get(axis) for axis in ("theme", "form", "viewpoint", "era")):
-            labelled.append(parsed)
+    labelled: list[dict] = _persisted_cluster_labels(atlas)
+    if not labelled:
+        # 永続化済み注釈が無ければ従来どおりその場でラベリングする（後方互換）。
+        # 実行の都度scoutを呼ぶこの経路は、annotate_clusters()で一度永続化すれば
+        # 以後は使われなくなる（sol §4.1: 同じラベリングの再計算・非永続化の解消）。
+        for cluster in _cluster_entries(atlas)[:8]:
+            excerpts = [
+                chunk_by_id.get(chunk_id, {}).get("text", "")[:1500]
+                for chunk_id in cluster.get("exemplars", [])
+            ]
+            response = scout(
+                "クラスタ代表例を主題・形式・視点・時代で属性ラベリングしてください。"
+                'JSON {"theme":"...","form":"...","viewpoint":"...","era":"..."} だけを返してください。\n'
+                + "\n---\n".join(excerpts)
+                + context
+            )
+            parsed = _extract_json_object(response)
+            if parsed and all(parsed.get(axis) for axis in ("theme", "form", "viewpoint", "era")):
+                labelled.append(parsed)
     if len(labelled) < 2:
         return []
 

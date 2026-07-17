@@ -210,6 +210,83 @@ def build_atlas(
     return Atlas(index_dir, labels, density, style, chunks, meta)
 
 
+_CLUSTER_ANNOTATION_PROMPT_VERSION = "v1"
+_CLUSTER_ANNOTATION_AXES = ("theme", "form", "viewpoint", "era")
+
+
+def annotate_clusters(
+    atlas: "Atlas",
+    scout,
+    *,
+    annotator_model: str,
+    prompt_version: str = _CLUSTER_ANNOTATION_PROMPT_VERSION,
+    max_exemplar_chars: int = 1500,
+) -> list[dict]:
+    """クラスタ代表例に属性ラベル（theme/form/viewpoint/era）を付け、注釈の出所つきで
+    永続化する（PLAN_CHANGELOG 0.7.18 問4・designs/corpus-expansion.md C-1）.
+
+    従来はaleph/explore/niche.py::_cell_candidatesが `aleph explore` の実行毎に
+    scoutへ再ラベリングを依頼し、結果を一切保存していなかった（sol §4.1指摘）。
+    本関数はその同じラベリングを一度だけ行い、`atlas_dir/cluster_annotations.json`へ
+    「単一注釈器による分類である」ことが読み取れる形（annotator_model・prompt_version・
+    confidence・ts）で保存する。過剰設計を避けるため、複数注釈器の合議は行わない
+    （Q4決定: 単一注釈の品質を実監査してから要否判断）。
+    """
+    from aleph.explore.niche import _extract_json_object
+
+    chunk_by_id = {chunk.get("chunk_id"): chunk for chunk in atlas.chunks}
+    annotations: list[dict] = []
+    for cluster in atlas.cluster_meta:
+        exemplars = cluster.get("exemplars", [])
+        excerpts = [chunk_by_id.get(cid, {}).get("text", "")[:max_exemplar_chars] for cid in exemplars]
+        response = scout(
+            "クラスタ代表例を主題・形式・視点・時代で属性ラベリングしてください。"
+            "併せて、この分類にどれだけ自信があるかを0.0〜1.0のconfidenceとして"
+            "自己申告してください。"
+            'JSON {"theme":"...","form":"...","viewpoint":"...","era":"...",'
+            '"confidence":0.0} だけを返してください。\n'
+            + "\n---\n".join(excerpts)
+        )
+        parsed = _extract_json_object(response) or {}
+        record = {
+            "label": cluster.get("label"),
+            "size": cluster.get("size"),
+            "annotator_model": annotator_model,
+            "prompt_version": prompt_version,
+            "ts": datetime.now(timezone.utc).isoformat(),
+        }
+        if parsed and all(parsed.get(axis) for axis in _CLUSTER_ANNOTATION_AXES):
+            record["attributes"] = {axis: str(parsed[axis]) for axis in _CLUSTER_ANNOTATION_AXES}
+            try:
+                record["confidence"] = float(parsed.get("confidence"))
+            except (TypeError, ValueError):
+                record["confidence"] = None
+        else:
+            record["attributes"] = None
+            record["confidence"] = None
+        annotations.append(record)
+
+    payload = {
+        "prompt_version": prompt_version,
+        "annotator_model": annotator_model,
+        "created": datetime.now(timezone.utc).isoformat(),
+        "annotations": annotations,
+    }
+    (atlas.index_dir / "cluster_annotations.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+    )
+    return annotations
+
+
+def load_cluster_annotations(atlas_dir: str | Path) -> list[dict]:
+    """永続化済みのクラスタ属性注釈を読む（無ければ空リスト。annotate_clusters未実行の意）."""
+    path = Path(atlas_dir) / "cluster_annotations.json"
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return list(data.get("annotations", []))
+
+
 def annotate_failure(
     atlas_dir: str | Path,
     *,
