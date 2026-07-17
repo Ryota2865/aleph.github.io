@@ -33,8 +33,10 @@ class _AlwaysInBandEmbedder:
         return np.stack([a, b]).astype(np.float32)
 
 
-def test_min_form_fidelity_none_keeps_m2_contract_behavior_unchanged():
-    """既定(min_form_fidelity未指定)ではform_fidelityは計測されるがゲートしない。
+def test_min_form_fidelity_explicit_none_disables_gate():
+    """明示的にmin_form_fidelity=Noneを渡すとform_fidelityは計測されるがゲートしない。
+    0.7.18-1でtransmute()の既定は0.4へ反転したため、無効化には明示指定が必要になった
+    （tests/test_m2_acceptance.py の旧v1フィクスチャが使う経路）。
     test_m2_acceptance.py::test_transmute_iterates_into_band_and_records_provenance と
     同じ入力(骨格特徴を含まない生成文)を使い、distanceのみで通ることを確認する。"""
     from aleph.materia.transmute import transmute
@@ -62,7 +64,7 @@ def test_min_form_fidelity_none_keeps_m2_contract_behavior_unchanged():
 
     card = transmute(
         source, "喪失についての文学", fake_llm, SeqEmb(),
-        source_biblio={"title": "規程様式", "kind": "law"},
+        source_biblio={"title": "規程様式", "kind": "law"}, min_form_fidelity=None,
     )
     assert card["provenance"]["iterations"] == 3
     assert 0.3 <= card["provenance"]["final_cos"] <= 0.85

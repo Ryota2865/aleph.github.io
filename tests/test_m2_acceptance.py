@@ -136,7 +136,15 @@ def test_distance_band_rejects_parody_and_unrelated():
 
 
 def test_transmute_iterates_into_band_and_records_provenance():
-    """帯域に入るまで反復し、母材の書誌と反復回数を素材カードに残す（PLAN §5.3・§8系譜）."""
+    """帯域に入るまで反復し、母材の書誌と反復回数を素材カードに残す（PLAN §5.3・§8系譜）.
+
+    **契約範囲の明示的縮小（PLAN_CHANGELOG 0.7.18-1、Fable5設計者審査 問5により承認）**:
+    このフィクスチャは骨格の形式的特徴を含まない生成文（"第N稿の文学的テキスト"）を
+    使うため、distance帯域のみの契約として`min_form_fidelity=None`を明示する。
+    transmuteゲート全体（distance+骨格保存）の契約は
+    tests/test_m2_acceptance_v2.py が引き継ぐ。「旧契約を書き換えない」ことと
+    「旧契約が新しい既定を永久に拘束する」ことは別、という設計者の指摘に基づく。
+    """
     from aleph.materia.transmute import transmute
 
     source = (FIXTURES / "law_style.txt").read_text(encoding="utf-8")
@@ -157,7 +165,8 @@ def test_transmute_iterates_into_band_and_records_provenance():
             b = np.zeros(DIM); b[0] = c; b[1] = float(np.sqrt(max(0.0, 1 - c**2)))
             return np.stack([a, b]).astype(np.float32)
 
-    card = transmute(source, "喪失についての文学", fake_llm, SeqEmb(), source_biblio={"title": "規程様式", "kind": "law"})
+    card = transmute(source, "喪失についての文学", fake_llm, SeqEmb(),
+                      source_biblio={"title": "規程様式", "kind": "law"}, min_form_fidelity=None)
     assert card["method"] == "transmute"
     assert card["provenance"]["source"]["title"] == "規程様式"  # 系譜の透明性（PLAN §8）
     assert card["provenance"]["iterations"] == 3

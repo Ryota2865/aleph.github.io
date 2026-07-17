@@ -114,16 +114,20 @@ def transmute(
     source_biblio: dict | None = None,
     near: float = 0.85,
     far: float = 0.3,
-    min_form_fidelity: float | None = None,
+    min_form_fidelity: float | None = 0.4,
 ) -> dict:
     """骨格を抽出し、帯域に入るまで反復して素材カードを生成する（PLAN §5.3・§8系譜）.
 
     min_form_fidelity: source_biblio["kind"]がSTRUCTURE_DETECTORSに登録されている場合、
     骨格の形式的特徴の残存率（structural_fidelity）がこの値を下回ると再生成させる第二の
-    帯域チェック（S-2パイロットが実証した「content_distanceだけでは骨格喪失を検出できない」
-    問題への対処）。既定Noneは無効——distance帯域のみで判定する従来の挙動を保つ
-    （M2契約 tests/test_m2_acceptance.py の既存フィクスチャとの後方互換のため）。
-    kindが未登録、またはNoneのままの場合はform_fidelityを計測のみ行いゲートしない。
+    帯域チェック（S-2パイロット reports/EXP_transmute_pilot_20260717.md が実証した
+    「content_distanceだけでは骨格喪失を検出できない」問題への対処。同パイロットの
+    実測分布からn=40中の失敗例(0.0, 0.2)と成功例(0.5以上)を分ける境界として0.4を採用）。
+    **既定値0.4（PLAN_CHANGELOG 0.7.18-1、Fable5設計者審査により反転。旧既定はNone）**。
+    無効化したい場合は明示的に`min_form_fidelity=None`を渡すこと
+    （tests/test_m2_acceptance.py の旧v1フィクスチャがこの経路を使う）。
+    kindが未登録の場合はform_fidelityを計測のみ行いゲートしない（測定不能を理由に
+    足踏みさせない）。
     """
     skeleton = extract_skeleton(source_text, llm)
     kind = (source_biblio or {}).get("kind", "")
