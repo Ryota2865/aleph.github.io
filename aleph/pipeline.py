@@ -439,11 +439,61 @@ class RealDeps:
 
         _annotate_failure(self.index_dir, work_id=self._work_id, niche_desc=niche_desc, reason=reason)
 
-    def reflect_poetics(self, work) -> dict:
-        """終端後、詩学の自己改訂を検討する（PLAN §7.4）。author=著者役、adversary=reader役で反駁."""
-        from aleph.meta.poetics import reflect
+    def _cadence_state_path(self) -> Path:
+        return self.poetics_dir / "cadence_state.json"
 
-        return reflect(self.poetics_dir, work, self._author, self._reader)
+    def _read_cadence_count(self) -> int:
+        try:
+            data = json.loads(self._cadence_state_path().read_text(encoding="utf-8"))
+            return int(data.get("works_since_reflection", 0))
+        except (FileNotFoundError, ValueError, TypeError):
+            return 0
+
+    def _write_cadence_count(self, count: int) -> None:
+        self.poetics_dir.mkdir(parents=True, exist_ok=True)
+        self._cadence_state_path().write_text(
+            json.dumps({"works_since_reflection": count}, ensure_ascii=False), encoding="utf-8",
+        )
+
+    def reflect_poetics(self, work) -> dict:
+        """終端後、詩学の自己改訂を検討するかどうかを判定する（PLAN §7.4）.
+
+        PLAN_CHANGELOG 0.7.18-1（Fable5審査 問7）が指摘した非対称性を実装する:
+        導く腕（詩学の注入）は毎作行うが、疑う腕（改訂の検討）は
+        `policies.poetics.revision_cadence_works` 作ごとに間引く（既定3。「導く腕は毎作、
+        疑う腕はN作ごと」）。加えて、詩学がまだ第0版（一度も改訂されていない）の場合、
+        `policies.poetics.first_revision_requires_human_ack` が真になるまで実際の改訂は
+        見送る——reflect()の出力はself_definitionと同じ設置力を持つ「設計変更」であり、
+        承認とは別種の扱いを要する、という指摘への対応（first_publish_ackと同型のゲート）。
+        いずれの場合も見送った理由をdictで返し、pipeline側がdecisions.jsonlへ記録する。
+        """
+        from aleph.meta.poetics import current_version, reflect
+
+        policies = (self._policies().get("poetics") or {})
+        cadence = max(1, int(policies.get("revision_cadence_works", 1)))
+        count = self._read_cadence_count() + 1
+
+        if count < cadence:
+            self._write_cadence_count(count)
+            return {
+                "applied": False,
+                "diff_reason": f"改訂周期のため見送り（{count}/{cadence}作）。",
+            }
+
+        version_before = current_version(self.poetics_dir)
+        if version_before == 0 and not policies.get("first_revision_requires_human_ack", False):
+            self._write_cadence_count(0)
+            return {
+                "applied": False,
+                "diff_reason": (
+                    "初回改訂は人間承認待ち"
+                    "（policies.poetics.first_revision_requires_human_ack=false）。"
+                ),
+            }
+
+        result = reflect(self.poetics_dir, work, self._author, self._reader)
+        self._write_cadence_count(0)
+        return result
 
     # -- 役割呼び出しヘルパ（work_id で作品別予算を効かせる） -----------------
     def _author(self, prompt: str) -> str:
