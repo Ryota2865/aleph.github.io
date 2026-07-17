@@ -50,6 +50,12 @@ def _transition(work, current: State, nxt: State, reason: str, decided_by: str,
 
     Loop.transition は payload を持たないため pipeline 側で Checkpoint を直接保存する
     （PLAN_CHANGELOG 0.7.8 の再開要件）。遷移記録は work.append_decision で必ず残す。
+
+    decisions.jsonl のL0記録には差分payload（このステップで新規に追加されたctxの部分）
+    のみを書く（全ctxを毎回複製すると素材カード等の重複でファイルが肥大化するため）。
+    `aleph.core.loop.replay_checkpoint` が全L0記録の差分payloadを順に合成することで
+    checkpoint.jsonと等価な状態を再構成できる——decisions.jsonlが正、checkpointは
+    そこから再構築可能な投影である、という位置づけ（PLAN_CHANGELOG 0.7.18 問1）。
     """
     if not validate_transition(current, nxt):
         raise ValueError(f"invalid transition: {current} -> {nxt}")
@@ -66,6 +72,7 @@ def _transition(work, current: State, nxt: State, reason: str, decided_by: str,
             "decision": f"{current.value}->{nxt.value}",
             "reason": reason,
             "decided_by": decided_by,
+            "payload": dict(payload) if payload else {},
         }
     )
     return nxt_step

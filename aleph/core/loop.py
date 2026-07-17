@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -70,14 +71,19 @@ class Checkpoint:
     payload: dict = field(default_factory=dict)
 
     def save(self, work_dir) -> None:
-        path = Path(work_dir) / "checkpoint.json"
+        """checkpoint.json を一時ファイル+renameで原子的に書く（PLAN_CHANGELOG 0.7.18
+        問1、sol §3.3: 書き込み途中のプロセス終了で不完全なJSONが残ることを防ぐ）."""
+        work_dir = Path(work_dir)
+        path = work_dir / "checkpoint.json"
         payload = {
             "work_id": self.work_id,
             "state": self.state.value,
             "step": self.step,
             "payload": self.payload,
         }
-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp_path = work_dir / f".checkpoint.json.{os.getpid()}.tmp"
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(tmp_path, path)
 
     @classmethod
     def load(cls, work_dir) -> "Checkpoint":
@@ -89,6 +95,40 @@ class Checkpoint:
             step=data["step"],
             payload=data.get("payload", {}),
         )
+
+
+def replay_checkpoint(work_id: str, decisions_path) -> Checkpoint:
+    """decisions.jsonl の L0 記録だけから checkpoint と等価な状態を再構成する.
+
+    PLAN_CHANGELOG 0.7.18 問1（Fable5設計者審査）: 「decisions.jsonl が正、
+    checkpoint.json はそこから再構築可能な投影である」という位置づけを、
+    `Checkpoint.load(work.dir) == replay_checkpoint(work.work_id, work.decisions)`
+    という契約テストで実際に保証するための関数。各L0記録の"payload"（そのステップで
+    新規に追加された差分のみ。pipeline._transition が書く）を順に合成し、最後の
+    遷移先を現在状態、L0記録数をstepとする。旧い作品（0.7.18以前に完了・payload
+    未記録）を再生すると、payloadが空のCheckpointになる——これは既知の限界であり、
+    偽装しない（該当作品は既に終端済みでreplayを必要としない）。
+    """
+    path = Path(decisions_path)
+    state = State.SEEDED
+    step = 0
+    payload: dict = {}
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if record.get("layer") != "L0":
+                continue
+            step += 1
+            decision = str(record.get("decision", ""))
+            if "->" in decision:
+                _, _, nxt_name = decision.partition("->")
+                state = State(nxt_name)
+            record_payload = record.get("payload")
+            if record_payload:
+                payload.update(record_payload)
+    return Checkpoint(work_id=work_id, state=state, step=step, payload=payload)
 
 
 class Loop:
