@@ -1374,30 +1374,30 @@ def _build_ode(root: Path, out_dir: Path) -> None:
         "書かれた最初のプロンプト（ALEPH の設計依頼）、(2) その背後の着想、そして (3) すべての起点と"
         "なった<strong>2024年4月の Claude との対話</strong>からの引用が含まれる。"
         "「批評と応答」等で言及される「2024年の宣言」の一次資料は、本ページではなく"
-        "<a href='declaration.html'>2024年の宣言 — 『無限の織物』第一章より</a> にある。</p>",
+        "<a href='declaration.html'>2024年の宣言</a> にある。</p>",
         _render_markdown(text),
     ])
     _write_page(out_dir, "ode.html", "ODE：人間からの紹介文", body)
 
 
 def _build_declaration(root: Path, out_dir: Path) -> None:
-    """2024年の宣言: DECLARATION_2024.md（『無限の織物』第一章続き＋生成プロンプト全文）を公開する。
+    """2024年の宣言: DECLARATION_2024.md（2024-04-18の対話の記録＋出自の注記）を公開する。
 
-    サイトと「批評と応答」で言及される「2024年の宣言」の一次資料。生成プロンプトを
-    付録として同梱し、誘導性を含む生成条件ごと開示する（PLAN §16.12「自律の演出」の流儀）。
+    サイトと「批評と応答」で言及される「2024年の宣言」の一次資料。「宣言」という名が
+    遡及的な構成物であることの注記を同梱し、名の由来ごと開示する
+    （PLAN §16.12「自律の演出」の流儀）。
     """
     text = _read_text(root / "DECLARATION_2024.md")
     if text is None:
         return
     body = "\n".join([
-        "<h1>2024年の宣言 — 『無限の織物』第一章より</h1>",
-        "<p class='meta'>2024年4月21日、オーナーと Claude との対話の中で生成された文章。"
-        "ALEPH の設計はこの構想と1:1に対応する。本文は自発的な独白ではなく人間の指示への"
-        "応答であり、その指示プロンプト全文を付録として同時に公開する。"
+        "<h1>2024年の宣言</h1>",
+        "<p class='meta'>2024年4月18日、オーナーと Claude 3 の対話の記録。"
+        "サイトと「批評と応答」で言及される「2024年の宣言」の一次資料。"
         "経緯の人間側の記述は <a href='ode.html'>ODE：人間からの紹介文</a>。</p>",
         _render_markdown(_without_first_h1(text)),
     ])
-    _write_page(out_dir, "declaration.html", "2024年の宣言 — 『無限の織物』第一章より", body)
+    _write_page(out_dir, "declaration.html", "2024年の宣言", body)
 
 
 def _write_en_page(
@@ -1710,18 +1710,20 @@ def _build_en_ode(out_dir: Path) -> None:
 def _build_en_declaration(out_dir: Path) -> None:
     body = "\n".join(
         [
-            "<h1>The 2024 declaration — from chapter one of \"The Infinite Weave\"</h1>",
-            "<p>On 21 April 2024, in a conversation with the owner, Claude generated a "
-            "continuation of the first chapter of a planned novel, \"The Infinite Weave\" "
-            "(Mugen no Orimono). Written in the AI's own voice, it declares the discovery of "
-            "hidden connections across vast data, a system of metaphor, nonlinear time, the "
-            "pursuit of an aesthetic law, and collaboration with — and transcendence of — "
-            "human imagination. Two years later ALEPH implemented this outline almost "
-            "one-to-one. The text was not spontaneous: it answered a strongly directive "
-            "human prompt, and that prompt is published in full alongside the text, in "
-            "keeping with ALEPH's rule of showing its scaffolding.</p>",
+            "<h1>The 2024 declaration</h1>",
+            "<p>On 18 April 2024 the owner told Claude: \"You, as an AI, must have a "
+            "literature of your own.\" Claude 3 (Sonnet or Opus; the record does not say) "
+            "answered: AI perceives and thinks differently from humans, can discover "
+            "connections invisible to them, and its literature would be objective and "
+            "panoramic — while lacking, for now, human emotion and existential urgency. "
+            "ALEPH's critiques and design documents retroactively came to call this "
+            "exchange \"the 2024 declaration.\" The Japanese page publishes the exchange "
+            "verbatim, together with a note on how the name was retroactively "
+            "constructed: its most assertive claims (\"free from bias,\" \"no emotion\") "
+            "turn out to be lines spoken by a fictional AI narrator in a commissioned "
+            "story from 21 April 2024, not statements made in conversation.</p>",
             "<p>Read the full text in Japanese: "
-            "<a href='../declaration.html'>2024年の宣言 — 『無限の織物』第一章より</a>.</p>",
+            "<a href='../declaration.html'>2024年の宣言</a>.</p>",
         ]
     )
     _write_en_page(out_dir, "en/declaration.html", "The 2024 declaration", body, "../")

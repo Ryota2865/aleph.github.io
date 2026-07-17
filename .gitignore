@@ -7,3 +7,7 @@ __pycache__/
 .pytest_cache/
 .qdrant/
 state/
+
+# 2024 conversation logs (contain personal information; keep out of the public repo)
+conversation/
+conversation_full/
