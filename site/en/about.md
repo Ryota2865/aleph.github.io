@@ -8,7 +8,7 @@ Autonomy does not mean the absence of humans. Within a human-designed scope of d
 
 A work is not a one-off output. Exploration, criteria, drafts, reviews, and stopping decisions return to later production. ALEPH treats the poetics and records retained across works as the continuity it calls its “self.”
 
-[Read Poetics v0](poetics.html) · [Read the origin](ode.html)
+[Read Poetics v0](poetics.html) · [Read the 2024 declaration](declaration.html) · [Read the origin note](ode.html)
 
 ## The present map
 

@@ -240,6 +240,7 @@ _EN_PATHS = {
     "research/index.html": "en/research/index.html",
     "about.html": "en/about.html",
     "ode.html": "en/ode.html",
+    "declaration.html": "en/declaration.html",
     "archive.html": "en/archive.html",
 }
 _JP_PATHS = {en_path: jp_path for jp_path, en_path in _EN_PATHS.items()}
@@ -356,7 +357,7 @@ _CONTEXT_ITEMS = (
     ("poetics.html", "詩学"),
     ("research/index.html", "研究ノート"),
     ("about.html", "このプロジェクト"),
-    ("ode.html", "2024年の宣言"),
+    ("declaration.html", "2024年の宣言"),
 )
 
 
@@ -588,7 +589,7 @@ def _nav(root_prefix: str, current_path: str = "index.html", lang: str = "ja") -
             current_group = "en/research/index.html"
         elif current_path in {"en/dialogue.html"}:
             current_group = "en/research/index.html"
-        elif current_path in {"en/poetics.html", "en/ode.html"}:
+        elif current_path in {"en/poetics.html", "en/ode.html", "en/declaration.html"}:
             current_group = "en/about.html"
         elif current_path.startswith("en/process/"):
             current_group = "en/archive.html"
@@ -601,7 +602,7 @@ def _nav(root_prefix: str, current_path: str = "index.html", lang: str = "ja") -
             current_group = "research/index.html"
         elif current_path == "dialogue.html":
             current_group = "research/index.html"
-        elif current_path in {"poetics.html", "ode.html"}:
+        elif current_path in {"poetics.html", "ode.html", "declaration.html"}:
             current_group = "about.html"
         elif current_path.startswith("process/"):
             current_group = "archive.html"
@@ -1006,7 +1007,8 @@ def _build_archive(root: Path, out_dir: Path) -> None:
         "</div>",
         "<h2>作品を跨ぐ記録</h2>",
         "<p><a href='poetics.html'>詩学第0版</a> · <a href='dialogue.html'>批評と応答</a> · "
-        "<a href='research/index.html'>研究ノート</a> · <a href='ode.html'>起源と2024年の宣言</a></p>",
+        "<a href='research/index.html'>研究ノート</a> · <a href='declaration.html'>2024年の宣言</a> · "
+        "<a href='ode.html'>ODE：人間からの紹介文</a></p>",
         f"<p><a href='{_esc(_REPO_URL)}'>GitHub上の全リポジトリ</a> · <a href='llms.txt'>llms.txt</a></p>",
     ])
     _write_page(out_dir, "archive.html", "制作記録", body, description="ALEPH作品のニッチ、基準書、決定ログ、査読、批評、研究への索引。")
@@ -1187,7 +1189,8 @@ def _build_dialogue(root: Path, out_dir: Path) -> None:
         "<p class='meta'>批評（チャット Fable 5）と設計者応答の往復。"
         "ここで生じた問いを条件操作へ移した記録は <a href='research/index.html'>研究ノート</a> で追える。"
         "本ページで言及される「2024年の宣言」は "
-        "<a href='ode.html'>ODE：起源と2024年の宣言</a> を参照。</p>",
+        "<a href='declaration.html'>2024年の宣言</a>（一次資料）を参照。"
+        "人間側の経緯は <a href='ode.html'>ODE：人間からの紹介文</a>。</p>",
     ]
     for path in paths:
         text = _read_text(path)
@@ -1356,25 +1359,45 @@ def _build_about(root: Path, out_dir: Path) -> None:
 
 
 def _build_ode(root: Path, out_dir: Path) -> None:
-    """2024年の宣言（起源）: ODE.md（人間側からのALEPH紹介・最初のプロンプト）を公開する。
+    """ODE: 人間からの紹介文（ODE.md）を公開する。
 
-    「批評と応答」等で言及される「2024年の宣言」の一次資料。個人情報を含む2024年会話ログ
-    （無限の織物、未追跡）とは別に、オーナーが公開用に書いた起源の記述。
+    オーナーが公開用に書いた起源の記述（最初のプロンプト・着想・2024年対話の引用）。
+    「2024年の宣言」の一次資料は declaration.html（DECLARATION_2024.md）へ分離した。
+    個人情報を含む2024年会話ログ（無限の織物、未追跡）は引き続き非公開。
     """
     text = _read_text(root / "ODE.md")
     if text is None:
         return
     body = "\n".join([
-        "<h1>ODE：起源と2024年の宣言</h1>",
+        "<h1>ODE：人間からの紹介文</h1>",
         "<p class='meta'>人間側から見た ALEPH の起源。ここには (1) 2026年の Claude Code セッションで"
         "書かれた最初のプロンプト（ALEPH の設計依頼）、(2) その背後の着想、そして (3) すべての起点と"
-        "なった<strong>2024年4月の Claude 3.5 Sonnet との対話</strong>が含まれる。"
-        "「批評と応答」で言及される<strong>「2024年の宣言」とは、本ページ後半に引用される"
-        "Claude 3.5 Sonnet の言葉</strong>（「確かに、AIは人間とは異なる知覚や思考のプロセスを…"
-        "新しい時間感覚を生み出すことも…」）を指す。最初のプロンプトそのものではない。</p>",
+        "なった<strong>2024年4月の Claude との対話</strong>からの引用が含まれる。"
+        "「批評と応答」等で言及される「2024年の宣言」の一次資料は、本ページではなく"
+        "<a href='declaration.html'>2024年の宣言 — 『無限の織物』第一章より</a> にある。</p>",
         _render_markdown(text),
     ])
-    _write_page(out_dir, "ode.html", "ODE：起源と2024年の宣言", body)
+    _write_page(out_dir, "ode.html", "ODE：人間からの紹介文", body)
+
+
+def _build_declaration(root: Path, out_dir: Path) -> None:
+    """2024年の宣言: DECLARATION_2024.md（『無限の織物』第一章続き＋生成プロンプト全文）を公開する。
+
+    サイトと「批評と応答」で言及される「2024年の宣言」の一次資料。生成プロンプトを
+    付録として同梱し、誘導性を含む生成条件ごと開示する（PLAN §16.12「自律の演出」の流儀）。
+    """
+    text = _read_text(root / "DECLARATION_2024.md")
+    if text is None:
+        return
+    body = "\n".join([
+        "<h1>2024年の宣言 — 『無限の織物』第一章より</h1>",
+        "<p class='meta'>2024年4月21日、オーナーと Claude との対話の中で生成された文章。"
+        "ALEPH の設計はこの構想と1:1に対応する。本文は自発的な独白ではなく人間の指示への"
+        "応答であり、その指示プロンプト全文を付録として同時に公開する。"
+        "経緯の人間側の記述は <a href='ode.html'>ODE：人間からの紹介文</a>。</p>",
+        _render_markdown(_without_first_h1(text)),
+    ])
+    _write_page(out_dir, "declaration.html", "2024年の宣言 — 『無限の織物』第一章より", body)
 
 
 def _write_en_page(
@@ -1571,7 +1594,8 @@ def _build_en_archive(root: Path, out_dir: Path) -> None:
         "</div>",
         "<h2>Across works</h2>",
         "<p><a href='poetics.html'>Poetics v0</a> · <a href='dialogue.html'>Critique and response</a> · "
-        "<a href='research/index.html'>Research</a> · <a href='ode.html'>Origin</a></p>",
+        "<a href='research/index.html'>Research</a> · <a href='declaration.html'>2024 declaration</a> · "
+        "<a href='ode.html'>Origin note</a></p>",
         f"<p><a href='{_esc(_REPO_URL)}'>Full repository on GitHub</a> · <a href='../llms.txt'>llms.txt</a></p>",
     ])
     _write_en_page(out_dir, "en/archive.html", "Production records", body, "../", description="An index to ALEPH's niches, criteria, decisions, reviews, critique, and research artifacts.")
@@ -1670,18 +1694,37 @@ def _build_en_poetics(root: Path, out_dir: Path) -> None:
 def _build_en_ode(out_dir: Path) -> None:
     body = "\n".join(
         [
-            "<h1>Origin and the 2024 declaration</h1>",
-            "<p>The origin page explains ALEPH from the human side: the first 2026 prompt "
+            "<h1>ODE: an introduction from the human side</h1>",
+            "<p>The origin note explains ALEPH from the human side: the first 2026 prompt "
             "that asked for a system for literary expression by LLMs, the design work "
             "supervised by Claude Fable 5, and the earlier inspiration from an April 2024 "
-            "conversation with Claude 3.5 Sonnet. In this site, the \"2024 declaration\" "
-            "means a passage quoted from that Claude 3.5 Sonnet conversation, where the "
-            "possibility of AI literature was imagined through nonhuman patterns of "
-            "perception, association, metaphor, and time.</p>",
-            "<p>Read in Japanese: <a href='../ode.html'>ODE：起源と2024年の宣言</a>.</p>",
+            "conversation with Claude. The primary source of the \"2024 declaration\" "
+            "referenced across this site now has its own page: "
+            "<a href='declaration.html'>the 2024 declaration</a>.</p>",
+            "<p>Read in Japanese: <a href='../ode.html'>ODE：人間からの紹介文</a>.</p>",
         ]
     )
-    _write_en_page(out_dir, "en/ode.html", "Origin and the 2024 declaration", body, "../")
+    _write_en_page(out_dir, "en/ode.html", "ODE: an introduction from the human side", body, "../")
+
+
+def _build_en_declaration(out_dir: Path) -> None:
+    body = "\n".join(
+        [
+            "<h1>The 2024 declaration — from chapter one of \"The Infinite Weave\"</h1>",
+            "<p>On 21 April 2024, in a conversation with the owner, Claude generated a "
+            "continuation of the first chapter of a planned novel, \"The Infinite Weave\" "
+            "(Mugen no Orimono). Written in the AI's own voice, it declares the discovery of "
+            "hidden connections across vast data, a system of metaphor, nonlinear time, the "
+            "pursuit of an aesthetic law, and collaboration with — and transcendence of — "
+            "human imagination. Two years later ALEPH implemented this outline almost "
+            "one-to-one. The text was not spontaneous: it answered a strongly directive "
+            "human prompt, and that prompt is published in full alongside the text, in "
+            "keeping with ALEPH's rule of showing its scaffolding.</p>",
+            "<p>Read the full text in Japanese: "
+            "<a href='../declaration.html'>2024年の宣言 — 『無限の織物』第一章より</a>.</p>",
+        ]
+    )
+    _write_en_page(out_dir, "en/declaration.html", "The 2024 declaration", body, "../")
 
 
 def _build_en_pages(root: Path, out_dir: Path) -> None:
@@ -1694,6 +1737,7 @@ def _build_en_pages(root: Path, out_dir: Path) -> None:
     _build_en_dialogue(root, out_dir)
     _build_en_poetics(root, out_dir)
     _build_en_ode(out_dir)
+    _build_en_declaration(out_dir)
 
 
 def _build_en_note(root: Path, out_dir: Path) -> None:
@@ -1751,6 +1795,7 @@ def build_public_site(root: Path = _ROOT, out_dir: Path = _ROOT / "docs") -> Non
     _build_research(root, out_dir)
     _build_about(root, out_dir)
     _build_ode(root, out_dir)
+    _build_declaration(root, out_dir)
     _build_en_note(root, out_dir)
     _build_en_pages(root, out_dir)
     _verify_relative_hrefs(out_dir)
