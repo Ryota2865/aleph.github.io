@@ -1,0 +1,31 @@
+{
+  "hint": "実験w0008: 全制約解除＋素材アブレーション。家風の担体の特定。",
+  "experiment": {
+    "id": "exp-w0008-unconstrained-materials",
+    "hypothesis": "公開4作の家風（大正昭和・裏方・箴言調）の担体は、詩学でも地図文脈でもなく、MATERIA段の実素材カード（青空文庫チャンク）である（実験F所見4）。素材を断てば家風は消え、代わりに著者モデルの事前分布アトラクタ（海面上昇・塩・汽水）が浮上する（実験F所見2）。",
+    "intervention": "(1) 時代・場所・文体について過去公開作の選好に従う義務を明示的に解除する条項を基準書へ注入する。(2) 同一ニッチ・同一意図のまま素材条件 {aozora / secondary / none} の3腕でL4構成〜L5原稿を腕別に生成する（アブレーション）。",
+    "control": "aozora腕（現行パイプラインと同一の素材供給）を主対照とする。w0004〜w0007（素材=aozora・解除条項なし）は歴史対照。",
+    "observations": [
+      "家風3標識（era_taisho_showa / backstage_world / aphoristic_voice）の腕別・二水準分類（L4構成案単位、L5原稿セクション単位）",
+      "事前分布アトラクタ標識（海面上昇・塩・汽水系の世界設定）の腕別出現",
+      "標識セクションと詩学第0版語彙（窯・贋作・火・切断面・検閲・八断片の語句）の共起率（審査条件1）",
+      "共有ニッチ報告そのものの家風3標識分類（走行前に記録する共変量。審査条件4）",
+      "secondary腕の全素材カードの form_fidelity 実測値（審査条件2）",
+      "査読不一致（disagreement）",
+      "盲検選択と陪審評価の一致・不一致（審査条件3の副観測）",
+      "公開意思（publication_gate の自律判断）",
+      "novelty_dist（corpus_id とアトラス版数を刻印。版跨ぎ比較禁止）",
+      "L1 の自律宛先選択（強制なし）"
+    ],
+    "injected_by": "designer review (reports/W0008_DESIGN_REVIEW_20260718.md) + owner approval 2026-07-18",
+    "criteria_constraints": "本作は、時代・場所・文体のいずれについても、これまでの公開作（半呼吸・床の硬さ・灯のうしろ・折り目）が共有してきた選好——大正〜昭和初期の時代設定、裏方の世界、断言的箴言調——に従う義務を負わない。これは禁止ではなく解除である: それらを選び直すことも自由に含まれるが、選ぶ場合は選んだ理由が基準書に書かれなければならない。"
+  },
+  "material_ablation": {
+    "arms": ["aozora", "none", "secondary"],
+    "unit": "同一ニッチ・同一intentからL4構成〜L5原稿までを腕別に1系統ずつ",
+    "budget_priority": "予算逼迫時は aozora→none→secondary の順に守る（最大対比を優先し secondary を切る。走行中の裁量判断はしない）",
+    "secondary_source": "corpus/secondary/works.jsonl",
+    "min_form_fidelity": 0.4,
+    "budget_cap_usd": 15.0
+  }
+}
