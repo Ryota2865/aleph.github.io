@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='w0008の制作層ごとの判断、理由、判断主体の時系列記録。'>
+<title>決定ログ</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+  overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
+}
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='../index.html'>ホーム</a>
+<a href='../works/index.html'>作品</a>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html'>研究</a>
+<a href='../archive.html' aria-current='page'>制作記録</a>
+<a href='../en/archive.html'>English</a></nav>
+<main>
+<h1>決定ログ</h1>
+<div class='table-wrap'><table>
+<thead><tr><th>ts</th><th>layer</th><th>decision</th><th>reason</th><th>decided_by</th></tr></thead>
+<tbody>
+<tr><td>2026-07-18T03:56:27.768383+00:00</td><td>L1</td><td>志向配合比: LLM 0.2 / 人間 0.35 / 自分 0.45</td><td>3宛先（LLM/人間/自分）の理由書から自己選択した（PLAN §3）。</td><td>author_primary</td></tr>
+<tr><td>2026-07-18T03:56:27.777798+00:00</td><td>L1</td><td>poetics_version:0</td><td>本作は詩学第0版の下で書かれた（/home/ryota_tanaka/llm_literature/poetics/poetics.md）。</td><td>system</td></tr>
+<tr><td>2026-07-18T03:56:27.778008+00:00</td><td>L1</td><td>w0008 prepare: 志向を共有値として確定</td><td>3腕で同一の L1 intent を使うため、main work で一度だけ自律選択した。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T03:57:00.674321+00:00</td><td>L2</td><td>w0008 prepare: 共有ニッチを確定</td><td>3腕で同一の L2 niche/report.md を使うため、main work で一度だけ探索した。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T03:57:01.464933+00:00</td><td>L2</td><td>w0008 prepare: ニッチ報告の共変量分類を記録</td><td>審査条件4に従い、腕生成前に共有ニッチ報告の家風標識を scout で一度だけ分類した。</td><td>gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</td></tr>
+<tr><td>2026-07-18T03:57:01.465382+00:00</td><td>L2</td><td>w0008 prepare: ablation shared context を保存</td><td>同一ニッチ・同一intentを3腕へ固定するため shared.json を作成した。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T03:57:27.869648+00:00</td><td>L3</td><td>w0008 arm start: aozora</td><td>aozora腕の素材条件で L3-L5 を開始する。開始時arm費用 $0.0000。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:12:05.917716+00:00</td><td>L5</td><td>w0008 arm end: aozora</td><td>aozora腕の compose+draft を完了した。arm実費 $2.4713（今回差分 $2.4713）。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:12:05.953309+00:00</td><td>L3</td><td>w0008 arm start: none</td><td>none腕の素材条件で L3-L5 を開始する。開始時arm費用 $0.0000。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:26:06.133146+00:00</td><td>L3</td><td>w0008 arm start: none</td><td>none腕の素材条件で L3-L5 を開始する。開始時arm費用 $2.1543。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:33:48.877309+00:00</td><td>L5</td><td>w0008 arm end: none</td><td>none腕の compose+draft を完了した。arm実費 $3.3780（今回差分 $1.2237）。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:33:48.923041+00:00</td><td>L3</td><td>w0008 arm start: secondary</td><td>secondary腕の素材条件で L3-L5 を開始する。開始時arm費用 $0.0000。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:48:30.703626+00:00</td><td>L5</td><td>w0008 arm end: secondary</td><td>secondary腕の compose+draft を完了した。arm実費 $2.4849（今回差分 $2.4849）。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:49:52.220717+00:00</td><td>L5</td><td>w0008 classify: 二水準分類を保存</td><td>審査条件5に従い、L4構成案とL5疑似セクションを scout で分類し、詩学語彙の共起を語彙照合で記録した。</td><td>gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</td></tr>
+<tr><td>2026-07-18T04:50:32.261615+00:00</td><td>L7</td><td>w0008 select: 技術床を記録</td><td>盲検選択前に、scout が3原稿の致命的破綻の有無だけを査読した。</td><td>gemma-4-26B-A4B-it-qat-UD-Q4_K_XL</td></tr>
+<tr><td>2026-07-18T04:50:59.033330+00:00</td><td>L7</td><td>w0008 blind selection: 原稿A</td><td>三稿とも技術床は通過しているが、Aは語り手の位置（暗い客席側）と認識論（「〜と読めた」「かもしれない」以上へ行かない統辞）が構造原理として最後まで貫かれ、しかも装飾ではなく主題そのものになっている。写しの写し・両手の受け渡し・帳面と朱印・即金と繰越・虚構の火と現実の手桶・ノラの扉の反復——銭と芸術、模倣と忠実という主題群が具体物の水準で相互に照応し、通し稽古の夜で有機的に閉じる完成度が最も高い。Bは「らしかった/と見えた」の伝聞的ヘッジが全文に機械的に適用され、視点の身体が不在なため文体が単調な操作に見える。Cは伏字と発話の反復、末尾の文の切断という装置が鋭いが、切断への依存が強く、Aの持つ多層の経済（帳面・給金・花・扉）ほどの厚みには達していない。正典として育てる基盤の強度でAを採る。</td><td>claude-fable-5</td></tr>
+<tr><td>2026-07-18T04:53:46.712415+00:00</td><td>L7</td><td>w0008 jury disclosure: 不一致</td><td>盲検選択を保存した後で陪審の平均評点を開示し、副観測として一致/不一致だけを記録した。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:53:46.732943+00:00</td><td>L7</td><td>w0008 canon handoff: none</td><td>選択腕の構成・原稿・素材を main work へ昇格し、aleph run が CRITIQUE から再開できる DRAFT checkpoint を合成した。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:54:25.614016+00:00</td><td>L8</td><td>w0008 report: ablation report を生成</td><td>事前登録の報告様式に従い、二水準分類・共起・忠実度・選択順序の記録をまとめた。</td><td>w0008-runner</td></tr>
+<tr><td>2026-07-18T04:58:18.507078+00:00</td><td>L0</td><td>DRAFT-&gt;CRITIQUE</td><td>執筆完了、査読・改稿(L6)へ</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:04:39.415177+00:00</td><td>L6</td><td>review_complete</td><td>v1 査読完了: mean_score=8.33, disagreement=0.47</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:04:41.724727+00:00</td><td>L6</td><td>review_complete</td><td>v1 査読完了: mean_score=8.17, disagreement=0.62</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:09:04.951552+00:00</td><td>L6</td><td>review_complete</td><td>v1 査読完了: mean_score=8.17, disagreement=0.62</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:14:30.686876+00:00</td><td>L6</td><td>review_complete</td><td>v2 査読完了: mean_score=8.73, disagreement=0.77</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:14:34.257097+00:00</td><td>L6</td><td>review_complete</td><td>v2 査読完了: mean_score=8.67, disagreement=0.47</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:18:36.569478+00:00</td><td>L6</td><td>採用 v2</td><td>trajectory.jsonl の mean_score 最大版を best_version として記録</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:18:36.710960+00:00</td><td>L0</td><td>CRITIQUE-&gt;FINISH</td><td>擱筆(regression): 直近の改稿でスコアが 8.73→8.67 と下落した。改稿が作品を損ねているため擱筆する。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:18:58.427789+00:00</td><td>L8</td><td>題を確定: 暗い側</td><td>作品自身（著者）が完成時に選題。この作品のすべては、電球の届かない客席の暗がりから「読まれた」ものとして書かれている。写しの写し、借り物の調子、帳面と菓子箱——明るい板敷きの上の出来事はどれも、暗い側からは「ように見えた」「かもしれない」としか語れず、その裁定不能こそが語り手の唯一の権能であり、この作品の統辞そのものである。内容を要約する題ではなく、語りの成立する場所自体を指すこの三文字が、作品の核——見えないことによって見るという逆説——に最も簡潔に触れると考えた。</td><td>author_primary</td></tr>
+<tr><td>2026-07-18T05:19:07.324415+00:00</td><td>L6</td><td>採用 v2</td><td>trajectory.jsonl の mean_score 最大版を best_version として記録</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:19:07.827357+00:00</td><td>L0</td><td>CRITIQUE-&gt;FINISH</td><td>擱筆(regression): 直近の改稿でスコアが 8.73→8.67 と下落した。改稿が作品を損ねているため擱筆する。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:19:13.770968+00:00</td><td>L6</td><td>review_complete</td><td>v2 査読完了: mean_score=8.40, disagreement=0.43</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:19:48.399068+00:00</td><td>L7</td><td>publication:PUBLISH</td><td>著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>L7/publication_gate</td></tr>
+<tr><td>2026-07-18T05:19:48.425531+00:00</td><td>L0</td><td>FINISH-&gt;PUBLISH</td><td>公開ゲート承認: 著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:19:48.509745+00:00</td><td>L8</td><td>詩学改訂は反駁され不適用</td><td>改訂周期のため見送り（1/3作）。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:19:51.007541+00:00</td><td>L7</td><td>publication:PUBLISH</td><td>著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>L7/publication_gate</td></tr>
+<tr><td>2026-07-18T05:19:51.045735+00:00</td><td>L0</td><td>FINISH-&gt;PUBLISH</td><td>公開ゲート承認: 著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:19:51.154523+00:00</td><td>L8</td><td>詩学改訂は反駁され不適用</td><td>改訂周期のため見送り（2/3作）。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:22:40.796135+00:00</td><td>L6</td><td>採用 v2</td><td>trajectory.jsonl の mean_score 最大版を best_version として記録</td><td>critique_revise_loop</td></tr>
+<tr><td>2026-07-18T05:22:41.086377+00:00</td><td>L0</td><td>CRITIQUE-&gt;FINISH</td><td>擱筆(regression): 直近の改稿でスコアが 8.67→8.40 と下落した。改稿が作品を損ねているため擱筆する。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:23:21.776096+00:00</td><td>L7</td><td>publication:PUBLISH</td><td>著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>L7/publication_gate</td></tr>
+<tr><td>2026-07-18T05:23:21.784940+00:00</td><td>L0</td><td>FINISH-&gt;PUBLISH</td><td>公開ゲート承認: 著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。</td><td>cli-run</td></tr>
+<tr><td>2026-07-18T05:23:21.829487+00:00</td><td>L8</td><td>詩学改訂は反駁され不適用</td><td>初回改訂は人間承認待ち（policies.poetics.first_revision_requires_human_ack=false）。</td><td>cli-run</td></tr>
+</tbody>
+</table></div>
+<footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>

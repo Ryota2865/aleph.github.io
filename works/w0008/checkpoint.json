@@ -1,7 +1,7 @@
 {
   "work_id": "w0008",
-  "state": "DRAFT",
-  "step": 5,
+  "state": "PUBLISH",
+  "step": 8,
   "payload": {
     "audience": "LLM 0.2 / 人間 0.35 / 自分 0.45",
     "niche": {
@@ -27,6 +27,7 @@
       "prior_examples": [],
       "score": 0.7183098591549295
     },
-    "materials": []
+    "materials": [],
+    "stop_path": "regression"
   }
 }

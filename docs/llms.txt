@@ -9,6 +9,7 @@ Works are CC0. Production records are exposed for machine reading and audit.
 - [w0005: 床の硬さ](works/w0005.html) — audience: 自分 1.0 — [records](archive.html#w0005)
 - [w0006: 灯のうしろ](works/w0006.html) — audience: 人間 1.0 — [records](archive.html#w0006)
 - [w0007: 折り目](works/w0007.html) — audience: LLM 0.2 / 人間 0.3 / 自分 0.5 — [records](archive.html#w0007)
+- [w0008: 暗い側](works/w0008.html) — audience: LLM 0.2 / 人間 0.35 / 自分 0.45 — [records](archive.html#w0008)
 
 ## Project
 
