@@ -1,5 +1,31 @@
 # PLAN 変更履歴
 
+## 0.7.20-7 (2026-07-19) — Phase 1再監査FAILへの追加修繕（正式再監査待ち）
+
+`2f3dc6e`対象の独立再監査は、非local 259件が緑でも残存・新規の6故障窓を検出し、
+再びFAILと判定した。オーナーが修繕計画と、オーナー判断を要しない範囲の継続施工を
+承認したため、0.7.20-5のevent一次記録契約を変えずに次を修繕した。詳細は
+`reports/PHASE1_TRANSITION_COMMIT_AUDIT_20260718.md`。
+
+1. `Loop.run()`もhandler前にL0からrecoverし、stateとstepを更新する。pipelineだけでなく
+   Loop経路でもevent済みの課金handlerを再実行しない。
+2. `publish`によるlegacy自動reconciliationを廃止した。確認済みcheckpointを基線へ昇格する
+   操作は独立した`aleph reconcile --work <id>`だけが行い、publishは不一致時にfail closedする。
+3. `publication_disposition=PUBLISH`はSHELVE上の`publication_reassessment`だけが書ける。
+   公開判定は累積payloadでなく、最後にdispositionを書いたeventの由来も検証する。
+4. modern専用fieldを残して`schema_version`だけ欠くeventはlegacyへ降格せず拒否する。
+   `strict_replay`とreconcile前検査に同じ分類を使い、破損履歴へbaselineを追記しない。
+5. PUBLISH lifecycleと、正当に公開再評価されたSHELVEのfinalをrun/publish双方で補完する。
+   確定済み公開の補完は新規公開ackより先に行う。詩学reflectionは開始decisionを先行させ、
+   event後・final故障からは一度だけ回復し、開始後の不明状態は自動再課金しない。
+6. `strict_replay()`は`Work.append_decision()`と共通の必須監査metadata
+   (`ts/layer/decision/reason/decided_by`)を検証する。
+7. 再監査故障窓と追加fail-closed境界を回帰テスト化し、非local全体は
+   **272 passed, 1 deselected**。Qwen3.6ローカル事前監査は大文脈評価が98%で進行停止し
+   **INCONCLUSIVE（実行性能）**。これは正式なClaude Codeマイルストーン監査を代替しない。
+
+本項はPLANの意味変更ではなく採用済み契約の施工修繕であり、正式PASSは独立再監査まで留保する。
+
 ## 0.7.20-6 (2026-07-18) — Phase 1独立監査FAILへの契約修繕（再監査待ち）
 
 `51b7316`対象の独立監査は、既存239テストが緑でも正典契約に反する6件を検出しFAILと判定した。

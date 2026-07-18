@@ -11,10 +11,27 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from aleph.core.artifacts import validate_decision_record
 from aleph.core.loop import Checkpoint, State, validate_transition
 
 
 SCHEMA_VERSION = 1
+_MODERN_ONLY_FIELDS = frozenset(
+    {
+        "event_id",
+        "command_id",
+        "event_type",
+        "state_before",
+        "state_after",
+        "legacy_event_count",
+        "legacy_warnings",
+    }
+)
+
+
+def has_modern_event_shape(row: dict[str, Any]) -> bool:
+    """Return whether a record carries schema-v1-only event structure."""
+    return "schema_version" in row or bool(_MODERN_ONLY_FIELDS.intersection(row))
 
 
 class TransitionCommitError(RuntimeError):
@@ -63,8 +80,25 @@ def _l0_records(path: Path) -> list[dict[str, Any]]:
     return [row for row in _records(path) if row.get("layer") == "L0"]
 
 
+def _validate_schema_classification(rows: list[dict[str, Any]]) -> None:
+    """Reject damaged modern events instead of silently treating them as legacy."""
+    for position, row in enumerate(rows, start=1):
+        if "schema_version" in row:
+            schema_version = row["schema_version"]
+            if type(schema_version) is not int or schema_version != SCHEMA_VERSION:
+                raise ReplayError(
+                    f"event at record {position} has invalid schema_version={schema_version!r}"
+                )
+        elif has_modern_event_shape(row):
+            raise ReplayError(
+                f"modern-shaped event at record {position} is missing schema_version"
+            )
+
+
 def _require_modern_stream(path: Path) -> list[dict[str, Any]]:
-    rows = _l0_records(path)
+    records = _records(path)
+    _validate_schema_classification(records)
+    rows = [row for row in records if row.get("layer") == "L0"]
     legacy = [row for row in rows if row.get("schema_version") != SCHEMA_VERSION]
     modern = [row for row in rows if row.get("schema_version") == SCHEMA_VERSION]
     if legacy and not modern:
@@ -85,6 +119,7 @@ def strict_replay(work_id: str, decisions_path) -> Checkpoint:
     """Replay schema-v1 L0 events, rejecting every continuity violation."""
     path = Path(decisions_path)
     records = _records(path)
+    _validate_schema_classification(records)
     misplaced = [
         row for row in records if "schema_version" in row and row.get("layer") != "L0"
     ]
@@ -112,6 +147,10 @@ def strict_replay(work_id: str, decisions_path) -> Checkpoint:
     initialized = False
 
     for expected_event_id, row in enumerate(rows, start=1):
+        try:
+            validate_decision_record(row)
+        except ValueError as exc:
+            raise ReplayError(f"event {expected_event_id}: {exc}") from exc
         schema_version = row.get("schema_version")
         if type(schema_version) is not int or schema_version != SCHEMA_VERSION:
             raise ReplayError(
@@ -190,6 +229,20 @@ def strict_replay(work_id: str, decisions_path) -> Checkpoint:
         delta = row["payload"]
         if not isinstance(delta, dict):
             raise ReplayError(f"event {expected_event_id} payload must be an object")
+        if (
+            delta.get("publication_disposition") == State.PUBLISH.value
+            and not (
+                state == State.PUBLISH
+                or (
+                    event_type == "projection"
+                    and decision == "projection:publication_reassessment"
+                    and state == State.SHELVE
+                )
+            )
+        ):
+            raise ReplayError(
+                f"event {expected_event_id} grants publication outside publication_reassessment"
+            )
         payload.update(delta)
 
     if initialized and rows[0].get("event_type") not in {"initialize", "reconciliation"}:
@@ -392,7 +445,9 @@ def reconcile(
     warnings: list[str] | tuple[str, ...],
 ) -> TransitionResult:
     """Append a truthful modern baseline after an immutable legacy L0 prefix."""
-    all_rows = _l0_records(work.decisions)
+    records = _records(work.decisions)
+    _validate_schema_classification(records)
+    all_rows = [row for row in records if row.get("layer") == "L0"]
     legacy = [row for row in all_rows if row.get("schema_version") != SCHEMA_VERSION]
     modern = [row for row in all_rows if row.get("schema_version") == SCHEMA_VERSION]
     if not legacy:
@@ -444,6 +499,13 @@ def project(
     payload_delta: dict[str, Any],
 ) -> TransitionResult:
     """Commit a projection-only event without changing lifecycle state."""
+    if (
+        payload_delta.get("publication_disposition") == State.PUBLISH.value
+        and (name != "publication_reassessment" or expected_state != State.SHELVE)
+    ):
+        raise ValueError(
+            "publication_disposition=PUBLISH requires publication_reassessment on SHELVE"
+        )
     current = strict_replay(work.work_id, work.decisions)
     if current.state != expected_state:
         raise ReplayError(

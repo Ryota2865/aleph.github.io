@@ -153,7 +153,11 @@ class Loop:
         self._step = result.checkpoint.step
 
     def run(self) -> State:
-        state = self.current_state()
+        from aleph.core.transition_commit import recover
+
+        recovered = recover(self.work)
+        state = recovered.state
+        self._step = recovered.step
         while state not in TERMINAL_STATES:
             handler = self.handlers.get(state)
             if handler is None:

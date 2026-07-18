@@ -75,6 +75,36 @@ def test_checkpoint_step_is_monotonic_across_resume(tmp_path):
     assert resumed.step == 2
 
 
+def test_loop_recovers_event_stream_before_running_paid_handler(tmp_path):
+    """再監査 finding 1: event先行・checkpoint staleでも完了handlerを再実行しない。"""
+    from aleph.core.transition_commit import initialize
+
+    work = Work(tmp_path, "w0011")
+    work.create({})
+    initialize(
+        work,
+        command_id="fixture-intent",
+        state=State.INTENT,
+        reason="fixture",
+        decided_by="test",
+    )
+    first = Loop(work, router=None, budget=None, policies=None)
+    first.transition(State.EXPLORE, reason="paid intent completed", decided_by="test")
+
+    # eventはEXPLOREだがcheckpointだけINTENTへ戻った故障窓。
+    Checkpoint(work.work_id, State.INTENT, 1, {}).save(work.dir)
+    resumed = Loop(work, router=None, budget=None, policies=None)
+
+    def paid_intent(_loop):
+        raise AssertionError("paid INTENT handler must not run again")
+
+    resumed.handlers[State.INTENT] = paid_intent
+
+    assert resumed.run() == State.EXPLORE
+    assert resumed._step == 2
+    assert Checkpoint.load(work.dir).state == State.EXPLORE
+
+
 def test_budget_work_scoped_spend_survives_persistence(cfg, tmp_path):
     """監査 finding 4: 永続化時に作品別サブ台帳(_work_spent)が保存されていなかった."""
     state_path = tmp_path / "budget.json"

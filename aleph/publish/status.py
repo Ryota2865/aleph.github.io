@@ -5,7 +5,12 @@ import json
 from pathlib import Path
 
 from aleph.core.loop import State
-from aleph.core.transition_commit import ReplayError, SCHEMA_VERSION, strict_replay
+from aleph.core.transition_commit import (
+    ReplayError,
+    SCHEMA_VERSION,
+    has_modern_event_shape,
+    strict_replay,
+)
 
 
 def is_published(work_dir: Path) -> bool:
@@ -42,15 +47,25 @@ def is_published(work_dir: Path) -> bool:
             checkpoint = strict_replay(work_dir.name, decisions)
         except ReplayError:
             return False
+        if checkpoint.state == State.PUBLISH:
+            return True
+        if checkpoint.state != State.SHELVE:
+            return False
+        disposition_events = [
+            row
+            for row in modern
+            if "publication_disposition" in (row.get("payload") or {})
+        ]
+        if not disposition_events:
+            return False
+        latest = disposition_events[-1]
         return (
-            checkpoint.state == State.PUBLISH
-            or (
-                checkpoint.state == State.SHELVE
-                and checkpoint.payload.get("publication_disposition") == "PUBLISH"
-            )
+            latest.get("event_type") == "projection"
+            and latest.get("decision") == "projection:publication_reassessment"
+            and latest.get("payload", {}).get("publication_disposition") == "PUBLISH"
         )
 
-    if any("schema_version" in row for row in rows):
+    if any(has_modern_event_shape(row) for row in rows):
         return False
 
     for row in reversed(rows):

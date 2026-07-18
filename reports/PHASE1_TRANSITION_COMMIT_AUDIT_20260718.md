@@ -1,9 +1,45 @@
 # Phase 1 TransitionCommit 独立監査と修繕記録
 
 日付: 2026-07-18
-監査対象: `51b7316` (`main`)
-受領判定: **FAIL**
-修繕状態: **全6所見を回帰テスト化して修正済み、独立再監査待ち**
+更新日: 2026-07-19
+初回監査対象: `51b7316` (`main`)
+再監査対象: `2f3dc6e` (`main`)
+最新受領判定: **FAIL**
+修繕状態: **再監査6所見を回帰テスト化して修正済み、正式独立再監査待ち**
+
+## 2026-07-19 再監査
+
+初回修繕後の`2f3dc6e`に対する独立再監査は、非local
+`259 passed, 1 deselected`とclean worktreeを確認した上で、次の6件を検出した。
+
+1. **P1 — `Loop.run()`ではstale checkpointから課金handlerを再実行する。**
+2. **P1 — legacy最終eventと危険に不一致なcheckpointをpublishが自動reconcileし、公開できる。**
+3. **P1 — 無関係なprojectionが`publication_disposition=PUBLISH`を書いて公開権限を得る。**
+4. **P2 — `schema_version`を失ったmodern履歴がlegacy互換経路へ誤降格する。**
+5. **P2 — SHELVE公開、ack=false、final故障後reflectionの終端回復が不完全である。**
+6. **P2 — strict replayが`reason`と`decided_by`欠落を受理する。**
+
+### 再監査への修繕
+
+- `Loop.run()`開始時に`recover()`し、event由来のstate/stepをhandlerより先に採用する。
+- publishからreconciliationを分離し、明示的な`aleph reconcile --work <id>`だけが
+  reviewed checkpointをmodern基線にできるようにした。
+- 公開dispositionの書込みをSHELVE上の`publication_reassessment`へ限定し、公開判定でも
+  最後にdispositionを書いたeventの由来を検証する。後続の直交projectionは公開を消さない。
+- modern専用fieldの共通判定を導入し、schema欠落modernはstrict replay、recover、reconcile、
+  公開表示のすべてでfail closedにした。
+- lifecycle PUBLISHと正当なSHELVE公開の両方でfinalを補完し、確定済み公開の補完をackより
+  先にした。reflectionは開始記録を先行し、開始後の不明状態を自動再課金しない。
+- append/replayが同じ必須監査metadata検証を使うようにした。
+
+### 検証
+
+- 再監査の故障窓と、無効eventをappend前に拒否する境界を回帰テスト化。
+- 非local全体: **272 passed, 1 deselected**。
+- Qwen3.6ローカル事前監査: **INCONCLUSIVE（実行性能）**。初回は240秒のmodel ready
+  timeout、420秒へ延長した再試行は32k token文脈評価の98%地点で進行停止したため中断。
+  リポジトリはread-onlyで、runner所有のllama-serverのみ停止した。
+- このローカル事前監査は正式なClaude Codeマイルストーン監査の代替ではない。
 
 ## 監査所見
 

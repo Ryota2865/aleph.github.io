@@ -1,5 +1,27 @@
 # PROGRESS
 
+## 2026-07-19 — Phase 1再監査FAIL・追加6所見修繕完了（正式再監査待ち）
+
+### 完了したこと
+
+- `2f3dc6e`対象の独立再監査は**FAIL**。Loop経路の課金handler重複、legacy checkpointからの
+  自動公開昇格、projection由来未検証、modern履歴のlegacy誤降格、公開後補完不足、replayの
+  必須監査metadata不足を受領した。
+- 全所見を実interface越しに回帰テスト化し、現行実装で赤を確認してから修繕した。
+- `Loop.run()`のstrict recovery、明示`aleph reconcile`、公開dispositionのevent由来検証、
+  modern形状判定の共通化、PUBLISH/SHELVE公開のfinal補完、reflection開始記録、共通metadata
+  replay検査を実装した。
+- 関連テスト群は`28 + 10 + 22`件すべて通過。非local全体は
+  **272 passed, 1 deselected**。
+- Qwen3.6によるread-onlyローカル事前監査を実施。初回はserver ready timeout、再試行は
+  大文脈評価98%地点で進行停止したため、判定は**INCONCLUSIVE（実行性能）**。runnerは
+  自分で起動したserverだけを停止し、worktreeへの書込みはなかった。
+
+### 次の一手
+
+- 本変更を施工者と異なるClaude Code担当が正式再監査し、Phase 1のPASS/FAILを確定する。
+- PASS後にPhase 2の`ModelOutput`、`WorkSnapshot`、`RepositorySnapshot`へ進む。
+
 ## 2026-07-18 — Phase 1独立監査FAIL・6所見修繕完了（再監査待ち）
 
 ### 完了したこと

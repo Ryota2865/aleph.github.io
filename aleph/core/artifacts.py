@@ -33,6 +33,13 @@ WORK_LAYOUT = (
 _REQUIRED_DECISION_FIELDS = ("ts", "layer", "decision", "reason", "decided_by")
 
 
+def validate_decision_record(record: dict) -> None:
+    """Validate audit metadata shared by append and authoritative replay."""
+    missing = [field for field in _REQUIRED_DECISION_FIELDS if field not in record]
+    if missing:
+        raise ValueError(f"decisions.jsonl record missing required fields: {missing}")
+
+
 class Work:
     """作品ディレクトリへの型付きアクセス。パス計算は純粋関数として実装済み."""
 
@@ -107,9 +114,7 @@ class Work:
         """decisions.jsonl への追記。スキーマ（ファイル冒頭の不変条件:
         {ts, layer, decision, reason, decided_by(model), refs}）の欠落は拒否する。
         refs のみ省略可（空リストを補う）。"""
-        missing = [f for f in _REQUIRED_DECISION_FIELDS if f not in record]
-        if missing:
-            raise ValueError(f"decisions.jsonl record missing required fields: {missing}")
+        validate_decision_record(record)
         payload = {**record}
         payload.setdefault("refs", [])
         self.decisions.parent.mkdir(parents=True, exist_ok=True)

@@ -194,6 +194,60 @@ def test_strict_replay_rejects_missing_payload(tmp_path):
         strict_replay(work.work_id, work.decisions)
 
 
+@pytest.mark.parametrize("missing", ["ts", "reason", "decided_by"])
+def test_strict_replay_rejects_missing_required_audit_metadata(tmp_path, missing):
+    """再監査 finding 6: append時の必須監査metadataをreplay時にも要求する。"""
+    work = _work(tmp_path)
+    commit(
+        work,
+        command_id="one",
+        expected_state=State.SEEDED,
+        next_state=State.INTENT,
+        reason="one",
+        decided_by="test",
+    )
+    rows = _l0(work)
+    del rows[0][missing]
+    work.decisions.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReplayError, match=missing):
+        strict_replay(work.work_id, work.decisions)
+
+
+def test_modern_shaped_event_without_schema_is_not_reconcilable_legacy(tmp_path):
+    """再監査 finding 4: schema欠落modernをlegacy基線へ誤降格させない。"""
+    work = _work(tmp_path)
+    commit(
+        work,
+        command_id="one",
+        expected_state=State.SEEDED,
+        next_state=State.INTENT,
+        reason="one",
+        decided_by="test",
+    )
+    rows = _l0(work)
+    del rows[0]["schema_version"]
+    work.decisions.write_text(json.dumps(rows[0]) + "\n", encoding="utf-8")
+
+    with pytest.raises(ReplayError, match="schema_version"):
+        strict_replay(work.work_id, work.decisions)
+    with pytest.raises(ReplayError, match="schema_version"):
+        recover(work)
+    damaged = work.decisions.read_text(encoding="utf-8")
+    with pytest.raises(ReplayError, match="schema_version"):
+        reconcile(
+            work,
+            command_id="must-not-append",
+            reason="damaged modern is not legacy",
+            decided_by="test",
+            warnings=[],
+        )
+    assert work.decisions.read_text(encoding="utf-8") == damaged
+
+
 def test_strict_replay_rejects_modern_event_moved_out_of_l0(tmp_path):
     work = _work(tmp_path)
     commit(

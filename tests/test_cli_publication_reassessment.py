@@ -120,7 +120,7 @@ def test_publish_repairs_missing_final_for_committed_publish(tmp_path, monkeypat
     assert (work.final / "published.marker").read_text(encoding="utf-8") == "ok"
 
 
-def test_publish_reassessment_reconciles_legacy_prefix_without_rewrite(tmp_path, monkeypatch):
+def test_publish_refuses_legacy_mismatch_until_explicit_reconciliation(tmp_path, monkeypatch):
     work = Work(tmp_path / "works", "w9902")
     work.create({})
     legacy = {
@@ -134,17 +134,58 @@ def test_publish_reassessment_reconciles_legacy_prefix_without_rewrite(tmp_path,
     work.append_decision(legacy)
     Checkpoint(
         work_id=work.work_id,
-        state=State.SHELVE,
+        state=State.PUBLISH,
         step=8,
         payload={"audience": "human"},
     ).save(work.dir)
 
     rc = cli._cmd_publish(tmp_path, _wire_cli(monkeypatch, tmp_path))
 
-    assert rc == 0
+    assert rc == 1
+    rows = [json.loads(line) for line in work.decisions.read_text(encoding="utf-8").splitlines()]
+    l0 = [row for row in rows if row.get("layer") == "L0"]
+    assert l0 == [legacy]
+    assert not (work.final / "published.marker").exists()
+
+    reconcile_rc = cli._cmd_reconcile(
+        tmp_path,
+        SimpleNamespace(work="w9902"),
+    )
+    assert reconcile_rc == 0
     rows = [json.loads(line) for line in work.decisions.read_text(encoding="utf-8").splitlines()]
     l0 = [row for row in rows if row.get("layer") == "L0"]
     assert l0[0] == legacy
     assert l0[1]["event_type"] == "reconciliation"
-    assert l0[1]["legacy_warnings"]
-    assert l0[2]["event_type"] == "projection"
+    assert l0[1]["state_after"] == "PUBLISH"
+
+
+def test_publish_repairs_committed_shelve_publication_before_ack_gate(tmp_path, monkeypatch):
+    """再監査 finding 5: 確定済み公開のfinal補完は新規公開ackを要求しない。"""
+    class AckOffConfig(_Config):
+        policies = {"publication": {"first_publish_ack": False}}
+
+    work = Work(tmp_path / "works", "w9902")
+    work.create({})
+    initialize(
+        work,
+        command_id="fixture",
+        state=State.SHELVE,
+        reason="fixture",
+        decided_by="test",
+    )
+    from aleph.core.transition_commit import project
+
+    project(
+        work,
+        command_id="published",
+        expected_state=State.SHELVE,
+        name="publication_reassessment",
+        reason="already approved",
+        decided_by="test",
+        payload_delta={"publication_disposition": "PUBLISH"},
+    )
+    args = _wire_cli(monkeypatch, tmp_path)
+    monkeypatch.setattr(cli, "load_config", lambda _: AckOffConfig())
+
+    assert cli._cmd_publish(tmp_path, args) == 0
+    assert (work.final / "published.marker").read_text(encoding="utf-8") == "ok"

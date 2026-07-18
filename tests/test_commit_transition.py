@@ -258,3 +258,97 @@ def test_pipeline_repairs_incomplete_final_for_committed_publish(tmp_path):
 
     meta = json.loads((work.final / "meta.json").read_text(encoding="utf-8"))
     assert meta["license"] == "CC0-1.0"
+
+
+def test_pipeline_repairs_final_for_committed_shelve_publication(tmp_path):
+    """再監査 finding 5: SHELVE上の正当な公開dispositionもfinalを補完する。"""
+    from aleph.core.transition_commit import initialize, project
+    from aleph.pipeline import run_work
+
+    work = Work(tmp_path / "works", "w9210")
+    work.create({})
+    work.draft_path(1).write_text("本文。", encoding="utf-8")
+    initialize(
+        work,
+        command_id="fixture",
+        state=State.SHELVE,
+        reason="fixture",
+        decided_by="test",
+    )
+    project(
+        work,
+        command_id="published",
+        expected_state=State.SHELVE,
+        name="publication_reassessment",
+        reason="approved",
+        decided_by="test",
+        payload_delta={"publication_disposition": "PUBLISH"},
+    )
+
+    assert run_work(work, object(), decided_by="publish-repair-test") == State.SHELVE
+    assert (work.final / "meta.json").is_file()
+    assert (work.final / "text.md").is_file()
+
+
+def test_publish_event_recovery_runs_poetics_reflection_once(tmp_path, monkeypatch):
+    """再監査 finding 5: final故障後の再開でも終端reflectionを一度だけ完了する。"""
+    import aleph.pipeline as pipeline
+
+    work = Work(tmp_path / "works", "w9211")
+    work.create({})
+
+    class ReflectingDeps(_FullLoopDeps):
+        def __init__(self):
+            self.reflect_calls = 0
+
+        def reflect_poetics(self, work):
+            self.reflect_calls += 1
+            return {"applied": False, "diff_reason": "test reflection"}
+
+    deps = ReflectingDeps()
+    original_finalize = pipeline._finalize_publish
+    monkeypatch.setattr(
+        pipeline,
+        "_finalize_publish",
+        lambda work, deps: (_ for _ in ()).throw(RuntimeError("final failed")),
+    )
+    with pytest.raises(RuntimeError, match="final failed"):
+        pipeline.run_work(work, deps, decided_by="reflection-repair-test")
+    assert replay_checkpoint(work.work_id, work.decisions).state == State.PUBLISH
+    assert deps.reflect_calls == 0
+
+    monkeypatch.setattr(pipeline, "_finalize_publish", original_finalize)
+    assert pipeline.run_work(work, deps, decided_by="reflection-repair-test") == State.PUBLISH
+    assert deps.reflect_calls == 1
+    assert pipeline.run_work(work, deps, decided_by="reflection-repair-test") == State.PUBLISH
+    assert deps.reflect_calls == 1
+
+
+def test_incomplete_reflection_start_is_not_retried_automatically(tmp_path):
+    """開始後の成否不明な課金hookは、owner reconciliationなしに再実行しない。"""
+    from aleph.core.transition_commit import initialize
+    from aleph.pipeline import run_work
+
+    work = Work(tmp_path / "works", "w9212")
+    work.create({})
+    work.draft_path(1).write_text("本文。", encoding="utf-8")
+    initialize(
+        work,
+        command_id="fixture",
+        state=State.PUBLISH,
+        reason="fixture",
+        decided_by="test",
+    )
+    work.append_decision({
+        "ts": "2026-07-19T00:00:00+00:00",
+        "layer": "L8",
+        "decision": "詩学リフレクション開始",
+        "reason": "simulated crash after start",
+        "decided_by": "test",
+    })
+
+    class MustNotReflect:
+        def reflect_poetics(self, work):
+            raise AssertionError("incomplete reflection must fail closed")
+
+    assert run_work(work, MustNotReflect(), decided_by="reflection-repair-test") == State.PUBLISH

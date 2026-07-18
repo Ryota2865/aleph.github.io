@@ -188,6 +188,38 @@ def _ensure_publish_artifacts(work, deps) -> None:
     _finalize_publish(work, deps)
 
 
+def _terminal_reflection_state(work) -> str:
+    """Return complete, started, or missing for this work's terminal reflection."""
+    try:
+        rows = [
+            json.loads(line)
+            for line in work.decisions.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    except (OSError, json.JSONDecodeError):
+        return "missing"
+    terminal_rows = [row for row in rows if row.get("layer") == "L8"]
+    completed = {
+        "詩学改訂を適用",
+        "詩学改訂は反駁され不適用",
+        "詩学リフレクション結果なし",
+    }
+    if any(row.get("decision") in completed for row in terminal_rows):
+        return "complete"
+    if any(row.get("decision") == "詩学リフレクション開始" for row in terminal_rows):
+        return "started"
+    return "missing"
+
+
+def _ensure_terminal_effects(work, deps, decided_by: str) -> None:
+    """Complete recoverable terminal effects without repeating charged reflection."""
+    from aleph.publish.status import is_published
+
+    if is_published(work.dir):
+        _ensure_publish_artifacts(work, deps)
+    _reflect_poetics_if_available(work, deps, decided_by)
+
+
 # ---------------------------------------------------------------- run_work
 def run_work(work, deps, *, decided_by: str) -> State:
     """現在のチェックポイント状態から正典遷移表に従い閉ループを進め、終端 State を返す.
@@ -202,8 +234,8 @@ def run_work(work, deps, *, decided_by: str) -> State:
     step = cp.step
     ctx: dict = dict(cp.payload)
 
-    if state == State.PUBLISH:
-        _ensure_publish_artifacts(work, deps)
+    if state in (State.PUBLISH, State.SHELVE, State.DISCARD):
+        _ensure_terminal_effects(work, deps, decided_by)
         return state
 
     def go(nxt: State, reason: str, payload: dict | None = None) -> None:
@@ -279,14 +311,13 @@ def run_work(work, deps, *, decided_by: str) -> State:
         reason = pub.get("reason", "")
         if decision == "PUBLISH":
             go(State.PUBLISH, f"公開ゲート承認: {reason}")
-            _ensure_publish_artifacts(work, deps)
         elif decision == "DISCARD":
             _record_termination_failure(work, deps, ctx, reason, decided_by)
             go(State.DISCARD, f"廃棄: {reason}")
         else:
             _record_termination_failure(work, deps, ctx, reason, decided_by)
             go(State.SHELVE, f"棚上げ: {reason}")
-        _reflect_poetics_if_available(work, deps, decided_by)
+        _ensure_terminal_effects(work, deps, decided_by)
 
     return state
 
@@ -340,13 +371,30 @@ def _reflect_poetics_if_available(work, deps, decided_by: str) -> None:
     reflect_poetics = getattr(deps, "reflect_poetics", None)
     if reflect_poetics is None:
         return
+    reflection_state = _terminal_reflection_state(work)
+    if reflection_state == "complete":
+        return
+    if reflection_state == "started":
+        print(
+            f"poetics reflection for {work.work_id} has an incomplete start record; "
+            "refusing automatic retry",
+            file=sys.stderr,
+        )
+        return
+    work.append_decision({
+        "ts": _now_iso(),
+        "layer": "L8",
+        "decision": "詩学リフレクション開始",
+        "reason": "終端後フック開始。完了記録なしの自動再課金を禁止する。",
+        "decided_by": decided_by,
+    })
     try:
         result = reflect_poetics(work)
     except Exception as exc:  # 詩学リフレクションの失敗で作品終端そのものは止めない
         print(f"poetics reflection failed for {work.work_id}: {exc}", file=sys.stderr)
         return
     if not result:
-        return
+        result = {"applied": False, "diff_reason": "リフレクション結果なし"}
     work.append_decision({
         "ts": _now_iso(),
         "layer": "L8",

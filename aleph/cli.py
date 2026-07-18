@@ -1,4 +1,4 @@
-"""ALEPH CLI（PLAN §9）: aleph new / run / status / resume / publish.
+"""ALEPH CLI（PLAN §9）: aleph new / run / status / resume / publish / reconcile.
 
 施工: M0（骨格）。各コマンドの実体は該当マイルストーンで接続する。
 """
@@ -96,16 +96,15 @@ def _cmd_publish(root: Path, args) -> int:
     初回公開の人間承認は config/policies.yaml の publication.first_publish_ack で行う。
     SHELVEは終端のまま維持し、再評価結果をpublication dispositionとして追記する。
     """
-    from aleph.core.loop import Checkpoint, State
+    from aleph.core.loop import State
     from aleph.core.transition_commit import (
         ReplayError,
-        audit_history,
         commit,
         project,
-        reconcile,
         recover,
     )
-    from aleph.pipeline import RealDeps, _ensure_publish_artifacts
+    from aleph.pipeline import RealDeps, _ensure_terminal_effects
+    from aleph.publish.status import is_published
 
     config = load_config(root)
     work = _work_for_cli(root / "works", args.work, config)
@@ -116,18 +115,12 @@ def _cmd_publish(root: Path, args) -> int:
     try:
         cp = recover(work)
     except ReplayError as exc:
-        if not str(exc).startswith("legacy stream has no reconciliation"):
-            print(f"publish: transition history is not replayable: {exc}", file=sys.stderr)
-            return 1
-        warnings = audit_history(work)
-        reconcile(
-            work,
-            command_id=f"{work.work_id}:reconcile:v1",
-            reason="公開再評価前にlegacy履歴から厳密再生区間を開始",
-            decided_by="cli-publish",
-            warnings=warnings,
+        print(
+            f"publish: transition history is not replayable: {exc}. "
+            f"Run `aleph reconcile --work {work.work_id}` after reviewing the mismatch.",
+            file=sys.stderr,
         )
-        cp = Checkpoint.load(work.dir)
+        return 1
 
     logger = CallLogger(work.calls, secrets=config.secrets.values())
     budget = Budget(config, state_path=_budget_state_path(root))
@@ -137,9 +130,10 @@ def _cmd_publish(root: Path, args) -> int:
         poetics_dir=root / "poetics",
     )
 
-    if cp.state == State.PUBLISH:
-        _ensure_publish_artifacts(work, deps)
-        print(f"publish: {args.work} is already published", file=sys.stderr)
+    if is_published(work.dir):
+        _ensure_terminal_effects(work, deps, "cli-publish")
+        suffix = "is already published" if cp.state == State.PUBLISH else "-> PUBLISH (recovered)"
+        print(f"publish: {args.work} {suffix}", file=sys.stderr)
         return 0
     if cp.state == State.DISCARD:
         print(f"publish: {args.work} was discarded; refusing to publish", file=sys.stderr)
@@ -159,14 +153,6 @@ def _cmd_publish(root: Path, args) -> int:
             file=sys.stderr,
         )
         return 1
-
-    if (
-        cp.state == State.SHELVE
-        and cp.payload.get("publication_disposition") == "PUBLISH"
-    ):
-        _ensure_publish_artifacts(work, deps)
-        print(f"publish: {args.work} -> PUBLISH (recovered)", file=sys.stderr)
-        return 0
 
     audience = cp.payload.get("audience")
     publication = deps.decide_publication(work, audience)
@@ -199,13 +185,50 @@ def _cmd_publish(root: Path, args) -> int:
                 "publication_reassessment_reason": reason,
             },
         )
-    if decision == "PUBLISH":
-        _ensure_publish_artifacts(work, deps)
+    _ensure_terminal_effects(work, deps, "cli-publish")
     print(
         f"publish: {args.work} -> {decision} (lifecycle={result.checkpoint.state.value})",
         file=sys.stderr,
     )
     return 0 if decision == "PUBLISH" else 2
+
+
+def _cmd_reconcile(root: Path, args) -> int:
+    """Explicitly establish a modern baseline for a reviewed legacy checkpoint."""
+    from aleph.core.transition_commit import ReplayError, audit_history, reconcile, recover
+
+    config = load_config(root)
+    work = _work_for_cli(root / "works", args.work, config)
+    if not work.dir.exists():
+        print(f"reconcile: work not found: {work.dir}", file=sys.stderr)
+        return 1
+
+    try:
+        recover(work)
+    except ReplayError as exc:
+        if not str(exc).startswith("legacy stream has no reconciliation"):
+            print(f"reconcile: history is not eligible for legacy reconciliation: {exc}", file=sys.stderr)
+            return 1
+    else:
+        print(f"reconcile: {args.work} already has a replayable modern history", file=sys.stderr)
+        return 0
+
+    warnings = audit_history(work)
+    result = reconcile(
+        work,
+        command_id=f"{work.work_id}:reconcile:v1",
+        reason="オーナーが明示的にlegacy checkpointをmodern基線として承認",
+        decided_by="cli-reconcile",
+        warnings=warnings,
+    )
+    print(
+        f"reconcile: {args.work} -> {result.checkpoint.state.value}; "
+        f"warnings={len(result.warnings)}",
+        file=sys.stderr,
+    )
+    for warning in result.warnings:
+        print(f"reconcile warning: {warning}", file=sys.stderr)
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -226,6 +249,11 @@ def main(argv: list[str] | None = None) -> int:
     pub_p = sub.add_parser("publish", help="棚上げ済み作品の公開ゲートを再評価する（初回は人間承認必須）")
     pub_p.add_argument("--work", required=True, help="作品id（works/<id>）")
     pub_p.add_argument("--index", default="state/atlas", help="索引ディレクトリ（公開ゲートは未使用だが依存配線に必要）")
+    reconcile_p = sub.add_parser(
+        "reconcile",
+        help="確認済みlegacy checkpointを明示的にmodern replay基線へ昇格する",
+    )
+    reconcile_p.add_argument("--work", required=True, help="作品id（works/<id>）")
     explore = sub.add_parser("explore", help="コーパスからアトラスとニッチ候補を構築する")
     explore.add_argument("--corpus", default="corpus/aozora/works.jsonl")
     explore.add_argument("--out", default="state/atlas")
@@ -250,6 +278,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_run(root, args)
     if args.command == "publish":
         return _cmd_publish(root, args)
+    if args.command == "reconcile":
+        return _cmd_reconcile(root, args)
     if args.command == "status":
         config = load_config(root)
         budget = Budget(config, state_path=_budget_state_path(root))
