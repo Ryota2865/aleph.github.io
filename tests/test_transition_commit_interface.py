@@ -110,6 +110,111 @@ def test_strict_replay_rejects_source_discontinuity(tmp_path):
         strict_replay(work.work_id, work.decisions)
 
 
+def test_strict_replay_rejects_non_integer_event_id(tmp_path):
+    work = _work(tmp_path)
+    commit(
+        work,
+        command_id="one",
+        expected_state=State.SEEDED,
+        next_state=State.INTENT,
+        reason="one",
+        decided_by="test",
+    )
+    rows = _l0(work)
+    rows[0]["event_id"] = 1.0
+    work.decisions.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReplayError, match="event_id"):
+        strict_replay(work.work_id, work.decisions)
+
+
+def test_strict_replay_rejects_boolean_schema_version(tmp_path):
+    work = _work(tmp_path)
+    commit(
+        work,
+        command_id="one",
+        expected_state=State.SEEDED,
+        next_state=State.INTENT,
+        reason="one",
+        decided_by="test",
+    )
+    rows = _l0(work)
+    rows[0]["schema_version"] = True
+    work.decisions.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReplayError, match="schema_version"):
+        strict_replay(work.work_id, work.decisions)
+
+
+def test_strict_replay_rejects_decision_that_contradicts_transition(tmp_path):
+    work = _work(tmp_path)
+    commit(
+        work,
+        command_id="one",
+        expected_state=State.SEEDED,
+        next_state=State.INTENT,
+        reason="one",
+        decided_by="test",
+    )
+    rows = _l0(work)
+    rows[0]["decision"] = "SEEDED->PUBLISH"
+    work.decisions.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReplayError, match="decision"):
+        strict_replay(work.work_id, work.decisions)
+
+
+def test_strict_replay_rejects_missing_payload(tmp_path):
+    work = _work(tmp_path)
+    commit(
+        work,
+        command_id="one",
+        expected_state=State.SEEDED,
+        next_state=State.INTENT,
+        reason="one",
+        decided_by="test",
+    )
+    rows = _l0(work)
+    del rows[0]["payload"]
+    work.decisions.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReplayError, match="payload"):
+        strict_replay(work.work_id, work.decisions)
+
+
+def test_strict_replay_rejects_modern_event_moved_out_of_l0(tmp_path):
+    work = _work(tmp_path)
+    commit(
+        work,
+        command_id="one",
+        expected_state=State.SEEDED,
+        next_state=State.INTENT,
+        reason="one",
+        decided_by="test",
+    )
+    rows = _l0(work)
+    rows[0]["layer"] = "L7"
+    work.decisions.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReplayError, match="layer"):
+        strict_replay(work.work_id, work.decisions)
+
+
 def test_recover_repairs_checkpoint_when_projection_write_failed(tmp_path, monkeypatch):
     work = _work(tmp_path)
     original_save = Checkpoint.save
@@ -135,6 +240,22 @@ def test_recover_repairs_checkpoint_when_projection_write_failed(tmp_path, monke
     repaired = recover(work)
     assert repaired.state == State.INTENT
     assert Checkpoint.load(work.dir) == repaired
+
+
+def test_recover_refuses_empty_stream_that_conflicts_with_checkpoint(tmp_path):
+    work = _work(tmp_path)
+    existing = Checkpoint(
+        work_id=work.work_id,
+        state=State.SHELVE,
+        step=7,
+        payload={"audience": "human"},
+    )
+    existing.save(work.dir)
+
+    with pytest.raises(ReplayError, match="empty L0 stream"):
+        recover(work)
+
+    assert Checkpoint.load(work.dir) == existing
 
 
 def test_initialize_records_experiment_handoff_without_fake_transition_chain(tmp_path):

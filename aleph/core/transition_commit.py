@@ -84,7 +84,13 @@ def _require_modern_stream(path: Path) -> list[dict[str, Any]]:
 def strict_replay(work_id: str, decisions_path) -> Checkpoint:
     """Replay schema-v1 L0 events, rejecting every continuity violation."""
     path = Path(decisions_path)
-    all_rows = _l0_records(path)
+    records = _records(path)
+    misplaced = [
+        row for row in records if "schema_version" in row and row.get("layer") != "L0"
+    ]
+    if misplaced:
+        raise ReplayError("modern event schema is only valid for layer L0")
+    all_rows = [row for row in records if row.get("layer") == "L0"]
     if not all_rows:
         return Checkpoint(work_id=work_id, state=State.SEEDED, step=0, payload={})
     legacy = [row for row in all_rows if row.get("schema_version") != SCHEMA_VERSION]
@@ -106,11 +112,15 @@ def strict_replay(work_id: str, decisions_path) -> Checkpoint:
     initialized = False
 
     for expected_event_id, row in enumerate(rows, start=1):
-        if row.get("schema_version") != SCHEMA_VERSION:
-            raise ReplayError(f"event {expected_event_id} is legacy or has unknown schema")
-        if row.get("event_id") != expected_event_id:
+        schema_version = row.get("schema_version")
+        if type(schema_version) is not int or schema_version != SCHEMA_VERSION:
             raise ReplayError(
-                f"event_id must be contiguous: expected {expected_event_id}, got {row.get('event_id')!r}"
+                f"event {expected_event_id} has invalid schema_version={schema_version!r}"
+            )
+        event_id = row.get("event_id")
+        if type(event_id) is not int or event_id != expected_event_id:
+            raise ReplayError(
+                f"event_id must be a contiguous integer: expected {expected_event_id}, got {event_id!r}"
             )
         command_id = row.get("command_id")
         if not isinstance(command_id, str) or not command_id:
@@ -153,7 +163,31 @@ def strict_replay(work_id: str, decisions_path) -> Checkpoint:
             else:
                 raise ReplayError(f"event {expected_event_id} has invalid event_type={event_type!r}")
 
-        delta = row.get("payload", {})
+        decision = row.get("decision")
+        if event_type == "transition":
+            expected_decision = f"{before_raw}->{after_raw}"
+            if decision != expected_decision:
+                raise ReplayError(
+                    f"event {expected_event_id} decision must be {expected_decision!r}"
+                )
+        elif event_type in {"initialize", "reconciliation"}:
+            expected_decision = f"{event_type}:{after_raw}"
+            if decision != expected_decision:
+                raise ReplayError(
+                    f"event {expected_event_id} decision must be {expected_decision!r}"
+                )
+        elif (
+            not isinstance(decision, str)
+            or not decision.startswith("projection:")
+            or not decision.removeprefix("projection:")
+        ):
+            raise ReplayError(
+                f"event {expected_event_id} has invalid projection decision={decision!r}"
+            )
+
+        if "payload" not in row:
+            raise ReplayError(f"event {expected_event_id} is missing payload")
+        delta = row["payload"]
         if not isinstance(delta, dict):
             raise ReplayError(f"event {expected_event_id} payload must be an object")
         payload.update(delta)
@@ -166,6 +200,13 @@ def strict_replay(work_id: str, decisions_path) -> Checkpoint:
 def recover(work) -> Checkpoint:
     """Rebuild and atomically save the checkpoint from a strict modern stream."""
     checkpoint = strict_replay(work.work_id, work.decisions)
+    if not _l0_records(work.decisions) and work.checkpoint.exists():
+        existing = Checkpoint.load(work.dir)
+        if existing != checkpoint:
+            raise ReplayError(
+                "empty L0 stream conflicts with the existing checkpoint; "
+                "explicit initialization or reconciliation is required"
+            )
     checkpoint.save(work.dir)
     return checkpoint
 
