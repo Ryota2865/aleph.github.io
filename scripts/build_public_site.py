@@ -1390,12 +1390,11 @@ def _build_declaration(root: Path, out_dir: Path) -> None:
     text = _read_text(root / "DECLARATION_2024.md")
     if text is None:
         return
+    rendered = _render_markdown(_without_first_h1(text))
+    rendered = rendered.replace("<p>2024年4月18日、", "<p class='meta'>2024年4月18日、", 1)
     body = "\n".join([
         "<h1>2024年の宣言</h1>",
-        "<p class='meta'>2024年4月18日、オーナーと Claude 3 の対話の記録。"
-        "サイトと「批評と応答」で言及される「2024年の宣言」の一次資料。"
-        "経緯の人間側の記述は <a href='ode.html'>ODE：人間からの紹介文</a>。</p>",
-        _render_markdown(_without_first_h1(text)),
+        rendered,
     ])
     _write_page(out_dir, "declaration.html", "2024年の宣言", body)
 
@@ -1711,7 +1710,7 @@ def _build_en_declaration(out_dir: Path) -> None:
     body = "\n".join(
         [
             "<h1>The 2024 declaration</h1>",
-            "<p>On 18 April 2024 the owner told Claude: \"You, as an AI, must have a "
+            "<p>On 18 April 2024 the user told Claude: \"You, as an AI, must have a "
             "literature of your own.\" Claude 3 (Sonnet or Opus; the record does not say) "
             "answered: AI perceives and thinks differently from humans, can discover "
             "connections invisible to them, and its literature would be objective and "
