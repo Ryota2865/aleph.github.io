@@ -62,6 +62,64 @@ def test_publish_reassessment_keeps_shelve_lifecycle(tmp_path, monkeypatch):
     assert (work.final / "published.marker").read_text(encoding="utf-8") == "ok"
 
 
+def test_publish_recovers_missing_checkpoint_before_preflight(tmp_path, monkeypatch):
+    work = Work(tmp_path / "works", "w9902")
+    work.create({})
+    initialize(
+        work,
+        command_id="fixture",
+        state=State.FINISH,
+        reason="fixture",
+        decided_by="test",
+        payload={"audience": "human"},
+    )
+    work.checkpoint.unlink()
+
+    rc = cli._cmd_publish(tmp_path, _wire_cli(monkeypatch, tmp_path))
+
+    assert rc == 0
+    assert Checkpoint.load(work.dir) == strict_replay(work.work_id, work.decisions)
+
+
+def test_publish_from_finish_commits_lifecycle_transition(tmp_path, monkeypatch):
+    work = Work(tmp_path / "works", "w9902")
+    work.create({})
+    initialize(
+        work,
+        command_id="fixture",
+        state=State.FINISH,
+        reason="fixture",
+        decided_by="test",
+        payload={"audience": "human"},
+    )
+
+    rc = cli._cmd_publish(tmp_path, _wire_cli(monkeypatch, tmp_path))
+
+    assert rc == 0
+    checkpoint = strict_replay(work.work_id, work.decisions)
+    assert checkpoint.state == State.PUBLISH
+    rows = [json.loads(line) for line in work.decisions.read_text(encoding="utf-8").splitlines()]
+    assert rows[-1]["event_type"] == "transition"
+    assert rows[-1]["decision"] == "FINISH->PUBLISH"
+
+
+def test_publish_repairs_missing_final_for_committed_publish(tmp_path, monkeypatch):
+    work = Work(tmp_path / "works", "w9902")
+    work.create({})
+    initialize(
+        work,
+        command_id="fixture",
+        state=State.PUBLISH,
+        reason="fixture",
+        decided_by="test",
+    )
+
+    rc = cli._cmd_publish(tmp_path, _wire_cli(monkeypatch, tmp_path))
+
+    assert rc == 0
+    assert (work.final / "published.marker").read_text(encoding="utf-8") == "ok"
+
+
 def test_publish_reassessment_reconciles_legacy_prefix_without_rewrite(tmp_path, monkeypatch):
     work = Work(tmp_path / "works", "w9902")
     work.create({})

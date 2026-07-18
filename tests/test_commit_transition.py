@@ -167,3 +167,94 @@ def test_pipeline_recovers_from_event_stream_when_checkpoint_is_missing(tmp_path
     assert final == State.PUBLISH
     assert called == []
     assert Checkpoint.load(work.dir) == replay_checkpoint(work.work_id, work.decisions)
+
+
+def test_pipeline_recovers_stale_checkpoint_before_paid_handler(tmp_path):
+    """event済み・checkpoint未保存の再開で、完了済みL1を再実行しない."""
+    from aleph.pipeline import run_work
+
+    work = Work(tmp_path / "works", "w9206")
+    work.create({})
+
+    class StopAfterIntent(_FullLoopDeps):
+        def explore(self, work):
+            raise RuntimeError("stop after intent")
+
+    with pytest.raises(RuntimeError, match="stop after intent"):
+        run_work(work, StopAfterIntent(), decided_by="stale-checkpoint-test")
+    assert replay_checkpoint(work.work_id, work.decisions).state == State.EXPLORE
+
+    Checkpoint(work.work_id, State.INTENT, 1, {}).save(work.dir)
+
+    class ResumeDeps(_FullLoopDeps):
+        def choose_intent(self, work):
+            raise AssertionError("choose_intent must not run again")
+
+        def explore(self, work):
+            raise RuntimeError("recovered at explore")
+
+    with pytest.raises(RuntimeError, match="recovered at explore"):
+        run_work(work, ResumeDeps(), decided_by="stale-checkpoint-test")
+
+
+def test_publish_artifact_never_precedes_publish_event(tmp_path, monkeypatch):
+    """FINISH->PUBLISH event前に停止しても、finalが公開対象にならない."""
+    import aleph.pipeline as pipeline
+    from aleph.publish.site import _iter_published
+
+    work = Work(tmp_path / "works", "w9207")
+    work.create({})
+    original_transition = pipeline._transition
+
+    def stop_before_publish_event(work, current, nxt, *args, **kwargs):
+        if current == State.FINISH and nxt == State.PUBLISH:
+            raise RuntimeError("stop before publish event")
+        return original_transition(work, current, nxt, *args, **kwargs)
+
+    monkeypatch.setattr(pipeline, "_transition", stop_before_publish_event)
+
+    with pytest.raises(RuntimeError, match="stop before publish event"):
+        pipeline.run_work(work, _FullLoopDeps(), decided_by="publish-order-test")
+
+    assert replay_checkpoint(work.work_id, work.decisions).state == State.FINISH
+    assert list(_iter_published(tmp_path / "works")) == []
+
+
+def test_pipeline_repairs_final_after_publish_event_crash(tmp_path, monkeypatch):
+    """PUBLISH event後のfinal生成失敗は、同じrun commandで補完できる."""
+    import aleph.pipeline as pipeline
+
+    work = Work(tmp_path / "works", "w9208")
+    work.create({})
+    original_finalize = pipeline._finalize_publish
+
+    def fail_finalize(work, deps):
+        raise RuntimeError("stop after publish event")
+
+    monkeypatch.setattr(pipeline, "_finalize_publish", fail_finalize)
+    with pytest.raises(RuntimeError, match="stop after publish event"):
+        pipeline.run_work(work, _FullLoopDeps(), decided_by="publish-repair-test")
+    assert replay_checkpoint(work.work_id, work.decisions).state == State.PUBLISH
+    assert not (work.final / "meta.json").exists()
+
+    monkeypatch.setattr(pipeline, "_finalize_publish", original_finalize)
+    final = pipeline.run_work(work, _FullLoopDeps(), decided_by="publish-repair-test")
+
+    assert final == State.PUBLISH
+    assert (work.final / "meta.json").exists()
+    assert (work.final / "text.md").exists()
+
+
+def test_pipeline_repairs_incomplete_final_for_committed_publish(tmp_path):
+    """PUBLISH済みの壊れたfinal metadataは、再開時に補完する."""
+    from aleph.pipeline import run_work
+
+    work = Work(tmp_path / "works", "w9209")
+    work.create({})
+    assert run_work(work, _FullLoopDeps(), decided_by="publish-repair-test") == State.PUBLISH
+    (work.final / "meta.json").write_text("{", encoding="utf-8")
+
+    assert run_work(work, _FullLoopDeps(), decided_by="publish-repair-test") == State.PUBLISH
+
+    meta = json.loads((work.final / "meta.json").read_text(encoding="utf-8"))
+    assert meta["license"] == "CC0-1.0"

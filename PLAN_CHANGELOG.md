@@ -1,5 +1,22 @@
 # PLAN 変更履歴
 
+## 0.7.20-6 (2026-07-18) — Phase 1独立監査FAILへの契約修繕（再監査待ち）
+
+`51b7316`対象の独立監査は、既存239テストが緑でも正典契約に反する6件を検出しFAILと判定した。
+オーナーが全修繕計画を承認したため、PLANの意味を変更せず、0.7.20-5で採用済みのevent一次記録
+契約を実効化する修正を行った。詳細は
+`reports/PHASE1_TRANSITION_COMMIT_AUDIT_20260718.md`。
+
+1. pipelineとpublish CLIは処理・判定前にL0をstrict replayし、checkpointを回復する。
+   stale projectionから課金対象handlerを再実行しない。
+2. 空L0と既存checkpointが不一致ならfail closed。schema/event idの厳密なJSON整数型、必須payload、
+   L0所属、state/event type/`decision`表示整合性を検査する。
+3. 初回公開は`FINISH->PUBLISH|SHELVE|DISCARD`の通常commit、SHELVE後の再評価だけprojectionとする。
+4. PUBLISH event確定後にfinalを原子的に生成し、event済み・final欠落/破損は再実行で補完する。
+5. 公開出力はfinalだけでなく正典公開状態を要求する。modern履歴はstrict replayし、既存legacy
+   作品は最後のL0公開遷移で互換維持する。FINISH上のdisposition projectionは公開とみなさない。
+6. 受入テストを追加し、非local全体は**259 passed, 1 deselected**。独立再監査まではPASSとしない。
+
 ## 0.7.20-5 (2026-07-18) — Phase 1 TransitionCommit施工（独立監査待ち）
 
 オーナーが全面採用した`designs/next-designer-execution-plan.md` Phase 1にもとづき、

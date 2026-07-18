@@ -100,24 +100,45 @@ def _cmd_publish(root: Path, args) -> int:
     from aleph.core.transition_commit import (
         ReplayError,
         audit_history,
+        commit,
         project,
         reconcile,
         recover,
     )
-    from aleph.pipeline import RealDeps, _finalize_publish
+    from aleph.pipeline import RealDeps, _ensure_publish_artifacts
 
     config = load_config(root)
     work = _work_for_cli(root / "works", args.work, config)
     if not work.dir.exists():
         print(f"publish: work not found: {work.dir}", file=sys.stderr)
         return 1
+
     try:
+        cp = recover(work)
+    except ReplayError as exc:
+        if not str(exc).startswith("legacy stream has no reconciliation"):
+            print(f"publish: transition history is not replayable: {exc}", file=sys.stderr)
+            return 1
+        warnings = audit_history(work)
+        reconcile(
+            work,
+            command_id=f"{work.work_id}:reconcile:v1",
+            reason="公開再評価前にlegacy履歴から厳密再生区間を開始",
+            decided_by="cli-publish",
+            warnings=warnings,
+        )
         cp = Checkpoint.load(work.dir)
-    except FileNotFoundError:
-        print(f"publish: no checkpoint for {args.work}; run it to completion first", file=sys.stderr)
-        return 1
+
+    logger = CallLogger(work.calls, secrets=config.secrets.values())
+    budget = Budget(config, state_path=_budget_state_path(root))
+    router = Router(config, logger, budget)
+    deps = RealDeps(
+        work, router, config=config, index_dir=root / args.index, search_fn=lambda *a, **k: [],
+        poetics_dir=root / "poetics",
+    )
 
     if cp.state == State.PUBLISH:
+        _ensure_publish_artifacts(work, deps)
         print(f"publish: {args.work} is already published", file=sys.stderr)
         return 0
     if cp.state == State.DISCARD:
@@ -139,59 +160,47 @@ def _cmd_publish(root: Path, args) -> int:
         )
         return 1
 
-    try:
-        cp = recover(work)
-    except ReplayError as exc:
-        if not str(exc).startswith("legacy stream has no reconciliation"):
-            print(f"publish: transition history is not replayable: {exc}", file=sys.stderr)
-            return 1
-        warnings = audit_history(work)
-        reconcile(
-            work,
-            command_id=f"{work.work_id}:reconcile:v1",
-            reason="公開再評価前にlegacy履歴から厳密再生区間を開始",
-            decided_by="cli-publish",
-            warnings=warnings,
-        )
-        cp = Checkpoint.load(work.dir)
-
-    if cp.state == State.PUBLISH:
-        print(f"publish: {args.work} is already published", file=sys.stderr)
-        return 0
-
-    logger = CallLogger(work.calls, secrets=config.secrets.values())
-    budget = Budget(config, state_path=_budget_state_path(root))
-    router = Router(config, logger, budget)
-    deps = RealDeps(
-        work, router, config=config, index_dir=root / args.index, search_fn=lambda *a, **k: [],
-        poetics_dir=root / "poetics",
-    )
-    if cp.payload.get("publication_disposition") == "PUBLISH":
-        _finalize_publish(work, deps)
+    if (
+        cp.state == State.SHELVE
+        and cp.payload.get("publication_disposition") == "PUBLISH"
+    ):
+        _ensure_publish_artifacts(work, deps)
         print(f"publish: {args.work} -> PUBLISH (recovered)", file=sys.stderr)
         return 0
 
     audience = cp.payload.get("audience")
     publication = deps.decide_publication(work, audience)
     decision = str(publication.get("decision", "SHELVE")).upper()
+    if decision not in {"PUBLISH", "SHELVE", "DISCARD"}:
+        decision = "SHELVE"
     reason = str(publication.get("reason", ""))
     command_digest = hashlib.sha256(
         f"{work.work_id}\0{decision}\0{reason}".encode("utf-8")
     ).hexdigest()[:16]
-    result = project(
-        work,
-        command_id=f"{work.work_id}:publication-reassessment:{command_digest}",
-        expected_state=cp.state,
-        name="publication_reassessment",
-        reason=reason or "公開ゲート再評価",
-        decided_by="cli-publish",
-        payload_delta={
-            "publication_disposition": decision,
-            "publication_reassessment_reason": reason,
-        },
-    )
+    if cp.state == State.FINISH:
+        result = commit(
+            work,
+            command_id=f"{work.work_id}:publication-initial:{command_digest}",
+            expected_state=State.FINISH,
+            next_state=State(decision),
+            reason=reason or "公開ゲート初回判断",
+            decided_by="cli-publish",
+        )
+    else:
+        result = project(
+            work,
+            command_id=f"{work.work_id}:publication-reassessment:{command_digest}",
+            expected_state=State.SHELVE,
+            name="publication_reassessment",
+            reason=reason or "公開ゲート再評価",
+            decided_by="cli-publish",
+            payload_delta={
+                "publication_disposition": decision,
+                "publication_reassessment_reason": reason,
+            },
+        )
     if decision == "PUBLISH":
-        _finalize_publish(work, deps)
+        _ensure_publish_artifacts(work, deps)
     print(
         f"publish: {args.work} -> {decision} (lifecycle={result.checkpoint.state.value})",
         file=sys.stderr,

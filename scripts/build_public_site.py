@@ -16,6 +16,8 @@ import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from aleph.publish.status import is_published
+
 
 _ROOT = Path(__file__).resolve().parents[1]
 _REPO_URL = "https://github.com/Ryota2865/aleph.github.io"
@@ -1013,6 +1015,8 @@ def iter_published(root: Path) -> list[tuple[str, dict, str]]:
         if "ablation" in meta_path.relative_to(root / "works").parts:
             continue
         work_id = meta_path.parent.parent.name
+        if not is_published(meta_path.parent.parent):
+            continue
         text = _read_text(meta_path.parent / "text.md")
         if text is None:
             continue

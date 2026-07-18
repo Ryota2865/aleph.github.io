@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from aleph.publish.status import is_published
+
 
 def build_llms_txt(*, works_root: Path, out_dir: Path) -> Path:
     """out_dir/llms.txt を生成し、その Path を返す（PLAN §8）.
@@ -27,6 +29,8 @@ def build_llms_txt(*, works_root: Path, out_dir: Path) -> Path:
     lines = ["# ALEPH works", ""]
     for meta_path in sorted(Path(works_root).glob("*/final/meta.json")):
         work_id = meta_path.parent.parent.name
+        if not is_published(meta_path.parent.parent):
+            continue
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:

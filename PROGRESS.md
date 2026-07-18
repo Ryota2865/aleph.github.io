@@ -1,5 +1,25 @@
 # PROGRESS
 
+## 2026-07-18 — Phase 1独立監査FAIL・6所見修繕完了（再監査待ち）
+
+### 完了したこと
+
+- `51b7316`対象の独立監査は**FAIL**。公開event/final順序、stale checkpointでの課金重複、
+  空L0回復の巻戻し、FINISH publishのprojection誤用、CLIのcheckpoint先行判定、replay検証
+  不足の6件を受領した。
+- 全件を独立再現し、`reports/PHASE1_TRANSITION_COMMIT_AUDIT_20260718.md`へ所見と修繕を記録。
+- strict recoveryをpipeline/CLIの処理前へ移し、空L0不一致をfail closed化。event型・表示契約を
+  強化し、初回publishはlifecycle commit、SHELVE再評価だけprojectionとした。
+- PUBLISH event先行→final原子生成へ変更。event済み・final欠落/破損を再実行で補完する。
+- 3つの公開出力経路（簡易サイト、GitHub Pages、LLM索引）は正典公開状態も収載条件とし、
+  legacy公開作品の互換性を維持した。
+- 非local全体テスト: **259 passed, 1 deselected**。追跡済み`docs/`に差分なし。
+
+### 次の一手
+
+- 本修繕を施工者と異なる担当が再監査し、PASS/FAILを確定する。
+- PASS後にPhase 2の`ModelOutput`、`WorkSnapshot`、`RepositorySnapshot`へ進む。
+
 ## 2026-07-18 — Phase 1 TransitionCommit施工完了・独立監査待ち（Codex）
 
 ### 完了したこと

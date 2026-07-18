@@ -292,6 +292,26 @@ def test_public_site_ignores_w0008_ablation_dirs(tmp_path: Path) -> None:
     assert "aozora" not in "\n".join(path.name for path in (out_dir / "works").glob("*.html"))
 
 
+def test_public_site_excludes_final_without_publish_event(tmp_path: Path) -> None:
+    work = tmp_path / "works" / "wtest"
+    _write_text(work / "final" / "meta.json", '{"title":"uncommitted"}')
+    _write_text(work / "final" / "text.md", "uncommitted text")
+
+    assert iter_published(tmp_path) == []
+
+
+def test_public_site_keeps_legacy_publish_history_compatible(tmp_path: Path) -> None:
+    work = tmp_path / "works" / "wlegacy"
+    _write_jsonl(
+        work / "decisions.jsonl",
+        [{"layer": "L0", "decision": "FINISH->PUBLISH"}],
+    )
+    _write_text(work / "final" / "meta.json", '{"title":"legacy"}')
+    _write_text(work / "final" / "text.md", "legacy text")
+
+    assert [work_id for work_id, _meta, _text in iter_published(tmp_path)] == ["wlegacy"]
+
+
 def test_relative_href_validator_accepts_nested_pages(tmp_path: Path) -> None:
     (tmp_path / "nested").mkdir()
     (tmp_path / "index.html").write_text("<a href='nested/page.html'>page</a>", encoding="utf-8")

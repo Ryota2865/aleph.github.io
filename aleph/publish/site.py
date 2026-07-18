@@ -11,6 +11,8 @@ import html
 import json
 from pathlib import Path
 
+from aleph.publish.status import is_published
+
 
 def _iter_published(works_root: Path):
     """works_root 直下の final/meta.json + final/text.md を持つ作品を列挙する."""
@@ -19,6 +21,8 @@ def _iter_published(works_root: Path):
         if not text_path.exists():
             continue
         work_id = meta_path.parent.parent.name
+        if not is_published(meta_path.parent.parent):
+            continue
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:

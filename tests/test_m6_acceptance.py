@@ -163,8 +163,17 @@ def test_run_work_resumes_from_checkpoint(work):
 
 # ---------------------------------------------------------------- 公開層
 def make_published_work(tmp_path, work_id="w6100", title="規約"):
+    from aleph.core.transition_commit import initialize
+
     w = Work(tmp_path / "works", work_id)
     w.create({})
+    initialize(
+        w,
+        command_id=f"{work_id}:published-fixture",
+        state=State.PUBLISH,
+        reason="published fixture",
+        decided_by="test",
+    )
     w.final.mkdir(exist_ok=True)
     (w.final / "text.md").write_text(f"# {title}\n本文。", encoding="utf-8")
     (w.final / "meta.json").write_text(json.dumps({
@@ -190,6 +199,25 @@ def test_site_build_two_tier_with_credits(tmp_path):
     assert "制作記録" in page                        # 深層アーカイブへのリンク（二層構造）
 
 
+def test_site_excludes_final_without_publish_event(tmp_path):
+    """final生成が先行しても、正典eventなしでは公開作品にしない."""
+    from aleph.publish.site import build_site
+
+    work = Work(tmp_path / "works", "w6102")
+    work.create({})
+    (work.final / "text.md").write_text("# 未公開\n本文。", encoding="utf-8")
+    (work.final / "meta.json").write_text(
+        json.dumps({"title": "未公開"}, ensure_ascii=False), encoding="utf-8"
+    )
+
+    out = tmp_path / "docs"
+    build_site(works_root=tmp_path / "works", out_dir=out)
+
+    index = (out / "index.html").read_text(encoding="utf-8")
+    assert "未公開" not in index
+    assert not (out / "works" / "w6102.html").exists()
+
+
 def test_llms_txt_index(tmp_path):
     """LLM宛アーカイブ: llms.txt 形式の索引が生成される（PLAN §8）."""
     from aleph.publish.llm_archive import build_llms_txt
@@ -203,3 +231,15 @@ def test_llms_txt_index(tmp_path):
     assert text.startswith("# ")                     # llms.txt 形式（見出し+リスト）
     assert "w6100" in text and "w6101" in text
     assert "reader-x/2026" in text                   # 調律先読者モデル世代の記録（§15.5→§8）
+
+
+def test_llms_txt_excludes_final_without_publish_event(tmp_path):
+    from aleph.publish.llm_archive import build_llms_txt
+
+    work = Work(tmp_path / "works", "w6102")
+    work.create({})
+    (work.final / "meta.json").write_text('{"title":"uncommitted"}', encoding="utf-8")
+
+    path = build_llms_txt(works_root=tmp_path / "works", out_dir=tmp_path / "docs")
+
+    assert "w6102" not in path.read_text(encoding="utf-8")
