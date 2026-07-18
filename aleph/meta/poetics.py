@@ -81,17 +81,28 @@ def _production_record_summary(work) -> str:
     return "\n".join(summaries) if summaries else "制作記録ファイルなし"
 
 
-def reflect(poetics_dir: Path, work, author, adversary) -> dict:
-    """作品の制作記録から詩学改訂を検討し、敵対的反駁を通った場合だけ適用する（PLAN §7.4）."""
+def reflect(poetics_dir: Path, work, author, adversary, *, extra_inputs: dict[str, str] | None = None) -> dict:
+    """作品の制作記録から詩学改訂を検討し、敵対的反駁を通った場合だけ適用する（PLAN §7.4）.
+
+    extra_inputs: 改訂の検討に与える追加入力文書（名前→本文）。PLAN_CHANGELOG 0.7.19-2:
+    第0版→第1版の初回改訂に限り DECLARATION_2024.md を入力として与える（呼び出し側が
+    渡す。恒久注入ではない——渡された場合のみ author/adversary 双方のプロンプトに載る）。
+    """
     path = poetics_dir / "poetics.md"
     current = path.read_text(encoding="utf-8") if path.exists() else ""
     record_summary = _production_record_summary(work)
+
+    extra_block = ""
+    if extra_inputs:
+        sections = "\n\n".join(f"## {name}\n{text}" for name, text in extra_inputs.items())
+        extra_block = f"\n\n追加入力文書（改訂の検討にあたり読むこと）:\n{sections}"
 
     author_prompt = (
         "現行の詩学と作品の制作記録を読み、改訂案を出してください。"
         'JSON {"revised": "...", "diff_reason": "..."} のみで返答してください。\n\n'
         f"現行詩学:\n{current}\n\n"
         f"制作記録要約:\n{record_summary}"
+        f"{extra_block}"
     )
     parsed = _extract_json_object(str(author(author_prompt))) or {}
     revised = str(parsed.get("revised", current))
@@ -104,6 +115,7 @@ def reflect(poetics_dir: Path, work, author, adversary) -> dict:
         f"改訂案:\n{revised}\n\n"
         f"差分理由:\n{diff_reason}\n\n"
         f"制作記録要約:\n{record_summary}"
+        f"{extra_block}"
     )
     rebuttal = _extract_json_object(str(adversary(adversary_prompt))) or {}
     rebutted = bool(rebuttal.get("rebutted", False))

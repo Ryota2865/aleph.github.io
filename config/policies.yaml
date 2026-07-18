@@ -29,11 +29,13 @@ poetics:                      # 詩学の自己更新（PLAN §7.4）
   seed_from_human: false      # 第0版は潜在空間から生成（§14.3-10）。人間の種文を混入させない
   revision_requires_adversary: true
   fixation_monitor: true      # 改訂履歴の自己類似度監視。固着でL7が人間へ報告
-  first_revision_requires_human_ack: false   # 第1版への初回改訂は人間承認待ち
+  first_revision_requires_human_ack: true    # 第1版への初回改訂の人間承認ゲート
                               # （PLAN_CHANGELOG 0.7.18-1、Fable5審査 問7-1: reflect()の
                               # 出力はself_definitionと同じ設置力を持つ「設計変更」であり、
                               # 承認とは区別すべき、という指摘への対応。first_publish_ackと
                               # 同型のワンタイムゲート。true化した後は以後の改訂を妨げない）
+                              # **オーナーack 2026-07-18**:「宣言入力リフレクション(0.7.19-2)と
+                              # 初回ack(0.7.19-13)は実施許可します」により true 化。
   revision_cadence_works: 3   # 詩学リフレクションは毎作ではなくN作ごとに検討する
                               # （問7-3: 導く腕=毎作/疑う腕=N作ごとの非対称な時間定数）
 

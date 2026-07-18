@@ -455,7 +455,7 @@ class RealDeps:
             json.dumps({"works_since_reflection": count}, ensure_ascii=False), encoding="utf-8",
         )
 
-    def reflect_poetics(self, work) -> dict:
+    def reflect_poetics(self, work, *, ignore_cadence: bool = False) -> dict:
         """終端後、詩学の自己改訂を検討するかどうかを判定する（PLAN §7.4）.
 
         PLAN_CHANGELOG 0.7.18-1（Fable5審査 問7）が指摘した非対称性を実装する:
@@ -473,7 +473,10 @@ class RealDeps:
         cadence = max(1, int(policies.get("revision_cadence_works", 1)))
         count = self._read_cadence_count() + 1
 
-        if count < cadence:
+        # ignore_cadence: w0008 完成時のオーナー明示引き継ぎ（0.7.19-2/-13）のように、
+        # 周期カウントが「ackゲート閉鎖時の見送り」で消費済みの場合の一回性の実行口。
+        # 呼び出し側（scripts/reflect_poetics_v1.py）が理由を decisions.jsonl に記録する。
+        if not ignore_cadence and count < cadence:
             self._write_cadence_count(count)
             return {
                 "applied": False,
@@ -491,8 +494,25 @@ class RealDeps:
                 ),
             }
 
-        result = reflect(self.poetics_dir, work, self._author, self._reader)
+        # 0.7.19-2: 第0版→第1版の初回改訂に限り、2024年の宣言を入力文書として与える
+        # （恒久注入ではない。第1版以降は version_before > 0 となり自然に一度きりになる）。
+        extra_inputs = None
+        if version_before == 0:
+            declaration = self.poetics_dir.parent / "DECLARATION_2024.md"
+            if declaration.exists():
+                extra_inputs = {
+                    "2024年の宣言（DECLARATION_2024.md、PLAN_CHANGELOG 0.7.19-2 の登録入力）":
+                        declaration.read_text(encoding="utf-8"),
+                }
+
+        result = reflect(self.poetics_dir, work, self._author, self._reader, extra_inputs=extra_inputs)
         self._write_cadence_count(0)
+        if extra_inputs:
+            result["extra_inputs"] = sorted(extra_inputs)
+            result["diff_reason"] = (
+                str(result.get("diff_reason", ""))
+                + "（初回改訂につき 2024年の宣言を入力に含めた: 0.7.19-2）"
+            )
         return result
 
     # -- 役割呼び出しヘルパ（work_id で作品別予算を効かせる） -----------------
