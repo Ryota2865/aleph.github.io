@@ -17,8 +17,8 @@ These rules govern the quality of judgment, not the direction of the judgment.
 
 ## WSL execution environment
 
-- Run repository commands inside WSL as `ryota_tanaka`; the canonical checkout is
-  `/home/ryota_tanaka/llm_literature`. Do not mix Windows Git state with WSL Git state.
+- Run repository commands inside WSL, using the current WSL user and this repository's
+  checkout directory. Do not mix Windows Git state with WSL Git state.
 - Keep GitHub CLI state in WSL (`~/.config/gh`). Use `gh auth git-credential`; do not create
   `.git-credentials` or print tokens in diagnostics.
 - Run `bash scripts/doctor.sh` before environment-sensitive work. Add `--network` only when

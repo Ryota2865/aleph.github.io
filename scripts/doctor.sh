@@ -35,17 +35,11 @@ else
   warn "runtime: WSL was not detected"
 fi
 
-if [[ "$(id -un)" == "ryota_tanaka" ]]; then
-  pass "user: ryota_tanaka"
-else
-  warn "user: $(id -un) (expected ryota_tanaka)"
-fi
+pass "user: $(id -un)"
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
-if [[ "$repo_root" == "/home/ryota_tanaka/llm_literature" ]]; then
+if [[ -n "$repo_root" ]]; then
   pass "repository: $repo_root"
-elif [[ -n "$repo_root" ]]; then
-  warn "repository: $repo_root (canonical path differs)"
 else
   fail "repository: not inside a git work tree"
 fi
@@ -89,9 +83,9 @@ if [[ -n "$repo_root" ]]; then
   fi
 fi
 
-llama_bin=/home/ryota_tanaka/llama.cpp/build-cuda129/bin/llama-server
-gemma_model=/home/ryota_tanaka/models/gguf/gemma4/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
-qwen_model=/home/ryota_tanaka/models/gguf/qwen36/Qwen3.6-27B-Q4_K_M.gguf
+llama_bin=${ALEPH_LLAMA_BIN:-"$HOME/llama.cpp/build-cuda129/bin/llama-server"}
+gemma_model=${ALEPH_GEMMA_MODEL:-"$HOME/models/gguf/gemma4/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf"}
+qwen_model=${ALEPH_QWEN_MODEL:-"$HOME/models/gguf/qwen36/Qwen3.6-27B-Q4_K_M.gguf"}
 
 [[ -x "$llama_bin" ]] && pass "llama-server: $llama_bin" || fail "llama-server: missing"
 [[ -f "$gemma_model" ]] && pass "Hermes gemma4 model: present" || fail "Hermes gemma4 model: missing"
