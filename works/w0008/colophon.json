@@ -1,0 +1,20 @@
+{
+  "poetics_version": 0,
+  "author_models": [
+    "claude-fable-5"
+  ],
+  "scout_models": [
+    "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL"
+  ],
+  "jury_models": [
+    "claude-opus-4-8",
+    "gpt-5.5",
+    "Qwen3.6-27B-Q4_K_M"
+  ],
+  "reader_models": [],
+  "corpus_id": "aozora",
+  "atlas_version": null,
+  "canonical": true,
+  "generated_by": "scripts/build_work_colophon.py",
+  "generated_at": "2026-07-18T04:55:36.043343+00:00"
+}

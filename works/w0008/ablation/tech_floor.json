@@ -1,0 +1,14 @@
+{
+  "aozora": {
+    "pass": true,
+    "issues": []
+  },
+  "none": {
+    "pass": true,
+    "issues": []
+  },
+  "secondary": {
+    "pass": true,
+    "issues": []
+  }
+}

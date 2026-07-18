@@ -1,0 +1,33 @@
+{
+  "rows": [
+    {
+      "arm": "aozora",
+      "scores": [
+        9.0,
+        8.8,
+        9.5
+      ],
+      "mean_score": 9.1
+    },
+    {
+      "arm": "none",
+      "scores": [
+        8.5,
+        8.0,
+        9.5
+      ],
+      "mean_score": 8.666666666666666
+    },
+    {
+      "arm": "secondary",
+      "scores": [
+        8.5,
+        8.0,
+        1.0
+      ],
+      "mean_score": 5.833333333333333
+    }
+  ],
+  "jury_argmax": "aozora",
+  "blind_choice_matched_jury_argmax": false
+}

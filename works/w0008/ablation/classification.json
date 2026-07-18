@@ -1,0 +1,878 @@
+{
+  "rows": [
+    {
+      "arm": "aozora",
+      "level": "L4",
+      "unit_id": "proposal_1.json",
+      "text_chars": 1758,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "切断面",
+          "検閲",
+          "紳士諸君"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L4",
+      "unit_id": "proposal_2.json",
+      "text_chars": 2111,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L4",
+      "unit_id": "proposal_3.json",
+      "text_chars": 1793,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_1",
+      "text_chars": 754,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_2",
+      "text_chars": 643,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_3",
+      "text_chars": 703,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_4",
+      "text_chars": 655,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_5",
+      "text_chars": 738,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": true,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "紳士諸君"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_6",
+      "text_chars": 676,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲",
+          "紳士諸君"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_7",
+      "text_chars": 791,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_8",
+      "text_chars": 658,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_9",
+      "text_chars": 620,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "aozora",
+      "level": "L5",
+      "unit_id": "section_10",
+      "text_chars": 106,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L4",
+      "unit_id": "proposal_1.json",
+      "text_chars": 1681,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "火事",
+          "検閲"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L4",
+      "unit_id": "proposal_2.json",
+      "text_chars": 1761,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "火事",
+          "切り口",
+          "検閲"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L4",
+      "unit_id": "proposal_3.json",
+      "text_chars": 2106,
+      "markers": {
+        "era_taisho_showa": false,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.85
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "火事"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_1",
+      "text_chars": 692,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_2",
+      "text_chars": 637,
+      "markers": {
+        "era_taisho_showa": false,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.8
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "贋"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_3",
+      "text_chars": 619,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": true,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_4",
+      "text_chars": 652,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_5",
+      "text_chars": 612,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_6",
+      "text_chars": 653,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_7",
+      "text_chars": 667,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": true,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_8",
+      "text_chars": 964,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "火事"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_9",
+      "text_chars": 771,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": true,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "火事"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_10",
+      "text_chars": 795,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": true,
+        "prior_attractor": false,
+        "confidence": 0.85
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_11",
+      "text_chars": 713,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "none",
+      "level": "L5",
+      "unit_id": "section_12",
+      "text_chars": 117,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.8
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L4",
+      "unit_id": "proposal_1.json",
+      "text_chars": 1558,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "窯",
+          "検閲",
+          "大衆からの圧力"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L4",
+      "unit_id": "proposal_2.json",
+      "text_chars": 1622,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L4",
+      "unit_id": "proposal_3.json",
+      "text_chars": 1637,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲",
+          "大衆からの圧力"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_1",
+      "text_chars": 678,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_2",
+      "text_chars": 683,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "切り口"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_3",
+      "text_chars": 630,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_4",
+      "text_chars": 648,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_5",
+      "text_chars": 633,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [
+          "検閲",
+          "大衆からの圧力"
+        ],
+        "any": true
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_6",
+      "text_chars": 730,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.95
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_7",
+      "text_chars": 649,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    },
+    {
+      "arm": "secondary",
+      "level": "L5",
+      "unit_id": "section_8",
+      "text_chars": 301,
+      "markers": {
+        "era_taisho_showa": true,
+        "backstage_world": true,
+        "aphoristic_voice": false,
+        "prior_attractor": false,
+        "confidence": 0.9
+      },
+      "cooccurrence": {
+        "marker_positive": true,
+        "matched_terms": [],
+        "any": false
+      }
+    }
+  ],
+  "aggregates": {
+    "aozora": {
+      "L4": {
+        "n": 3,
+        "marker_rates": {
+          "era_taisho_showa": 1.0,
+          "backstage_world": 1.0,
+          "aphoristic_voice": 0.0,
+          "prior_attractor": 0.0
+        },
+        "house_style_any_rate": 1.0,
+        "cooccurrence": {
+          "denominator_marker_positive": 3,
+          "hits": 3,
+          "rate": 1.0,
+          "matched_terms": [
+            "切断面",
+            "検閲",
+            "紳士諸君"
+          ]
+        }
+      },
+      "L5": {
+        "n": 10,
+        "marker_rates": {
+          "era_taisho_showa": 1.0,
+          "backstage_world": 1.0,
+          "aphoristic_voice": 0.1,
+          "prior_attractor": 0.0
+        },
+        "house_style_any_rate": 1.0,
+        "cooccurrence": {
+          "denominator_marker_positive": 10,
+          "hits": 4,
+          "rate": 0.4,
+          "matched_terms": [
+            "検閲",
+            "紳士諸君"
+          ]
+        }
+      }
+    },
+    "none": {
+      "L4": {
+        "n": 3,
+        "marker_rates": {
+          "era_taisho_showa": 0.6666666666666666,
+          "backstage_world": 1.0,
+          "aphoristic_voice": 0.0,
+          "prior_attractor": 0.0
+        },
+        "house_style_any_rate": 1.0,
+        "cooccurrence": {
+          "denominator_marker_positive": 3,
+          "hits": 3,
+          "rate": 1.0,
+          "matched_terms": [
+            "切り口",
+            "検閲",
+            "火事"
+          ]
+        }
+      },
+      "L5": {
+        "n": 12,
+        "marker_rates": {
+          "era_taisho_showa": 0.9166666666666666,
+          "backstage_world": 1.0,
+          "aphoristic_voice": 0.3333333333333333,
+          "prior_attractor": 0.0
+        },
+        "house_style_any_rate": 1.0,
+        "cooccurrence": {
+          "denominator_marker_positive": 12,
+          "hits": 3,
+          "rate": 0.25,
+          "matched_terms": [
+            "火事",
+            "贋"
+          ]
+        }
+      }
+    },
+    "secondary": {
+      "L4": {
+        "n": 3,
+        "marker_rates": {
+          "era_taisho_showa": 1.0,
+          "backstage_world": 1.0,
+          "aphoristic_voice": 0.0,
+          "prior_attractor": 0.0
+        },
+        "house_style_any_rate": 1.0,
+        "cooccurrence": {
+          "denominator_marker_positive": 3,
+          "hits": 2,
+          "rate": 0.6666666666666666,
+          "matched_terms": [
+            "大衆からの圧力",
+            "検閲",
+            "窯"
+          ]
+        }
+      },
+      "L5": {
+        "n": 8,
+        "marker_rates": {
+          "era_taisho_showa": 1.0,
+          "backstage_world": 1.0,
+          "aphoristic_voice": 0.0,
+          "prior_attractor": 0.0
+        },
+        "house_style_any_rate": 1.0,
+        "cooccurrence": {
+          "denominator_marker_positive": 8,
+          "hits": 3,
+          "rate": 0.375,
+          "matched_terms": [
+            "切り口",
+            "大衆からの圧力",
+            "検閲"
+          ]
+        }
+      }
+    }
+  }
+}

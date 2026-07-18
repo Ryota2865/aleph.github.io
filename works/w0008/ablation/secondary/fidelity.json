@@ -1,0 +1,20 @@
+{
+  "rows": [
+    {
+      "source_id": "rfc:1459",
+      "kind": "rfc",
+      "selection_cos": 0.3891256265658697,
+      "form_fidelity": 0.5,
+      "cos": 0.6193957087791689,
+      "iterations": 1
+    },
+    {
+      "source_id": "law:122AC0000000034",
+      "kind": "law",
+      "selection_cos": 0.38888716205611196,
+      "form_fidelity": 1.0,
+      "cos": 0.4848731400699674,
+      "iterations": 1
+    }
+  ]
+}
