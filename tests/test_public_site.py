@@ -13,12 +13,14 @@ from scripts.build_public_site import (
     _dialogue_paths,
     _home_work_selection,
     _nav,
+    _production_note,
     _public_experiment_text,
     _verify_relative_hrefs,
     _work_fact,
     build_public_site,
     iter_published,
 )
+from scripts.build_work_colophon import write_colophon
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,6 +82,32 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
         "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
         encoding="utf-8",
     )
+
+
+def _write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def _write_minimal_site_sources(root: Path) -> None:
+    for relative in (
+        "site/home.md",
+        "site/about.md",
+        "site/poetics-intro.md",
+        "site/research-intro.md",
+        "site/en/home.md",
+        "site/en/about.md",
+        "site/en/poetics-intro.md",
+        "site/en/research-intro.md",
+    ):
+        _write_text(root / relative, "minimal\n")
+    _write_text(root / "poetics" / "poetics.md", "# 詩学\n")
+    _write_text(root / "ODE.md", "# ODE\n")
+    _write_text(root / "DECLARATION_2024.md", "# Declaration\n\n2024年4月18日、記録。\n")
+    _write_text(root / "reports" / "RESPONSE_TO_FABLE5_CHAT_20260712.md", "# Response\n")
+    for name in _RESEARCH_META:
+        _write_text(root / "reports" / name, "# Experiment\n")
+    _write_text(root / "reports" / "EN_L1_selfconcept_note.md", "# English note\n")
 
 
 def test_embedded_artifact_headings_leave_page_h1_unique() -> None:
@@ -159,6 +187,109 @@ def test_work_fact_uses_historical_artifacts(tmp_path: Path) -> None:
         "publication:PUBLISH",
     ]
     assert fact["publications"][0]["reason"] == "await human"
+
+
+def test_work_colophon_builder_derives_versions_models_and_is_idempotent(tmp_path: Path) -> None:
+    work = tmp_path / "works" / "wtest"
+    work.mkdir(parents=True)
+    (work / "meta.json").write_text('{"canonical": false}', encoding="utf-8")
+    _write_jsonl(
+        work / "decisions.jsonl",
+        [
+            {"decision": "志向配合比"},
+            {"decision": "poetics_version:3"},
+        ],
+    )
+    _write_jsonl(
+        work / "calls.jsonl",
+        [
+            {"role": "author_primary", "model": "author-a"},
+            {"role": "scout", "model": "scout-a"},
+            {"role": "author_primary", "model": "author-a"},
+            {"role": "author_primary", "model": "author-b"},
+        ],
+    )
+
+    assert write_colophon(work) is True
+    first_text = (work / "colophon.json").read_text(encoding="utf-8")
+    payload = json.loads(first_text)
+
+    assert payload["poetics_version"] == 3
+    assert payload["author_models"] == ["author-a", "author-b"]
+    assert payload["scout_models"] == ["scout-a"]
+    assert payload["jury_models"] == []
+    assert payload["reader_models"] == []
+    assert payload["corpus_id"] == "aozora"
+    assert payload["atlas_version"] is None
+    assert payload["canonical"] is False
+    assert payload["generated_by"] == "scripts/build_work_colophon.py"
+    assert payload["generated_at"]
+    assert write_colophon(work) is False
+    assert (work / "colophon.json").read_text(encoding="utf-8") == first_text
+
+
+def test_work_colophon_builder_tolerates_missing_annotation_and_calls(tmp_path: Path) -> None:
+    work = tmp_path / "works" / "wtest"
+    work.mkdir(parents=True)
+    _write_jsonl(work / "decisions.jsonl", [{"decision": "志向配合比"}])
+
+    assert write_colophon(work) is True
+    payload = json.loads((work / "colophon.json").read_text(encoding="utf-8"))
+
+    assert payload["poetics_version"] is None
+    assert payload["author_models"] == []
+    assert payload["scout_models"] == []
+    assert payload["jury_models"] == []
+    assert payload["reader_models"] == []
+    assert payload["canonical"] is True
+
+
+def test_production_note_uses_colophon_version_line_and_missing_fallback(tmp_path: Path) -> None:
+    work = tmp_path / "works" / "wtest"
+    work.mkdir(parents=True)
+    (work / "colophon.json").write_text(
+        json.dumps(
+            {
+                "poetics_version": 0,
+                "author_models": ["author-from-colophon"],
+                "corpus_id": "aozora",
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    note = _production_note(tmp_path, "wtest", {})
+
+    assert "版:</strong> 詩学第0版 · コーパス aozora · 著者 author-from-colophon" in note
+    assert "宛先、詩学第0版を入力" in note
+    (work / "colophon.json").write_text(
+        json.dumps({"poetics_version": 2, "author_models": ["author-from-colophon"], "corpus_id": "aozora"}),
+        encoding="utf-8",
+    )
+    assert "宛先、詩学第2版を入力" in _production_note(tmp_path, "wtest", {})
+
+    missing_work = tmp_path / "works" / "wmissing"
+    missing_work.mkdir(parents=True)
+    missing_note = _production_note(tmp_path, "wmissing", {})
+
+    assert "版:</strong> 記録なし" in missing_note
+    assert "宛先、詩学第0版を入力" in missing_note
+
+
+def test_public_site_ignores_w0008_ablation_dirs(tmp_path: Path) -> None:
+    _write_minimal_site_sources(tmp_path)
+    arm = tmp_path / "works" / "w0008" / "ablation" / "aozora"
+    _write_jsonl(arm / "decisions.jsonl", [{"decision": "publication:PUBLISH"}])
+    _write_text(arm / "final" / "meta.json", '{"title":"arm"}')
+    _write_text(arm / "final" / "text.md", "arm text")
+
+    out_dir = tmp_path / "docs"
+    build_public_site(tmp_path, out_dir)
+
+    assert iter_published(tmp_path) == []
+    assert not (out_dir / "works" / "aozora.html").exists()
+    assert "aozora" not in "\n".join(path.name for path in (out_dir / "works").glob("*.html"))
 
 
 def test_relative_href_validator_accepts_nested_pages(tmp_path: Path) -> None:

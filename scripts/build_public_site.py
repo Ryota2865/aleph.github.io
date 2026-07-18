@@ -744,6 +744,11 @@ def _work_decisions(root: Path, work_id: str) -> list[dict]:
     return _read_jsonl(root / "works" / work_id / "decisions.jsonl")
 
 
+def _work_colophon(root: Path, work_id: str) -> dict | None:
+    colophon = _read_json(root / "works" / work_id / "colophon.json")
+    return colophon if isinstance(colophon, dict) else None
+
+
 def _first_author_model(root: Path, work_id: str) -> str:
     models = _models_for_role(root, work_id, "author_primary")
     return models[0] if models else "記録なし"
@@ -781,6 +786,7 @@ def _work_fact(root: Path, work_id: str) -> dict:
         "publications": publications,
         "finish": finish,
         "criteria_model": _first_author_model(root, work_id),
+        "colophon": _work_colophon(root, work_id),
     }
 
 
@@ -799,6 +805,35 @@ def _trajectory_text(fact: dict) -> str:
         disagreement = row.get("disagreement")
         items.append(f"v{version}: 平均 {_esc(f'{float(score):.2f}')} / 不一致 {_esc(f'{float(disagreement):.2f}')}")
     return " → ".join(items) if items else "記録なし"
+
+
+def _poetics_version_label(fact: dict) -> str:
+    colophon = fact.get("colophon")
+    version = colophon.get("poetics_version") if isinstance(colophon, dict) else None
+    if isinstance(version, int):
+        return f"詩学第{version}版"
+    return "詩学第0版"
+
+
+def _model_list_text(value: object) -> str:
+    if not isinstance(value, list):
+        return str(value) if value else "記録なし"
+    models = [str(item) for item in value if item]
+    return ", ".join(models) if models else "記録なし"
+
+
+def _version_line(fact: dict) -> str:
+    colophon = fact.get("colophon")
+    if not isinstance(colophon, dict):
+        return "<p><strong>版:</strong> 記録なし</p>"
+    version = colophon.get("poetics_version")
+    poetics = f"詩学第{version}版" if isinstance(version, int) else "詩学 記録なし"
+    corpus = colophon.get("corpus_id") or "記録なし"
+    author_models = _model_list_text(colophon.get("author_models"))
+    return (
+        f"<p><strong>版:</strong> {_esc(poetics)} · コーパス {_esc(corpus)} · "
+        f"著者 {_esc(author_models)}</p>"
+    )
 
 
 def _work_card(root: Path, work_id: str, meta: dict) -> str:
@@ -843,6 +878,7 @@ def _production_note(root: Path, work_id: str, meta: dict) -> str:
     best = fact["best_version"]
     best_text = f"v{best}" if isinstance(best, int) else "記録なし"
     final_author = _credited_author(meta)
+    poetics = _poetics_version_label(fact)
     criteria_handoff = (
         f" 基準書生成後の構成・本文と最終著者クレジットは {_esc(final_author)} が担当した。"
         if final_author != "記録なし" and final_author != fact["criteria_model"]
@@ -857,7 +893,8 @@ def _production_note(root: Path, work_id: str, meta: dict) -> str:
             f"<p><strong>採用ニッチ:</strong> {_esc(niche.get('description') or '記録なし')} "
             f"<a href='../process/{_esc(work_id)}-niche.html'>探索レポート</a></p>",
             "<p class='meta'>ニッチは発見のヒューリスティックであり、作品価値や世界初を証明するスコアではない。</p>",
-            f"<p><strong>基準書:</strong> 基準書生成時の著者役 {_esc(fact['criteria_model'])} が、採用ニッチ、宛先、詩学第0版を入力として本文執筆前に生成。構成選抜と陪審査読の共通基準に用いた。{criteria_handoff}</p>",
+            f"<p><strong>基準書:</strong> 基準書生成時の著者役 {_esc(fact['criteria_model'])} が、採用ニッチ、宛先、{_esc(poetics)}を入力として本文執筆前に生成。構成選抜と陪審査読の共通基準に用いた。{criteria_handoff}</p>",
+            _version_line(fact),
             f"<p><strong>査読軌跡:</strong> {_trajectory_text(fact)}。採用版: {_esc(best_text)}</p>",
             f"<p><strong>擱筆:</strong> {_esc(fact['finish'].get('reason') or '記録なし')}</p>",
             f"<p><strong>公開判断:</strong> {_esc(publication_text)}</p>",
@@ -946,6 +983,8 @@ def iter_published(root: Path) -> list[tuple[str, dict, str]]:
     """works/*/final/{meta.json,text.md} を持つ公開作品を (work_id, meta, text) で列挙する."""
     out: list[tuple[str, dict, str]] = []
     for meta_path in sorted((root / "works").glob("*/final/meta.json")):
+        if "ablation" in meta_path.relative_to(root / "works").parts:
+            continue
         work_id = meta_path.parent.parent.name
         text = _read_text(meta_path.parent / "text.md")
         if text is None:
