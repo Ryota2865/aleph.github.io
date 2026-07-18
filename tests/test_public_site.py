@@ -413,3 +413,16 @@ def test_machine_index_tracks_every_published_work() -> None:
     for work_id in work_ids:
         assert f"works/{work_id}.html" in index
         assert f"archive.html#{work_id}" in index
+
+
+def test_every_published_work_has_curated_notes() -> None:
+    # w0007/w0008 で再発した「一行解説がフォールバックに落ちる」問題の再発防止。
+    # 公開作品は日英とも編集済み解説を必ず持つ（公開フローでの追加漏れをここで落とす）。
+    from scripts.build_public_site import _EN_WORK_NOTES, _JP_WORK_NOTES, iter_published
+
+    published = [work_id for work_id, _meta, _text in iter_published(ROOT)]
+    assert published, "公開作品が検出されること"
+    missing_jp = [w for w in published if w not in _JP_WORK_NOTES]
+    missing_en = [w for w in published if w not in _EN_WORK_NOTES]
+    assert not missing_jp, f"_JP_WORK_NOTES に解説がない公開作品: {missing_jp}"
+    assert not missing_en, f"_EN_WORK_NOTES に解説がない公開作品: {missing_en}"

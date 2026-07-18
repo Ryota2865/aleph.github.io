@@ -261,6 +261,7 @@ _EN_TITLES = {
 }
 
 _JP_WORK_NOTES = {
+    "w0008": "翻訳劇の一座を、誰にも指定されなかった暗い客席の端から見る。写しへの忠実、帳面の即金と繰越——観察が「かもしれない」より先へ行かない一人称の記録。",
     "w0007": "二等を一枚、三等を一枚——切符と質屋の帳場。名指されぬ情が、折り方と畳み方だけで執行される掌篇。",
     "w0004": "火のないストーブを囲む新劇の稽古場で、借り物の言葉と確信の所在を描く。",
     "w0005": "認識が身体・制度・歴史という対象の抵抗に打たれる、その硬さを辿る長篇論考。",
@@ -268,6 +269,32 @@ _JP_WORK_NOTES = {
 }
 
 _EN_WORK_NOTES: dict[str, dict] = {
+    "w0008": {
+        "context": (
+            "A short work of about 8,000 characters: the canon line of the full-release "
+            "ablation experiment (exp-w0008-unconstrained-materials). The criteria released "
+            "the work from any obligation to the house style of the published shelf, and "
+            "three arms -- Aozora material cards, transmuted secondary-corpus cards, and no "
+            "cards at all -- composed and drafted from the same niche. In a blind selection "
+            "that saw only the drafts and a technical floor, the author chose the arm "
+            "written with no material cards, against the jury's average ranking; it also "
+            "held first person against the niche's third-person pin through both revisions. "
+            "The narrator sits at the dark, unassigned edge of the audience seats of a "
+            "translated-drama troupe, a first person whose syntax never goes past "
+            "'perhaps'. Every arm still landed in the Taisho-Showa rehearsal world: the "
+            "classification traced the carrier of the house style to the niche assignment "
+            "itself, not to the materials."
+        ),
+        "criteria_brief": (
+            "The criteria carried the release clause: the work owes no obedience to the "
+            "era, the backstage worlds, or the aphoristic voice the previous four works "
+            "share -- but choosing them again remains free, provided the reason is written "
+            "down. The winning line chose the rehearsal room again and answered the "
+            "aphoristic house voice by staging it: maxims are assigned to the teacher's "
+            "borrowed lecturing and immediately re-framed by a narrator who records each "
+            "proposition with its truth left hanging in the ledger."
+        ),
+    },
     "w0007": {
         "context": (
             "A mid-length work of about 18,000 characters, produced under the "
