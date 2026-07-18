@@ -56,15 +56,23 @@ def test_router_blocks_call_that_would_exceed_harness_budget(cfg, tmp_path):
 
 def test_checkpoint_step_is_monotonic_across_resume(tmp_path):
     """監査 finding 3: 再開後に新しいLoopを作るとstepが1に巻き戻っていた."""
+    from aleph.core.transition_commit import initialize
+
     work = Work(tmp_path, "w0004")
     work.create({})
-    Checkpoint(work_id="w0004", state=State.DRAFT, step=7, payload={}).save(work.dir)
+    initialize(
+        work,
+        command_id="test-handoff",
+        state=State.DRAFT,
+        reason="test fixture",
+        decided_by="test",
+    )
 
     loop = Loop(work, router=None, budget=None, policies=None)
     loop.transition(State.CRITIQUE, reason="resume-test", decided_by="test")
 
     resumed = Checkpoint.load(work.dir)
-    assert resumed.step == 8
+    assert resumed.step == 2
 
 
 def test_budget_work_scoped_spend_survives_persistence(cfg, tmp_path):

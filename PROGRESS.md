@@ -1,5 +1,31 @@
 # PROGRESS
 
+## 2026-07-18 — Phase 1 TransitionCommit施工完了・独立監査待ち（Codex）
+
+### 完了したこと
+
+- `designs/transition-commit.md`で一次記録interface、故障モデル、legacy、公開再評価を設計。
+- `aleph/core/transition_commit.py`へevent先行commit、strict replay、冪等command、recover、
+  initialize、projection、reconciliationを実装。
+- Loop、pipeline、`aleph publish`、w0008 canonical handoffの直接checkpoint操作を置換。
+- `scripts/audit_transition_history.py`と
+  `reports/TRANSITION_HISTORY_AUDIT_20260718.md`で現存8作品をread-only監査。
+- 非local全体テスト: **239 passed, 1 deselected**。
+
+### 判明したこと
+
+- w0001、w0004、w0007、w0008にはsource state不連続があり、全8作品でlegacy payloadだけから
+  現checkpointを完全再構築できない。既存行は変更せず、必要時だけreconciliationを追記する。
+- event列が複数段進んだ後にcheckpointが完全欠落する故障では、adapterが要求された
+  `next_state`ではなく回復後checkpoint stateを採る必要があった。回帰テストで固定済み。
+- 公開再評価はlifecycle巻戻しを必要とせず、SHELVE＋publication disposition=PUBLISHとして
+  表現できる。Phase 2の`WorkSnapshot`はこの二軸を読む必要がある。
+
+### 次の一手
+
+- 本施工を別担当がinterface越しに独立監査し、正式PASS artifactを作る。
+- PASS後、Phase 2の`ModelOutput`、`WorkSnapshot`、`RepositorySnapshot`へ進む。
+
 ## 2026-07-08 — M0 施工完了（Claude Code / Claude Sonnet 5）
 
 ### 完了したこと

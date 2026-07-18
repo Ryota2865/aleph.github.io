@@ -16,10 +16,22 @@ from pathlib import Path
 import pytest
 
 from aleph.core.artifacts import Work
-from aleph.core.loop import Checkpoint, State
+from aleph.core.loop import State
+from aleph.core.transition_commit import initialize
 from aleph.pipeline import _classify_termination, run_work
 
 pytestmark = pytest.mark.m6
+
+
+def _initialize_at_critique(work: Work, payload: dict) -> None:
+    initialize(
+        work,
+        command_id="fixture:critique",
+        state=State.CRITIQUE,
+        reason="termination hook fixture",
+        decided_by="test",
+        payload=payload,
+    )
 
 
 # ---------------------------------------------------------------- 分類ロジック
@@ -61,8 +73,7 @@ def test_run_work_without_hook_methods_still_shelves(tmp_path):
     """annotate_failure/reflect_poetics未対応のdepsでも例外なく終端する（後方互換）."""
     work = Work(tmp_path / "works", "w9101")
     work.create({})
-    Checkpoint(work_id="w9101", state=State.CRITIQUE, step=6,
-               payload={"audience": "自分 1.0"}).save(work.dir)
+    _initialize_at_critique(work, {"audience": "自分 1.0"})
 
     final = run_work(work, _MinimalDeps(), decided_by="hook-test")
     assert final == State.SHELVE
@@ -98,8 +109,10 @@ def test_aesthetic_failure_is_recorded_and_annotated(tmp_path):
     """品質床未達によるSHELVEはaesthetic_failureに分類され、否定的地図へ渡される."""
     work = Work(tmp_path / "works", "w9102")
     work.create({})
-    Checkpoint(work_id="w9102", state=State.CRITIQUE, step=6,
-               payload={"audience": "自分 1.0", "niche": {"description": "空虚な断片"}}).save(work.dir)
+    _initialize_at_critique(
+        work,
+        {"audience": "自分 1.0", "niche": {"description": "空虚な断片"}},
+    )
     deps = _HookedDeps(stop_reason="品質の床を通過していないため、公開せず棚に戻す。")
 
     final = run_work(work, deps, decided_by="hook-test")
@@ -117,8 +130,10 @@ def test_resource_stop_is_recorded_but_not_annotated(tmp_path):
     （sol提案: 探索座標を罰しない）."""
     work = Work(tmp_path / "works", "w9103")
     work.create({})
-    Checkpoint(work_id="w9103", state=State.CRITIQUE, step=6,
-               payload={"audience": "自分 1.0", "niche": {"description": "有望な空隙"}}).save(work.dir)
+    _initialize_at_critique(
+        work,
+        {"audience": "自分 1.0", "niche": {"description": "有望な空隙"}},
+    )
     deps = _HookedDeps(stop_reason="予算・時間の残量が尽きたため強制的に擱筆する。", stop_path="budget")
 
     final = run_work(work, deps, decided_by="hook-test")
@@ -135,8 +150,7 @@ def test_reflect_poetics_runs_on_publish_too(tmp_path):
     """PUBLISHでも詩学リフレクションは呼ばれる（PLAN §7.4「完成後」）."""
     work = Work(tmp_path / "works", "w9104")
     work.create({})
-    Checkpoint(work_id="w9104", state=State.CRITIQUE, step=6,
-               payload={"audience": "人間 1.0"}).save(work.dir)
+    _initialize_at_critique(work, {"audience": "人間 1.0"})
     work.draft_path(1).write_text("本文v1。" * 50, encoding="utf-8")
     deps = _HookedDeps(publish_decision="PUBLISH", stop_reason="公開に値する")
 

@@ -125,3 +125,45 @@ def test_checkpoint_save_is_atomic_no_partial_file_left_behind(tmp_path):
     files = list(work_dir.glob("*.tmp"))
     assert files == []
     assert (work_dir / "checkpoint.json").exists()
+
+
+def test_pipeline_recovers_from_event_stream_when_checkpoint_is_missing(tmp_path):
+    """複数event後にprojectionだけ消えても、完了済みlayerを再実行しない."""
+    from aleph.pipeline import run_work
+
+    work = Work(tmp_path / "works", "w9205")
+    work.create({})
+
+    class CrashAtCritique(_FullLoopDeps):
+        def decide_stop(self, work):
+            raise RuntimeError("stop before FINISH")
+
+    with pytest.raises(RuntimeError):
+        run_work(work, CrashAtCritique(), decided_by="checkpoint-loss-test")
+    assert Checkpoint.load(work.dir).state == State.CRITIQUE
+    work.checkpoint.unlink()
+
+    called: list[str] = []
+
+    class ResumeDeps(_FullLoopDeps):
+        def choose_intent(self, work):
+            called.append("intent")
+            return super().choose_intent(work)
+
+        def explore(self, work):
+            called.append("explore")
+            return super().explore(work)
+
+        def gather_materials(self, work, niche):
+            called.append("materia")
+            return super().gather_materials(work, niche)
+
+        def compose_and_draft(self, work, niche, audience, materials):
+            called.append("draft")
+            return super().compose_and_draft(work, niche, audience, materials)
+
+    final = run_work(work, ResumeDeps(), decided_by="checkpoint-loss-test")
+
+    assert final == State.PUBLISH
+    assert called == []
+    assert Checkpoint.load(work.dir) == replay_checkpoint(work.work_id, work.decisions)

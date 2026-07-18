@@ -366,7 +366,8 @@ def test_run_work_resume_skips_duplicate_critique_when_trajectory_full(tmp_path)
     w0001 実ランの回帰: 予算切れクラッシュからの再開が査読一式(API実費+ローカル
     数十分)を再実行してしまう。
     """
-    from aleph.core.loop import Checkpoint, State
+    from aleph.core.loop import State
+    from aleph.core.transition_commit import initialize
     from aleph.pipeline import run_work
 
     work = Work(tmp_path / "works", "w6206")
@@ -380,8 +381,14 @@ def test_run_work_resume_skips_duplicate_critique_when_trajectory_full(tmp_path)
     (reviews / "trajectory.jsonl").write_text(
         "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8",
     )
-    Checkpoint(work_id="w6206", state=State.CRITIQUE, step=6,
-               payload={"audience": "自分 1.0"}).save(work.dir)
+    initialize(
+        work,
+        command_id="fixture:critique",
+        state=State.CRITIQUE,
+        reason="resume regression fixture",
+        decided_by="test",
+        payload={"audience": "自分 1.0"},
+    )
 
     calls: list[str] = []
 

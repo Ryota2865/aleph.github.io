@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Callable
@@ -98,41 +97,14 @@ class Checkpoint:
 
 
 def replay_checkpoint(work_id: str, decisions_path) -> Checkpoint:
-    """decisions.jsonl の L0 記録だけから checkpoint と等価な状態を再構成する.
+    """Compatibility name for strict replay; discontinuities now fail closed."""
+    from aleph.core.transition_commit import strict_replay
 
-    PLAN_CHANGELOG 0.7.18 問1（Fable5設計者審査）: 「decisions.jsonl が正、
-    checkpoint.json はそこから再構築可能な投影である」という位置づけを、
-    `Checkpoint.load(work.dir) == replay_checkpoint(work.work_id, work.decisions)`
-    という契約テストで実際に保証するための関数。各L0記録の"payload"（そのステップで
-    新規に追加された差分のみ。pipeline._transition が書く）を順に合成し、最後の
-    遷移先を現在状態、L0記録数をstepとする。旧い作品（0.7.18以前に完了・payload
-    未記録）を再生すると、payloadが空のCheckpointになる——これは既知の限界であり、
-    偽装しない（該当作品は既に終端済みでreplayを必要としない）。
-    """
-    path = Path(decisions_path)
-    state = State.SEEDED
-    step = 0
-    payload: dict = {}
-    if path.exists():
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            record = json.loads(line)
-            if record.get("layer") != "L0":
-                continue
-            step += 1
-            decision = str(record.get("decision", ""))
-            if "->" in decision:
-                _, _, nxt_name = decision.partition("->")
-                state = State(nxt_name)
-            record_payload = record.get("payload")
-            if record_payload:
-                payload.update(record_payload)
-    return Checkpoint(work_id=work_id, state=state, step=step, payload=payload)
+    return strict_replay(work_id, decisions_path)
 
 
 class Loop:
-    """閉ループの実行器。遷移時に必ず: checkpoint保存 → decisions.jsonl 追記.
+    """閉ループの実行器。遷移はTransitionCommitのevent先行契約を通す.
 
     ローカルモデルのswapコスト（PLAN §2.3）を考慮し、同一モデルで処理できる
     ステップを束ねてスケジュールする。
@@ -165,20 +137,20 @@ class Loop:
             return State.SEEDED
 
     def transition(self, nxt: State, reason: str, decided_by: str) -> None:
+        from aleph.core.transition_commit import commit
+
         current = self.current_state()
-        if not validate_transition(current, nxt):
-            raise ValueError(f"invalid transition: {current} -> {nxt}")
-        self._step += 1
-        Checkpoint(work_id=self.work.work_id, state=nxt, step=self._step, payload={}).save(self.work.dir)
-        self.work.append_decision(
-            {
-                "ts": datetime.now(timezone.utc).isoformat(),
-                "layer": "L0",
-                "decision": f"{current.value}->{nxt.value}",
-                "reason": reason,
-                "decided_by": decided_by,
-            }
+        result = commit(
+            self.work,
+            command_id=(
+                f"{self.work.work_id}:loop:{self._step + 1}:{current.value}:{nxt.value}"
+            ),
+            expected_state=current,
+            next_state=nxt,
+            reason=reason,
+            decided_by=decided_by,
         )
+        self._step = result.checkpoint.step
 
     def run(self) -> State:
         state = self.current_state()

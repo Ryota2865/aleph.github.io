@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Iterable
 
@@ -113,8 +114,12 @@ class Work:
         payload.setdefault("refs", [])
         self.decisions.parent.mkdir(parents=True, exist_ok=True)
         text = scrub_secrets(json.dumps(payload, ensure_ascii=False), self._secrets)
-        with open(self.decisions, "a", encoding="utf-8") as f:
-            f.write(text + "\n")
+        existing = self.decisions.read_text(encoding="utf-8") if self.decisions.exists() else ""
+        if existing and not existing.endswith("\n"):
+            existing += "\n"
+        tmp_path = self.dir / f".decisions.jsonl.{os.getpid()}.tmp"
+        tmp_path.write_text(existing + text + "\n", encoding="utf-8")
+        os.replace(tmp_path, self.decisions)
 
     def latest_draft_version(self) -> int:
         if not self.drafts.is_dir():

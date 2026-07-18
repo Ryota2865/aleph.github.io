@@ -1,5 +1,31 @@
 # PLAN 変更履歴
 
+## 0.7.20-5 (2026-07-18) — Phase 1 TransitionCommit施工（独立監査待ち）
+
+オーナーが全面採用した`designs/next-designer-execution-plan.md` Phase 1にもとづき、
+次期設計者Codexが設計・施工した。正式な合格判定は、施工者と異なる監査者へ留保する。
+
+1. **一次記録module**: `aleph/core/transition_commit.py`を新設。`commit`、`initialize`、
+   `project`の小さいinterfaceへ、正典遷移検証、単調event id、冪等command id、event先行の
+   原子的JSONL確定、checkpoint投影、厳密再生、故障回復を集約した。契約詳細は
+   `designs/transition-commit.md`。
+2. **書込み順の訂正**: 旧経路のcheckpoint先行→decision追記を廃止。eventを一次記録として
+   先に確定し、checkpoint保存前に停止しても`recover()`がevent列から修復する。
+   `Work.append_decision()`自体も一時ファイル＋renameへ変更し、部分JSON行を防ぐ。
+3. **既存経路の置換**: `Loop.transition()`、pipeline `_transition()`、w0008 canonical handoffを
+   TransitionCommitへ移行。handoffは由来つき`initialize` eventとなり、checkpoint直接合成を
+   廃止した。寛容だった`replay_checkpoint()`はstrict replayのcompatibility nameへ変更。
+4. **公開再評価**: SHELVE checkpointをFINISHへ巻き戻す実装を廃止。制作lifecycleと後日の
+   publication dispositionを直交させ、SHELVEを終端のまま`projection` eventで公開状態を
+   更新する。終端不変条件は弱めていない。
+5. **legacy方針**: 既存L0行は変更しない。状態操作が必要な時だけ、現在checkpointとwarningを
+   含む`reconciliation` eventから新しい厳密区間を開始する。現存8作品のread-only基線は
+   `reports/TRANSITION_HISTORY_AUDIT_20260718.md`へ保存した。
+6. **テスト契約**: event id、source連続性、command衝突、冪等再試行、event確定後のprojection
+   故障、checkpoint全欠落からの複数段回復、handoff、公開再評価、legacy reconciliationを
+   interface越しに追加。checkpointを直接合成していたfixtureは`initialize`へ移行した。
+   受入条件を弱める変更はない。非local全体は **239 passed, 1 deselected**。
+
 ## 0.7.20-4 (2026-07-18) — Claude Pro手動批評路の保存（オーナー承認）
 
 オーナー決定: 2026-07-20以降、Claude Proプランに付与される$100クレジットの範囲で、

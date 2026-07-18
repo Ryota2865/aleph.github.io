@@ -403,8 +403,9 @@ def test_canon_handoff_writes_draft_checkpoint_and_meta(tmp_path):
 
     cp = Checkpoint.load(main.dir)
     assert cp.state == State.DRAFT
-    assert set(cp.payload) == {"audience", "niche", "materials"}
+    assert set(cp.payload) == {"audience", "niche", "materials", "canonical_arm"}
     assert cp.payload["audience"] == shared["audience"]
+    assert cp.payload["canonical_arm"] == "none"
     assert (main.compositions / "criteria.md").exists()
     assert (main.compositions / "proposal_1.json").exists()
     assert main.draft_path(1).read_text(encoding="utf-8") == "none draft"

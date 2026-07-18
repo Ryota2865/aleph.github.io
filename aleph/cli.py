@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import sys
 from pathlib import Path
 
@@ -93,11 +94,17 @@ def _cmd_publish(root: Path, args) -> int:
     """aleph publish: 棚上げ済み(または完成)作品の公開ゲートを再評価する（PLAN §9）.
 
     初回公開の人間承認は config/policies.yaml の publication.first_publish_ack で行う。
-    SHELVE/FINISH のチェックポイントを FINISH に戻して FINISH→(PUBLISH|SHELVE) ゲートを
-    再実行する（w0004 公開で手動化していた手順の正規化。0.7.14）。
+    SHELVEは終端のまま維持し、再評価結果をpublication dispositionとして追記する。
     """
     from aleph.core.loop import Checkpoint, State
-    from aleph.pipeline import RealDeps, run_work
+    from aleph.core.transition_commit import (
+        ReplayError,
+        audit_history,
+        project,
+        reconcile,
+        recover,
+    )
+    from aleph.pipeline import RealDeps, _finalize_publish
 
     config = load_config(root)
     work = _work_for_cli(root / "works", args.work, config)
@@ -132,10 +139,25 @@ def _cmd_publish(root: Path, args) -> int:
         )
         return 1
 
-    # SHELVE/FINISH → FINISH に戻し、公開ゲートを再評価させる（正典遷移 FINISH→PUBLISH は有効）。
-    Checkpoint(
-        work_id=cp.work_id, state=State.FINISH, step=max(0, cp.step - 1), payload=dict(cp.payload),
-    ).save(work.dir)
+    try:
+        cp = recover(work)
+    except ReplayError as exc:
+        if not str(exc).startswith("legacy stream has no reconciliation"):
+            print(f"publish: transition history is not replayable: {exc}", file=sys.stderr)
+            return 1
+        warnings = audit_history(work)
+        reconcile(
+            work,
+            command_id=f"{work.work_id}:reconcile:v1",
+            reason="公開再評価前にlegacy履歴から厳密再生区間を開始",
+            decided_by="cli-publish",
+            warnings=warnings,
+        )
+        cp = Checkpoint.load(work.dir)
+
+    if cp.state == State.PUBLISH:
+        print(f"publish: {args.work} is already published", file=sys.stderr)
+        return 0
 
     logger = CallLogger(work.calls, secrets=config.secrets.values())
     budget = Budget(config, state_path=_budget_state_path(root))
@@ -144,9 +166,37 @@ def _cmd_publish(root: Path, args) -> int:
         work, router, config=config, index_dir=root / args.index, search_fn=lambda *a, **k: [],
         poetics_dir=root / "poetics",
     )
-    final = run_work(work, deps, decided_by="cli-publish")
-    print(f"publish: {args.work} -> {final.value}", file=sys.stderr)
-    return 0 if final == State.PUBLISH else 2
+    if cp.payload.get("publication_disposition") == "PUBLISH":
+        _finalize_publish(work, deps)
+        print(f"publish: {args.work} -> PUBLISH (recovered)", file=sys.stderr)
+        return 0
+
+    audience = cp.payload.get("audience")
+    publication = deps.decide_publication(work, audience)
+    decision = str(publication.get("decision", "SHELVE")).upper()
+    reason = str(publication.get("reason", ""))
+    command_digest = hashlib.sha256(
+        f"{work.work_id}\0{decision}\0{reason}".encode("utf-8")
+    ).hexdigest()[:16]
+    result = project(
+        work,
+        command_id=f"{work.work_id}:publication-reassessment:{command_digest}",
+        expected_state=cp.state,
+        name="publication_reassessment",
+        reason=reason or "公開ゲート再評価",
+        decided_by="cli-publish",
+        payload_delta={
+            "publication_disposition": decision,
+            "publication_reassessment_reason": reason,
+        },
+    )
+    if decision == "PUBLISH":
+        _finalize_publish(work, deps)
+    print(
+        f"publish: {args.work} -> {decision} (lifecycle={result.checkpoint.state.value})",
+        file=sys.stderr,
+    )
+    return 0 if decision == "PUBLISH" else 2
 
 
 def main(argv: list[str] | None = None) -> int:

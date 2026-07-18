@@ -32,6 +32,7 @@ if str(ROOT) not in sys.path:
 
 from aleph.core.artifacts import Work  # noqa: E402
 from aleph.core.loop import Checkpoint, State  # noqa: E402
+from aleph.core.transition_commit import initialize  # noqa: E402
 from aleph.draft.write import pipeline_to_draft  # noqa: E402
 from aleph.explore.niche import _extract_json_object  # noqa: E402
 from aleph.materia.similarity import find_hidden_pairs, to_material_cards  # noqa: E402
@@ -987,18 +988,24 @@ def stage_canon_handoff(root: Path, deps: RunnerDeps, selection: dict) -> None:
     for src in sorted(chosen.materials.glob("*.json")):
         _copy_if_missing(src, main.materials / src.name)
 
-    cp = Checkpoint(
-        work_id=main.work_id,
-        state=State.DRAFT,
-        step=5,
-        payload={"audience": shared.get("audience"), "niche": shared.get("niche"), "materials": materials},
-    )
     if main.checkpoint.exists():
         # 既存checkpointは絶対に上書きしない: aleph run がCRITIQUE以降へ進んだ後に
         # select を再実行しても、作品を DRAFT へ巻き戻さない（実費・状態の保護）。
         _stderr(f"select: reusing {main.checkpoint} (never overwritten)")
     else:
-        cp.save(main.dir)
+        initialize(
+            main,
+            command_id=f"{main.work_id}:canonical-handoff:{chosen_arm}",
+            state=State.DRAFT,
+            reason="盲検選択した実験腕を正典作品へ昇格",
+            decided_by="w0008-runner",
+            payload={
+                "audience": shared.get("audience"),
+                "niche": shared.get("niche"),
+                "materials": materials,
+                "canonical_arm": chosen_arm,
+            },
+        )
     append_decision(
         main,
         layer="L7",

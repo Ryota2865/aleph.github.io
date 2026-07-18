@@ -16,7 +16,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from aleph.core.loop import Checkpoint, State, validate_transition
+from aleph.core.loop import Checkpoint, State
+from aleph.core.transition_commit import commit as commit_transition
 
 
 def _now_iso() -> str:
@@ -45,37 +46,20 @@ def _llm_is_primary_audience(audience: str) -> bool:
 
 # ---------------------------------------------------------------- 遷移ヘルパ
 def _transition(work, current: State, nxt: State, reason: str, decided_by: str,
-                *, step: int, ctx: dict, payload: dict | None = None) -> int:
-    """正典遷移表に従い遷移: validate → checkpoint(payloadつき)保存 → decisions.jsonl 記録.
-
-    Loop.transition は payload を持たないため pipeline 側で Checkpoint を直接保存する
-    （PLAN_CHANGELOG 0.7.8 の再開要件）。遷移記録は work.append_decision で必ず残す。
-
-    decisions.jsonl のL0記録には差分payload（このステップで新規に追加されたctxの部分）
-    のみを書く（全ctxを毎回複製すると素材カード等の重複でファイルが肥大化するため）。
-    `aleph.core.loop.replay_checkpoint` が全L0記録の差分payloadを順に合成することで
-    checkpoint.jsonと等価な状態を再構成できる——decisions.jsonlが正、checkpointは
-    そこから再構築可能な投影である、という位置づけ（PLAN_CHANGELOG 0.7.18 問1）。
-    """
-    if not validate_transition(current, nxt):
-        raise ValueError(f"invalid transition: {current} -> {nxt}")
-    if payload:
-        ctx.update(payload)
-    nxt_step = step + 1
-    Checkpoint(
-        work_id=work.work_id, state=nxt, step=nxt_step, payload=dict(ctx),
-    ).save(work.dir)
-    work.append_decision(
-        {
-            "ts": _now_iso(),
-            "layer": "L0",
-            "decision": f"{current.value}->{nxt.value}",
-            "reason": reason,
-            "decided_by": decided_by,
-            "payload": dict(payload) if payload else {},
-        }
+                *, step: int, ctx: dict, payload: dict | None = None) -> Checkpoint:
+    """Pipeline adapter for the authoritative TransitionCommit interface."""
+    result = commit_transition(
+        work,
+        command_id=f"{work.work_id}:transition:{step + 1}:{current.value}:{nxt.value}",
+        expected_state=current,
+        next_state=nxt,
+        reason=reason,
+        decided_by=decided_by,
+        payload_delta=payload,
     )
-    return nxt_step
+    ctx.clear()
+    ctx.update(result.checkpoint.payload)
+    return result.checkpoint
 
 
 # ---------------------------------------------------------------- final 化
@@ -195,8 +179,11 @@ def run_work(work, deps, *, decided_by: str) -> State:
 
     def go(nxt: State, reason: str, payload: dict | None = None) -> None:
         nonlocal step, state
-        step = _transition(work, state, nxt, reason, decided_by, step=step, ctx=ctx, payload=payload)
-        state = nxt
+        projected = _transition(
+            work, state, nxt, reason, decided_by, step=step, ctx=ctx, payload=payload
+        )
+        step = projected.step
+        state = projected.state
 
     # --- SEEDED → INTENT（種から志向選択へ。SEEDEDの処理は Work.create 済み）
     if state == State.SEEDED:
