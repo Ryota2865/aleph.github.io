@@ -1,5 +1,25 @@
 # PLAN 変更履歴
 
+## 0.7.20-8 (2026-07-19) — Phase 1 TransitionCommit正式独立再監査PASS
+
+施工者と異なるClaude Code担当が、追加修繕commit
+`df1552dc82f73c87a10234f83635da6aa2a04123`を正式再監査し、**PASS**と判定した。
+正式記録は`reports/PHASE1_TRANSITION_COMMIT_REAUDIT_20260719.md`。
+
+1. WSL側Gitでworktree clean、対象HEAD一致、doctor全PASS、diff check違反なしを確認した。
+2. 非local全体は**272 passed, 1 deselected**。tmp内で既存テストと独立した46件の故障注入を行い、
+   projection由来、modern/legacy分類、課金handler冪等性、公開後補完、reflection一度きり、
+   legacy reconciliation、event/checkpoint整合性の全件がPASSした。
+3. 0.7.20-6と0.7.20-7の必須修繕、および過去の退行確認はすべて独立に再現確認された。
+   契約違反P0–P2はない。
+4. legacy L0が存在してcheckpointが欠落する極端な場合に`aleph reconcile`が生の
+   `FileNotFoundError`を出すP3所見は、データ破損・誤公開を伴わずPhase 1契約違反ではない。
+   監査済みHEADを変えず、後続の堅牢化候補として保留する。
+5. これにより、全面採用済み`designs/next-designer-execution-plan.md`のPhase 1監査ゲートは
+   完了した。次はPhase 2の`ModelOutput`、`WorkSnapshot`、`RepositorySnapshot`設計へ進む。
+
+本項はPLANの意味を変更せず、採用済みPhase 1受入条件の達成と独立監査完了を記録する。
+
 ## 0.7.20-7 (2026-07-19) — Phase 1再監査FAILへの追加修繕（正式再監査待ち）
 
 `2f3dc6e`対象の独立再監査は、非local 259件が緑でも残存・新規の6故障窓を検出し、
