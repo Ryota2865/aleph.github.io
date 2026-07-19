@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -492,6 +493,23 @@ class RealDeps:
         self.embedder = embedder
         self.force_audience = force_audience  # 実験: L1自律選択を上書き（0.7.14）
         self._work_id = work.work_id
+        self._phase = "L0"
+        self._experiment_id: str | None = None
+        self._experiment_arm = "main"
+        try:
+            seed = json.loads(work.seed.read_text(encoding="utf-8"))
+            experiment = seed.get("experiment") if isinstance(seed, dict) else None
+            if isinstance(experiment, dict) and experiment.get("id"):
+                self._experiment_id = str(experiment["id"])
+                self._experiment_arm = str(seed.get("arm") or "main")
+                ablation = seed.get("material_ablation", {})
+                cap = experiment.get("budget_cap_usd", ablation.get("budget_cap_usd"))
+                if type(cap) in (int, float) and float(cap) > 0:
+                    router.budget.register_scope_limit(
+                        f"experiment:{self._experiment_id}", ledger="api", limit=float(cap)
+                    )
+        except (AttributeError, OSError, json.JSONDecodeError):
+            pass
         # credits / intended_reader_models は publish時の meta.json に反映
         self.credits: dict = {}
         self.intended_reader_models: list[str] = []
@@ -580,30 +598,47 @@ class RealDeps:
         return result
 
     # -- 役割呼び出しヘルパ（work_id で作品別予算を効かせる） -----------------
+    def _call_overrides(self) -> dict:
+        values = {"work_id": self._work_id}
+        if self._experiment_id is not None:
+            from aleph.core.llm import CallContext
+
+            values = {
+                "call_context": CallContext(
+                    command_id=f"{self._experiment_id}:{self._phase}:{uuid.uuid4()}",
+                    work_id=self._work_id,
+                    experiment_id=self._experiment_id,
+                    phase=self._phase,
+                    arm=self._experiment_arm,
+                    charged_to=f"experiment:{self._experiment_id}",
+                )
+            }
+        return values
+
     def _author(self, prompt: str) -> str:
         from aleph.core.llm import Message
 
         return self.router.call(
-            "author_primary", [Message("user", prompt)], work_id=self._work_id,
+            "author_primary", [Message("user", prompt)], **self._call_overrides(),
         ).text
 
     def _scout(self, prompt: str) -> str:
         from aleph.core.llm import Message
 
         return self.router.call(
-            "scout", [Message("user", prompt)], work_id=self._work_id,
+            "scout", [Message("user", prompt)], **self._call_overrides(),
         ).text
 
     def _reader(self, prompt: str) -> str:
         from aleph.core.llm import Message
 
         return self.router.call(
-            "reader_model", [Message("user", prompt)], work_id=self._work_id,
+            "reader_model", [Message("user", prompt)], **self._call_overrides(),
         ).text
 
     def _reader_llm(self, messages, **overrides):
         """完全な LLMResponse を返す reader 呼び出し（anti_cliche が logprobs を読むため）."""
-        return self.router.call("reader_model", messages, work_id=self._work_id, **overrides)
+        return self.router.call("reader_model", messages, **self._call_overrides(), **overrides)
 
     def _audience_hint(self, work) -> str:
         """現在の宛先配合を得る（checkpoint.payload 優先、無ければ force_audience）."""
@@ -630,7 +665,7 @@ class RealDeps:
         )
         try:
             resp = self.router.call(
-                "author_primary", [Message("user", prompt)], work_id=self._work_id, max_tokens=2048,
+                "author_primary", [Message("user", prompt)], **self._call_overrides(), max_tokens=2048,
             )
             parsed = parse_model_output(resp.text, schema=dict).value or {}
             title = str(parsed.get("title") or "").strip()
@@ -673,7 +708,7 @@ class RealDeps:
             def juror(prompt: str, _idx=idx):
                 resp = self.router._invoke(
                     "critic_jury", decls[_idx], [Message("user", prompt)],
-                    work_id=self._work_id,
+                    **self._call_overrides(),
                 )
                 return resp.text
 
@@ -692,6 +727,7 @@ class RealDeps:
 
     # -- L1 志向 --------------------------------------------------------------
     def choose_intent(self, work):
+        self._phase = "L1"
         from aleph.intent.choose import choose_intent
 
         # 実験の宛先固定（--force-audience）: 自律選択を上書きし owner-experiment として記録する。
@@ -731,6 +767,7 @@ class RealDeps:
 
     # -- L2 探索（niche 上位1件） --------------------------------------------
     def explore(self, work):
+        self._phase = "L2"
         from aleph.explore.atlas import Atlas, build_atlas
         from aleph.explore.niche import find_niches, report
 
@@ -759,6 +796,7 @@ class RealDeps:
 
     # -- L3 素材（最小: similarity 上位数件を素材カード化、失敗時は空リスト） --
     def gather_materials(self, work, niche):
+        self._phase = "L3"
         cards: list[dict] = []
         try:
             from aleph.materia.similarity import find_hidden_pairs, to_material_cards
@@ -829,6 +867,7 @@ class RealDeps:
             return {}
 
     def compose_and_draft(self, work, niche, audience, materials):
+        self._phase = "L4-L5"
         from aleph.draft.write import pipeline_to_draft
 
         # 実験制約（例 w0007: 自己言及的告白の出口封鎖）。注入の事実を決定ログに残す。
@@ -850,7 +889,10 @@ class RealDeps:
 
     # -- L6 査読・改稿ループ（M4 critique_revise_loop） ----------------------
     def critique_and_revise(self, work, audience):
+        self._phase = "L6"
         from aleph.critique.review import critique_revise_loop
+        from aleph.core.evaluation import EvaluationPacket
+        from aleph.core.work_snapshot import WorkReader
 
         criteria = ""
         criteria_path = work.compositions / "criteria.md"
@@ -865,6 +907,9 @@ class RealDeps:
             embedder=self.embedder, index_dir=self.index_dir, search_fn=self.search_fn,
             reader_llm=reader_llm,
             max_iters=2,
+            packet_factory=lambda version: EvaluationPacket.for_draft(
+                WorkReader(work.dir).snapshot(), version
+            ),
         )
         # 高不一致版を E-border 刺激として予約（失敗しても制作を止めない）
         try:
@@ -875,7 +920,10 @@ class RealDeps:
 
     # -- L7 擱筆判断（M5 stopping.decide_stop） ------------------------------
     def decide_stop(self, work):
+        self._phase = "L7"
         from aleph.meta.stopping import decide_stop
+        from aleph.core.evaluation import EvaluationPacket
+        from aleph.core.work_snapshot import WorkReader
 
         trajectory, instructions_history = _stop_inputs_from_trajectory(work)
         # 予算切れ経路（PLAN §7.3a）: 残額が改稿1サイクルの想定費を下回ったら
@@ -883,14 +931,22 @@ class RealDeps:
         min_cycle = float(self.config.budgets.get("api", {}).get("usd_min_revise_cycle", 1.2))
         remaining = _remaining_api_budget(self.router.budget, work.work_id)
         exhausted = remaining is not None and remaining < min_cycle
+        packet = None
+        if trajectory:
+            version = int(trajectory[-1].get("version", work.latest_draft_version()))
+            packet = EvaluationPacket.for_draft(WorkReader(work.dir).snapshot(), version)
         return decide_stop(
             trajectory=trajectory, instructions_history=instructions_history,
             budget_exhausted=exhausted,
+            packet=packet,
         )
 
     # -- L7 公開判断（M5 publication_gate へ委譲。PLAN §7.3d） ----------------
     def decide_publication(self, work, audience):
+        self._phase = "L7"
         from aleph.meta.publication_gate import decide_publication
+        from aleph.core.evaluation import EvaluationPacket
+        from aleph.core.work_snapshot import WorkReader
 
         # 完成時に作品自身へ題を聞く（フロー化, 0.7.14）。公開/棚の双方が title.txt を読む。
         self._ensure_title(work)
@@ -928,6 +984,12 @@ class RealDeps:
         first_publish_ack = bool(
             self._policies().get("publication", {}).get("first_publish_ack", False)
         )
+        snapshot = WorkReader(work.dir).snapshot()
+        packet = (
+            EvaluationPacket.for_draft(snapshot, snapshot.best_draft.version)
+            if snapshot.best_draft is not None and snapshot.best_draft.version is not None
+            else None
+        )
         result = decide_publication(
             work,
             audience=audience,
@@ -938,6 +1000,7 @@ class RealDeps:
             author=self._author,
             decided_by="L7/publication_gate",
             first_publish_ack=first_publish_ack,
+            packet=packet,
         )
         if result.get("decision") == "PUBLISH":
             self._record_credits()

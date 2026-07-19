@@ -30,3 +30,10 @@ These rules govern the quality of judgment, not the direction of the judgment.
   reuse a server that does not advertise the requested model alias.
 - `PLAN.md` and repository config remain canonical for ALEPH decisions. Personal skills only
   encode reusable execution workflows; they must not override project policy.
+
+## Formal milestone audits
+
+- Before requesting or closing a formal milestone audit, follow
+  `designs/formal-audit-runbook.md`. Keep tests-green separate from the formal verdict, identify
+  the audited candidate by commit or staged tree, preserve FAIL evidence, and use the same
+  independent auditor for the focused re-audit required by `PLAN.md` §12.

@@ -18,6 +18,7 @@ from typing import Callable
 import numpy as np
 
 from aleph.critique.adversary import adversary_review
+from aleph.core.evaluation import EvaluationPacket, EvaluationPacketError
 from aleph.critique.reader_model import reader_prompt
 from aleph.critique.style import rationing_instructions
 from aleph.core.model_output import parse_model_output
@@ -307,6 +308,14 @@ def _write_report_markdown(work, version: int, report: dict) -> None:
     lines = [
         f"# 査読報告 v{version}",
         "",
+        *(
+            [
+                f"- evaluation_packet_hash: `{report['evaluation_packet_hash']}`",
+                f"- effective_constraints_hash: `{report['effective_constraints_hash']}`",
+                "",
+            ]
+            if report.get("evaluation_packet_hash") else []
+        ),
         "## 技術審級",
         *(f"- {issue}" for issue in report["technical"].get("issues", [])),
         "",
@@ -350,8 +359,14 @@ def run_review(
     index_dir: str | Path,
     search_fn: Callable[..., list[dict]],
     reader_llm=None,
+    packet: EvaluationPacket | None = None,
 ) -> dict:
     """5審級（技術/基準/新奇性/読者/敵対的）を実行し、reviews/v{version}.md に報告を書く（PLAN §7.1）."""
+    if packet is not None:
+        packet.validate()
+        if packet.draft_version != version:
+            raise EvaluationPacketError("evaluation packet draft version disagreement")
+        criteria = packet.render_for("L6")
     # 過大な草稿は有界セグメントで査読する。ローカル審級の文脈長(20480)を超えると
     # llama-server が 400 を返して査読不能になる(w0003 実ラン: 21万字の草稿)。
     # 草稿長のガバナンス(length_estimate の強制)は別途の改善債務。
@@ -376,6 +391,9 @@ def run_review(
         "adversary": adversary,
         "revise_instructions": revise_instructions,
     }
+    if packet is not None:
+        report["evaluation_packet_hash"] = packet.hash
+        report["effective_constraints_hash"] = packet.effective_constraints_hash
     if reader_llm is not None and _llm_is_primary_audience(audience):
         report["perplexity"] = _perplexity_review(draft_text, reader_llm)
     _write_report_markdown(work, version, report)
@@ -396,6 +414,7 @@ def critique_revise_loop(
     search_fn: Callable[..., list[dict]],
     max_iters: int = 2,
     reader_llm=None,
+    packet_factory: Callable[[int], EvaluationPacket] | None = None,
 ) -> int:
     """v=1から REVISEループを max_iters 回まわす（PLAN §7.2・§10 M4）.
 
@@ -410,6 +429,7 @@ def critique_revise_loop(
 
     for _ in range(max_iters):
         draft_text = work.draft_path(version).read_text(encoding="utf-8")
+        packet = packet_factory(version) if packet_factory is not None else None
         report = run_review(
             work,
             draft_text,
@@ -423,6 +443,7 @@ def critique_revise_loop(
             index_dir=index_dir,
             search_fn=search_fn,
             reader_llm=reader_llm,
+            packet=packet,
         )
         cr = report["criteria_review"]
         record = {
@@ -432,6 +453,9 @@ def critique_revise_loop(
             "novelty_dist": report.get("novelty", {}).get("nearest_dist"),
             "instructions": report.get("revise_instructions", []),
         }
+        if packet is not None:
+            record["evaluation_packet_hash"] = packet.hash
+            record["effective_constraints_hash"] = packet.effective_constraints_hash
         with open(traj_path, "a", encoding="utf-8") as target:
             target.write(json.dumps(record, ensure_ascii=False) + "\n")
 
@@ -448,7 +472,7 @@ def critique_revise_loop(
             }
         )
 
-        new_path = revise(work, report, audience, author, version=version)
+        new_path = revise(work, report, audience, author, version=version, packet=packet)
         version = int(new_path.stem[1:])
 
     rows: list[dict] = []

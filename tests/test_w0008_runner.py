@@ -18,6 +18,13 @@ def seed_data(*, cap: float = 15.0) -> dict:
         "hint": "w0008 test",
         "experiment": {
             "id": "exp-w0008-test",
+            "version": 1,
+            "hypothesis": "materials change the draft",
+            "intervention": "remove or replace materials",
+            "control": "aozora materials",
+            "observations": ["blind selection", "jury scores"],
+            "budget_cap_usd": cap,
+            "blind": {"seed": 8008},
             "criteria_constraints": "解除条項",
         },
         "material_ablation": {
@@ -122,6 +129,7 @@ def write_call(work, cost: float) -> None:
 def setup_arm(main, arm: str, *, draft_text: str = "本文。", material: bool = False):
     work = runner.arm_work(main, arm)
     runner.ensure_work_layout(work, seed={"arm": arm})
+    runner.ExperimentRun.open(main.dir).register_arm(arm, work_id=f"{main.work_id}-{arm}")
     fake_pipeline_to_draft(work, {}, "", lambda _: "", lambda _: "")
     work.draft_path(1).write_text(draft_text, encoding="utf-8")
     if material:
@@ -131,6 +139,24 @@ def setup_arm(main, arm: str, *, draft_text: str = "本文。", material: bool =
 
 def decisions(work) -> list[dict]:
     return [json.loads(line) for line in work.decisions.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def record_none_selection_and_reveal(main) -> None:
+    run = runner.ExperimentRun.open(main.dir)
+    selection = run.select_blind(
+        {
+            "aozora": {"text": "first", "technical_floor": {"pass": True}},
+            "none": {"text": "second", "technical_floor": {"pass": True}},
+            "secondary": {"text": "third", "technical_floor": {"pass": True}},
+        },
+        selector=lambda candidates: {"choice": "A", "rationale": "fixture"},
+        decided_by="test",
+    )
+    assert selection.chosen_arm == "none"
+    run.reveal_jury(
+        [{"arm": arm, "scores": [8.0]} for arm in runner.ARMS_ORDER],
+        decided_by="test",
+    )
 
 
 def test_prepare_fails_cleanly_when_seed_missing_or_lacks_manifest(tmp_path):
@@ -260,10 +286,15 @@ def test_blind_selection_prompt_hides_arm_names_and_jury_runs_after_persist(tmp_
     for forbidden in {"平均", "不一致", "mean_score", "disagreement", "aozora", "secondary"}:
         assert forbidden not in prompt
     selection_rows = [row for row in decisions(main) if row["decision"].startswith("w0008 blind selection")]
-    assert selection_rows and "label_mapping" in selection_rows[-1]
+    assert selection_rows and selection_rows[-1]["experiment_event_id"]
+    event = next(
+        row for row in runner.ExperimentRun.open(main.dir).events()
+        if row["type"] == "blind_selection"
+    )
+    assert event["type"] == "blind_selection" and event["label_mapping"]
     assert jury_calls
     assert (main.dir / "ablation" / "jury_disclosure.json").exists()
-    assert result["selection"]["label_mapping"] == selection_rows[-1]["label_mapping"]
+    assert result["selection"]["label_mapping"] == event["label_mapping"]
 
 
 def test_classification_aggregation_and_report_sentence(tmp_path):
@@ -396,6 +427,7 @@ def test_canon_handoff_never_overwrites_existing_checkpoint(tmp_path):
     advanced.save(main.dir)
 
     deps = make_deps(tmp_path)
+    record_none_selection_and_reveal(main)
     runner.stage_canon_handoff(tmp_path, deps, {"chosen_arm": "none"})
 
     cp = Checkpoint.load(main.dir)
@@ -410,6 +442,7 @@ def test_canon_handoff_writes_draft_checkpoint_and_meta(tmp_path):
         setup_arm(main, arm, draft_text=f"{arm} draft", material=True)
 
     deps = make_deps(tmp_path)
+    record_none_selection_and_reveal(main)
     runner.stage_canon_handoff(tmp_path, deps, {"chosen_arm": "none"})
 
     cp = Checkpoint.load(main.dir)
@@ -431,3 +464,4 @@ def test_canon_handoff_writes_draft_checkpoint_and_meta(tmp_path):
     assert json.loads((runner.arm_work(main, "secondary").dir / "meta.json").read_text(encoding="utf-8")) == {
         "canonical": False
     }
+    assert runner.ExperimentRun.open(main.dir).events()[-1]["type"] == "canonical_promotion"

@@ -33,6 +33,7 @@ if str(ROOT) not in sys.path:
 from aleph.core.artifacts import Work  # noqa: E402
 from aleph.core.loop import Checkpoint, State  # noqa: E402
 from aleph.core.transition_commit import initialize  # noqa: E402
+from aleph.core.experiment import BlindCandidate, ExperimentRun
 from aleph.draft.write import pipeline_to_draft  # noqa: E402
 from aleph.core.model_output import parse_model_output
 from aleph.materia.similarity import find_hidden_pairs, to_material_cards  # noqa: E402
@@ -102,6 +103,7 @@ class RoleRuntime:
     author_model: str = "author_primary"
     scout_model: str = "scout"
     jury_models: Sequence[str] = field(default_factory=tuple)
+    set_phase: Callable[[str], None] | None = None
 
 
 @dataclass
@@ -575,8 +577,20 @@ def materials_for_arm(main: Work, work: Work, arm: str, shared: dict, manifest: 
 
 def run_arm(main: Work, arm: str, shared: dict, manifest: dict, deps: RunnerDeps) -> dict:
     work = arm_work(main, arm)
-    ensure_work_layout(work, seed={"work_id": f"{WORK_ID}-{arm}", "arm": arm, "parent": WORK_ID})
+    ensure_work_layout(
+        work,
+        seed={
+            "work_id": f"{WORK_ID}-{arm}",
+            "arm": arm,
+            "parent": WORK_ID,
+            "experiment": manifest.get("experiment", {}),
+            "material_ablation": manifest.get("material_ablation", {}),
+        },
+    )
     roles = deps.arm_roles(work)
+    if roles.set_phase is not None:
+        roles.set_phase("L3-L5")
+    ExperimentRun.open(main.dir).register_arm(arm, work_id=f"{main.work_id}-{arm}")
     before = arm_cost(work)
 
     append_decision(
@@ -749,6 +763,8 @@ def aggregate_classification(rows: Sequence[dict]) -> dict:
 
 
 def stage_classify(root: Path, deps: RunnerDeps) -> dict:
+    if deps.main_roles.set_phase is not None:
+        deps.main_roles.set_phase("classify")
     main = main_work(root)
     ensure_work_layout(main)
     out = main.dir / "ablation" / "classification.json"
@@ -805,6 +821,8 @@ def _tech_floor_prompt(text: str) -> str:
 
 
 def stage_tech_floor(root: Path, deps: RunnerDeps) -> dict:
+    if deps.main_roles.set_phase is not None:
+        deps.main_roles.set_phase("select-tech-floor")
     main = main_work(root)
     out = main.dir / "ablation" / "tech_floor.json"
     if out.exists():
@@ -879,9 +897,28 @@ def build_blind_selection_prompt(mapping: dict[str, str], tech_floor: dict, draf
 
 
 def stage_blind_selection(root: Path, deps: RunnerDeps, tech_floor: dict) -> dict:
+    if deps.main_roles.set_phase is not None:
+        deps.main_roles.set_phase("select")
     main = main_work(root)
     out = main.dir / "ablation" / "blind_selection.json"
     if out.exists():
+        if (main.dir / "experiment" / "events.jsonl").exists():
+            run = ExperimentRun.open(main.dir)
+            event = next(
+                (row for row in reversed(run.events()) if row["type"] == "blind_selection"),
+                None,
+            )
+            if event is None:
+                raise RuntimeError("select: projection exists without authoritative blind event")
+            return {
+                "seed": int(run.manifest.get("blind", {}).get("seed", BLIND_LABEL_SEED)),
+                "label_mapping": event["label_mapping"],
+                "choice": event["choice"],
+                "chosen_arm": event["chosen_arm"],
+                "rationale": event["rationale"],
+                "source_event_id": event["event_id"],
+                "source_event_hash": event["event_hash"],
+            }
         _stderr(f"select: reusing {out}")
         return _read_json(out)
 
@@ -890,30 +927,59 @@ def stage_blind_selection(root: Path, deps: RunnerDeps, tech_floor: dict) -> dic
     if len(drafted_arms) < 2:
         raise RuntimeError("select: blind selection requires at least two drafted arms")
     drafts = {arm: arm_work(main, arm).draft_path(1).read_text(encoding="utf-8") for arm in drafted_arms}
-    mapping = blind_label_mapping(drafted_arms)
-    prompt = build_blind_selection_prompt(mapping, tech_floor, drafts)
-    parsed = parse_model_output(deps.main_roles.author(prompt), schema=dict).value or {}
-    choice = str(parsed.get("choice", "")).strip().upper()
-    if choice not in set(mapping.values()):
-        raise RuntimeError(f"select: invalid blind selection choice: {choice!r}")
-    label_to_arm = {label: arm for arm, label in mapping.items()}
-    chosen_arm = label_to_arm[choice]
+    run = ExperimentRun.open(main.dir)
+
+    def selector(candidates: Sequence[BlindCandidate]) -> dict:
+        lines = [
+            "あなたはこの作品の著者です。次の候補原稿から正典として進める1本を選んでください。",
+            "提示される情報は、原稿本文と技術床の通過情報だけです。",
+            'JSON {"choice": "' + "|".join(candidate.label for candidate in candidates) + '", "rationale": "..."} だけを返してください。',
+            "",
+        ]
+        for candidate in candidates:
+            floor = candidate.technical_floor
+            issues = [_sanitize_blind_text(str(issue)) for issue in floor.get("issues", [])]
+            lines.extend(
+                [
+                    f"## 原稿{candidate.label}",
+                    f"技術床: {'pass' if floor.get('pass') else 'hold'}",
+                    "技術課題: " + ("; ".join(issues) if issues else "なし"),
+                    "",
+                    candidate.text,
+                    "",
+                ]
+            )
+        return parse_model_output(
+            deps.main_roles.author("\n".join(lines)), schema=dict
+        ).value or {}
+
+    selection = run.select_blind(
+        {
+            arm: {"text": drafts[arm], "technical_floor": tech_floor.get(arm, {})}
+            for arm in drafted_arms
+        },
+        selector=selector,
+        decided_by=deps.main_roles.author_model,
+    )
+    event = run.events()[-1]
     result = {
-        "seed": BLIND_LABEL_SEED,
-        "label_mapping": mapping,
-        "choice": choice,
-        "chosen_arm": chosen_arm,
-        "rationale": str(parsed.get("rationale", "")),
+        "seed": int(run.manifest.get("blind", {}).get("seed", BLIND_LABEL_SEED)),
+        "label_mapping": event["label_mapping"],
+        "choice": selection.choice,
+        "chosen_arm": selection.chosen_arm,
+        "rationale": selection.rationale,
+        "source_event_id": event["event_id"],
+        "source_event_hash": event["event_hash"],
     }
     _write_json(out, result)
     append_decision(
         main,
         layer="L7",
-        decision=f"w0008 blind selection: 原稿{choice}",
+        decision=f"w0008 blind selection: 原稿{selection.choice}",
         reason=str(result["rationale"]),
         decided_by=deps.main_roles.author_model,
         refs=[str(out.relative_to(root))],
-        label_mapping=mapping,
+        experiment_event_id=event["event_id"],
     )
     return result
 
@@ -936,9 +1002,34 @@ def _score_from_response(text: str) -> float:
 
 
 def stage_jury_disclosure(root: Path, deps: RunnerDeps, selection: dict) -> dict:
+    if deps.main_roles.set_phase is not None:
+        deps.main_roles.set_phase("select-jury-disclosure")
     main = main_work(root)
     out = main.dir / "ablation" / "jury_disclosure.json"
     if out.exists():
+        if (main.dir / "experiment" / "events.jsonl").exists():
+            event = next(
+                (
+                    row for row in reversed(ExperimentRun.open(main.dir).events())
+                    if row["type"] == "jury_reveal"
+                ),
+                None,
+            )
+            if event is None:
+                raise RuntimeError("select: projection exists without authoritative jury event")
+            rows = event["rows"]
+            scored = [
+                {**row, "mean_score": sum(row["scores"]) / len(row["scores"]) if row["scores"] else 0.0}
+                for row in rows
+            ]
+            argmax = max(scored, key=lambda row: row["mean_score"])["arm"] if scored else None
+            return {
+                "rows": scored,
+                "jury_argmax": argmax,
+                "blind_choice_matched_jury_argmax": argmax == selection.get("chosen_arm"),
+                "source_event_id": event["event_id"],
+                "source_event_hash": event["event_hash"],
+            }
         _stderr(f"select: reusing {out}")
         return _read_json(out)
 
@@ -955,10 +1046,14 @@ def stage_jury_disclosure(root: Path, deps: RunnerDeps, selection: dict) -> dict
         rows.append({"arm": arm, "scores": scores, "mean_score": mean_score})
     argmax = max(rows, key=lambda row: row["mean_score"])["arm"] if rows else None
     matched = bool(argmax and argmax == selection.get("chosen_arm"))
+    run = ExperimentRun.open(main.dir)
+    event = run.reveal_jury(rows, decided_by="w0008-runner")
     data = {
         "rows": rows,
         "jury_argmax": argmax,
         "blind_choice_matched_jury_argmax": matched,
+        "source_event_id": event["event_id"],
+        "source_event_hash": event["event_hash"],
     }
     _write_json(out, data)
     append_decision(
@@ -1030,6 +1125,23 @@ def stage_canon_handoff(root: Path, deps: RunnerDeps, selection: dict) -> None:
             _write_json(work.dir / "meta.json", {"canonical": True, "promoted_to": "works/w0008"})
         else:
             _write_json(work.dir / "meta.json", {"canonical": False})
+
+    # Existing w0008 artifacts predate Phase 3 and remain read-only legacy evidence. New runs have
+    # durable selection/reveal events and receive the single authoritative promotion event here.
+    experiment_dir = main.dir / "experiment"
+    if experiment_dir.exists():
+        run = ExperimentRun.open(main.dir)
+        event_types = [event["type"] for event in run.events()]
+    else:
+        run = None
+        event_types = []
+    if run is not None and "blind_selection" in event_types and "jury_reveal" in event_types:
+        run.promote(
+            chosen_arm,
+            work_id=main.work_id,
+            command_id=f"{main.work_id}:canonical-handoff:{chosen_arm}",
+            decided_by="w0008-runner",
+        )
 
 
 def stage_select(root: Path, deps: RunnerDeps) -> dict:
@@ -1176,7 +1288,44 @@ def write_report(root: Path, deps: RunnerDeps, *, date_utc: datetime | None = No
     tech_floor = _load_optional_json(main.dir / "ablation" / "tech_floor.json") or {}
     selection = _load_optional_json(main.dir / "ablation" / "blind_selection.json") or {}
     disclosure = _load_optional_json(main.dir / "ablation" / "jury_disclosure.json") or {}
+    if (main.dir / "experiment" / "events.jsonl").exists():
+        events = ExperimentRun.open(main.dir).events()
+        selected = next((row for row in reversed(events) if row["type"] == "blind_selection"), None)
+        revealed = next((row for row in reversed(events) if row["type"] == "jury_reveal"), None)
+        if selected is not None:
+            selection = selected
+        if revealed is not None:
+            rows = [
+                {**row, "mean_score": sum(row["scores"]) / len(row["scores"]) if row["scores"] else 0.0}
+                for row in revealed["rows"]
+            ]
+            argmax = max(rows, key=lambda row: row["mean_score"])["arm"] if rows else None
+            disclosure = {
+                "rows": rows,
+                "jury_argmax": argmax,
+                "blind_choice_matched_jury_argmax": argmax == selected.get("chosen_arm") if selected else False,
+            }
     checklist = _rule_checklist(classification)
+
+    reconciliation_lines: list[str] = []
+    if (main.dir / "experiment").exists():
+        run = ExperimentRun.open(main.dir)
+        budget_state = _load_optional_json(root / "state" / "budget.json") or {}
+        provider_path = root / "state" / "provider_charges.jsonl"
+        provider_rows = _load_jsonl(provider_path) if provider_path.exists() else []
+        reconciliation = run.reconcile(
+            calls_path=sorted(main.dir.rglob("calls.jsonl")),
+            charge_events=budget_state.get("charge_events", []),
+            provider_charges=provider_rows,
+        )
+        reconciliation_lines = [
+            f"- reconciliation: {reconciliation['status']}",
+            f"- reconciled calls / ledger / provider: "
+            f"${reconciliation['calls']['total_usd']:.4f} / "
+            f"${reconciliation['ledger']['total_usd']:.4f} / "
+            f"${reconciliation['provider']['total_usd']:.4f}",
+            *(f"- reconciliation issue: {issue}" for issue in reconciliation["issues"]),
+        ]
 
     lines = [
         "# EXP w0008 ablation",
@@ -1184,6 +1333,7 @@ def write_report(root: Path, deps: RunnerDeps, *, date_utc: datetime | None = No
         f"- date UTC: {date_utc.isoformat()}",
         f"- models used: {json.dumps(deps.model_names, ensure_ascii=False, sort_keys=True)}",
         f"- budget: spent ${spent_usd(main):.4f} / cap ${budget_cap(manifest):.4f}",
+        *reconciliation_lines,
         "",
         "## Covariate",
         "",
@@ -1353,6 +1503,7 @@ def build_real_deps(root: Path, *, index: str = "state/atlas") -> RunnerDeps:
             author_model="/".join(_role_model_names(config, "author_primary")) or "author_primary",
             scout_model="/".join(_role_model_names(config, "scout")) or "scout",
             jury_models=_role_model_names(config, "critic_jury"),
+            set_phase=lambda phase: setattr(real, "_phase", phase),
         )
 
     main_roles = RoleRuntime(
@@ -1363,6 +1514,7 @@ def build_real_deps(root: Path, *, index: str = "state/atlas") -> RunnerDeps:
         author_model="/".join(_role_model_names(config, "author_primary")) or "author_primary",
         scout_model="/".join(_role_model_names(config, "scout")) or "scout",
         jury_models=_role_model_names(config, "critic_jury"),
+        set_phase=lambda phase: setattr(main_real, "_phase", phase),
     )
 
     return RunnerDeps(

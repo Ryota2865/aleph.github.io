@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Callable
 
 from aleph.compose.generate import derive_criteria, evolve, generate_proposals
+from aleph.core.evaluation import EvaluationPacket
+from aleph.core.work_snapshot import WorkReader
 
 Author = Callable[[str], str]
 Critic = Callable[[str], str]
@@ -29,7 +31,14 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _section_prompt(audience: str, summary: str, previous_text: str, part: dict, style_policy: str) -> str:
+def _section_prompt(
+    audience: str,
+    summary: str,
+    previous_text: str,
+    part: dict,
+    style_policy: str,
+    evaluation_context: str = "",
+) -> str:
     position = f"{part.get('name', '')}({part.get('function', '')})"
     previous_block = previous_text if previous_text else "(なし。これは最初のセクションです)"
     lines = [
@@ -39,6 +48,7 @@ def _section_prompt(audience: str, summary: str, previous_text: str, part: dict,
         previous_block,
         f"構成上の現在位置: {position}",
         f"文体方針: {style_policy or '(指定なし)'}",
+        *( [evaluation_context] if evaluation_context else [] ),
         "このセクションの本文を執筆してください。",
     ]
     return "\n".join(lines)
@@ -83,7 +93,15 @@ def _record_perspective_deviation(work, composition: dict, draft_text: str) -> N
     )
 
 
-def write_draft(work, composition: dict, audience: str, author: Author, *, version: int = 1) -> Path:
+def write_draft(
+    work,
+    composition: dict,
+    audience: str,
+    author: Author,
+    *,
+    version: int = 1,
+    packet: EvaluationPacket | None = None,
+) -> Path:
     """composition["parts"] を階層文脈方式で順に執筆し、全体通読パスで縫合を平滑化する."""
     parts = composition.get("parts", [])
     style_policy = composition.get("style_policy", "")
@@ -93,7 +111,14 @@ def write_draft(work, composition: dict, audience: str, author: Author, *, versi
     for part in parts:
         previous_text = sections[-1] if sections else ""
         summary = accumulated[:_SUMMARY_CHARS]
-        prompt = _section_prompt(audience, summary, previous_text, part, style_policy)
+        prompt = _section_prompt(
+            audience,
+            summary,
+            previous_text,
+            part,
+            style_policy,
+            packet.render_for("L5") if packet is not None else "",
+        )
         text = author(prompt)
         sections.append(text)
         accumulated += text
@@ -144,6 +169,11 @@ def pipeline_to_draft(
     else:
         print("pipeline_to_draft: reusing criteria.md", file=sys.stderr)
     criteria_text = criteria_path.read_text(encoding="utf-8")
+    packet = EvaluationPacket.for_planned_draft(
+        WorkReader(work.dir).snapshot(), 1
+    )
+    packet.validate()
+    l4_context = packet.render_for("L4")
 
     proposals = []
     for p in sorted(work.compositions.glob("proposal_*.json")):
@@ -156,14 +186,14 @@ def pipeline_to_draft(
     if len(proposals) >= 3:
         print(f"pipeline_to_draft: reusing {len(proposals)} proposals", file=sys.stderr)
     else:
-        proposals = generate_proposals(work, criteria_text, materials or [], audience, author, n=3)
+        proposals = generate_proposals(work, l4_context, materials or [], audience, author, n=3)
 
     winner_path = work.compositions / "winner.json"
     if winner_path.exists():
         winner = json.loads(winner_path.read_text(encoding="utf-8"))
         print("pipeline_to_draft: reusing winner.json", file=sys.stderr)
     else:
-        winner = evolve(work, proposals, criteria_text, audience, author, critic, generations=generations)
+        winner = evolve(work, proposals, l4_context, audience, author, critic, generations=generations)
         winner_path.write_text(json.dumps(winner, ensure_ascii=False, indent=2), encoding="utf-8")
 
     work.append_decision(
@@ -176,7 +206,7 @@ def pipeline_to_draft(
         }
     )
 
-    path = write_draft(work, winner, audience, author)
+    path = write_draft(work, winner, audience, author, packet=packet)
 
     work.append_decision(
         {

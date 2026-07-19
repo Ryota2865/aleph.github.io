@@ -1674,3 +1674,19 @@ w0008一式・宣言・EXP報告のFable5チャット受け渡しを打診（回
   warningとして保持した。
 - 自己検証: `uv run pytest -q -m 'not local' --capture=no` =
   **283 passed, 1 deselected**。正式判定は別Claude Code担当の独立監査待ち。
+
+## 2026-07-19: Phase 3 Experiment・評価文脈module正式PASS
+
+- `designs/phase3-experiment-evaluation.md`を設計ゲートとし、`ExperimentRun`、
+  call/charge provenance、charge-event一次台帳、experiment cap、blind selection、
+  canonical promotion、制約amendment、`EvaluationPacket`を実装した。
+- L4〜L7のconsumerを同じpacketへ移行し、packet hashとeffective constraints hashを
+  review/trajectoryへ記録。既存w0008 artifactは書き換えず、event authorityがない場合だけ
+  legacy projectionを読む互換経路を残した。Phase 4およびw0009には進んでいない。
+- 候補tree `354749a9d924fe7ecdd3e7a4bae3d946d28d1d78`を別Claude Code担当が
+  read-only監査。focused 9件、非local 293件、独立故障注入33 assertionsを再現し、
+  P0/P1/P2なしで**VERDICT: PASS**。原文は
+  `reports/PHASE3_EXPERIMENT_EVALUATION_AUDIT_20260719.md`。
+- P3残余: legacy criteria proseは構造化解除から自動消去しない、global cap直前のcallは
+  provider応答後にunreconciledで拒否し得る、main workのcanonical表示が緩い、L4のdead read。
+  いずれもPhase 3契約を阻害せず、監査済みcodeを変えずに保持した。

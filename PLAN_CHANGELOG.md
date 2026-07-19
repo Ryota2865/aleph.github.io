@@ -1,5 +1,26 @@
 # PLAN 変更履歴
 
+## 0.7.20-11 (2026-07-19) — Phase 3正式独立監査PASS
+
+全面採用済み`designs/next-designer-execution-plan.md` Phase 3をCodexが施工し、
+施工者と異なるClaude Code担当がtree
+`354749a9d924fe7ecdd3e7a4bae3d946d28d1d78`をread-onlyで独立監査した。
+正式記録は`reports/PHASE3_EXPERIMENT_EVALUATION_AUDIT_20260719.md`。
+
+1. `ExperimentRun`のimmutable manifest、hash-chain event、arm/work対応、deviation、
+   blind selection、reveal順序、一回限りのcanonical promotionを独立再現した。
+2. call/charge provenance、charge-event一次台帳、experiment scope cap、三者照合が、
+   欠落・重複・不一致・restart・上限超過でfail closedになることを確認した。
+3. `EvaluationPacket`と制約amendmentをL4〜L7が共有し、packet/effective constraints hashの
+   不一致は外部adapter呼出し前に拒否され、解除済み制約は減点不能と表示されることを確認した。
+4. focusedは9 passed、独立故障注入は33 assertions passed、非local全体は
+   **293 passed, 1 deselected**、snapshot/README consistencyは5 passed、diff checkはclean。
+5. P0/P1/P2はなく、**VERDICT: PASS**。legacy proseへの解除反映、global cap直前の
+   post-provider拒否、main workの緩いcanonical表示、dead readの4件をP3残余リスクとして保持する。
+
+本項はPLANの意味、受入条件、終端状態、予算規則・上限を変更せず、採用済みPhase 3の
+正式監査ゲート完了を記録する。Phase 4およびw0009には着手していない。
+
 ## 0.7.20-10 (2026-07-19) — Phase 2正式独立再監査PASS
 
 施工者と異なるClaude Code担当がPhase 2を独立監査し、初回は`ModelOutput`の

@@ -7,6 +7,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from aleph.core.model_output import parse_model_output
+from aleph.core.evaluation import EvaluationPacket
 
 
 def _coerce_publish(value) -> bool | None:
@@ -79,6 +80,7 @@ def decide_publication(
     author,
     decided_by: str,
     first_publish_ack: bool = True,
+    packet: EvaluationPacket | None = None,
 ) -> dict:
     """公開可否を判定し、L7判断としてdecisions.jsonlに記録する（PLAN §7.3d・§3）.
 
@@ -87,6 +89,8 @@ def decide_publication(
     帰結ではなく著者の選択になる（自己宛ては非公開を意味しない）。
     first_publish_ack=False のときは、他条件が公開可でも SHELVE（初回公開の人間承認。0.7.14）。
     """
+    if packet is not None:
+        packet.validate()
     comparison = None
 
     if not quality_floor_passed:
@@ -116,14 +120,20 @@ def decide_publication(
             decision = "PUBLISH"
             reason = "著者が公開を選択し、品質の床・公開数上限を満たし、棚の既公開作との比較論述で公開価値を確認した。"
 
-    work.append_decision(
-        {
+    record = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "layer": "L7",
             "decision": f"publication:{decision}",
             "reason": reason,
             "decided_by": decided_by,
         }
-    )
+    if packet is not None:
+        record["evaluation_packet_hash"] = packet.hash
+        record["effective_constraints_hash"] = packet.effective_constraints_hash
+    work.append_decision(record)
 
-    return {"decision": decision, "reason": reason, "comparison": comparison}
+    result = {"decision": decision, "reason": reason, "comparison": comparison}
+    if packet is not None:
+        result["evaluation_packet_hash"] = packet.hash
+        result["effective_constraints_hash"] = packet.effective_constraints_hash
+    return result

@@ -15,6 +15,7 @@ import json
 import subprocess
 import threading
 import time
+import uuid
 from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
@@ -76,6 +77,20 @@ class Provider(Protocol):
         logprobs: bool = False,
         seed: int | None = None,
     ) -> LLMResponse: ...
+
+
+class ProvenanceError(ValueError):
+    """An experiment call lacks the context required for audit and charging."""
+
+
+@dataclass(frozen=True)
+class CallContext:
+    command_id: str
+    work_id: str
+    experiment_id: str
+    phase: str
+    arm: str
+    charged_to: str
 
 
 def sha256_text(text: str) -> str:
@@ -193,8 +208,11 @@ class Router:
         if ledger == "harness":
             return 1.0
         if ledger == "api":
-            prompt_chars = sum(len(m.content) for m in messages)
-            est_prompt_tokens = max(1, prompt_chars // 4)
+            # UTF-8 byte length is a conservative tokenizer-independent upper bound for the
+            # configured API models. Experiment caps must fail before a provider call, not after
+            # an optimistic chars/4 estimate.
+            prompt_bytes = sum(len(m.content.encode("utf-8")) for m in messages)
+            est_prompt_tokens = max(1, prompt_bytes)
             est_completion_tokens = kwargs.get("max_tokens") or 1024
             pricing = decl.get("pricing")
             if pricing:
@@ -214,7 +232,43 @@ class Router:
         # work_id はBudgetの作品別サブ台帳（usd_per_work）を通す経路。プロバイダへは渡さない
         # （Codex監査 finding: Router.callがwork_idを一切伝播しておらず、作品別上限が
         # 事実上機能していなかった）。
-        work_id = overrides.pop("work_id", None)
+        context = overrides.pop("call_context", None)
+        if context is not None and not isinstance(context, CallContext):
+            raise ProvenanceError("call_context must be CallContext")
+        if context is not None:
+            supplied = {
+                key
+                for key in ("command_id", "work_id", "experiment_id", "phase", "arm", "charged_to")
+                if key in overrides
+            }
+            if supplied:
+                raise ProvenanceError(
+                    "call_context cannot be combined with scalar provenance: "
+                    + ", ".join(sorted(supplied))
+                )
+        work_id = context.work_id if context else overrides.pop("work_id", None)
+        experiment_id = context.experiment_id if context else overrides.pop("experiment_id", None)
+        command_id = context.command_id if context else overrides.pop("command_id", None)
+        phase = context.phase if context else overrides.pop("phase", None)
+        arm = context.arm if context else overrides.pop("arm", None)
+        charged_to = context.charged_to if context else overrides.pop("charged_to", None)
+        if experiment_id is not None:
+            missing = [
+                name
+                for name, value in (
+                    ("command_id", command_id),
+                    ("work_id", work_id),
+                    ("phase", phase),
+                    ("arm", arm),
+                    ("charged_to", charged_to),
+                )
+                if value is None or str(value).strip() == ""
+            ]
+            if missing:
+                raise ProvenanceError(
+                    "experiment call provenance is incomplete: " + ", ".join(missing)
+                )
+        call_id = str(uuid.uuid4())
         provider_name = decl["provider"]
         model = decl.get("model") or decl.get("cli") or provider_name
         ledger = self._ledger_for(provider_name)
@@ -228,7 +282,10 @@ class Router:
         kwargs.update(overrides)
 
         self.budget.precheck(
-            ledger, self._precheck_amount(ledger, provider_name, messages, kwargs, decl), work_id=work_id
+            ledger,
+            self._precheck_amount(ledger, provider_name, messages, kwargs, decl),
+            work_id=work_id,
+            charged_to=charged_to,
         )
 
         using_fake = getattr(self, "_provider_for_test", None) is not None
@@ -262,25 +319,46 @@ class Router:
             )
             resp = replace(resp, cost_usd=round(cost, 6))
 
-        self.budget.charge(ledger, self._charge_amount(ledger, resp), work_id=work_id)
-
+        provenance = {
+            "call_id": call_id,
+            "command_id": command_id,
+            "work_id": work_id,
+            "experiment_id": experiment_id,
+            "phase": phase,
+            "arm": arm,
+            "charged_to": charged_to,
+        }
         prompt_text = "\n".join(f"{m.role}:{m.content}" for m in messages)
         response_hash = resp.response_hash or sha256_text(resp.text)
+        record = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "role": role,
+            "provider": resp.provider,
+            "model": resp.model,
+            "params": kwargs,
+            "prompt_hash": sha256_text(prompt_text),
+            "response_hash": response_hash,
+            "usage": {
+                "prompt_tokens": resp.usage.prompt_tokens,
+                "completion_tokens": resp.usage.completion_tokens,
+            },
+            "cost_usd": resp.cost_usd,
+            **provenance,
+        }
+        try:
+            charge = self.budget.charge(
+                ledger,
+                self._charge_amount(ledger, resp),
+                meta=provenance,
+                work_id=work_id,
+            )
+        except Exception:
+            # The provider call already happened. Preserve it as explicitly unreconciled rather
+            # than violating the all-calls-are-logged invariant or fabricating a charge.
+            self.logger.log({**record, "charge_id": None, "billing_status": "unreconciled"})
+            raise
         self.logger.log(
-            {
-                "ts": datetime.now(timezone.utc).isoformat(),
-                "role": role,
-                "provider": resp.provider,
-                "model": resp.model,
-                "params": kwargs,
-                "prompt_hash": sha256_text(prompt_text),
-                "response_hash": response_hash,
-                "usage": {
-                    "prompt_tokens": resp.usage.prompt_tokens,
-                    "completion_tokens": resp.usage.completion_tokens,
-                },
-                "cost_usd": resp.cost_usd,
-            }
+            {**record, "charge_id": charge["charge_id"], "billing_status": "charged"}
         )
         return resp
 

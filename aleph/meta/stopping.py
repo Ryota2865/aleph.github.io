@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Callable
 
 from aleph.core.model_output import parse_model_output
+from aleph.core.evaluation import EvaluationPacket
 
 
 def decide_stop(
@@ -17,6 +18,7 @@ def decide_stop(
     k: int = 3,
     epsilon: float = 0.05,
     budget_exhausted: bool = False,
+    packet: EvaluationPacket | None = None,
 ) -> dict:
     """擱筆の3経路を優先順位つきで判定する（PLAN §7.3a）.
 
@@ -27,12 +29,21 @@ def decide_stop(
     (3) 収束: 直近k版のスコア改善幅がすべてepsilon未満、かつ改稿指示が循環（同一指示の再出現）
     いずれでもなければ継続。
     """
+    if packet is not None:
+        packet.validate()
+
+    def result(payload: dict) -> dict:
+        if packet is not None:
+            payload["evaluation_packet_hash"] = packet.hash
+            payload["effective_constraints_hash"] = packet.effective_constraints_hash
+        return payload
+
     if budget_exhausted:
-        return {
+        return result({
             "stop": True,
             "path": "budget",
             "reason": "予算・時間の残量が尽きたため強制的に擱筆する。",
-        }
+        })
 
     recent = trajectory[-k:] if trajectory else []
 
@@ -42,7 +53,7 @@ def decide_stop(
         score_rising = all(b > a for a, b in zip(scores, scores[1:]))
         novelty_falling = all(b < a for a, b in zip(novelties, novelties[1:]))
         if score_rising and novelty_falling:
-            return {
+            return result({
                 "stop": True,
                 "path": "over_polish",
                 "alarm": True,
@@ -50,7 +61,7 @@ def decide_stop(
                     "直近版でスコアは上昇し続けているが新奇性査読の距離が縮んでいる"
                     "(無難化)。過剰彫琢として即時擱筆を推奨する(PLAN §16.4)。"
                 ),
-            }
+            })
 
     if len(recent) >= 2:
         scores = [float(record["mean_score"]) for record in recent]
@@ -59,14 +70,14 @@ def decide_stop(
         # 磨き続けても回復する保証はなく実費だけが増える(w0002実ラン 8.80→8.33 で観測。
         # 擱筆判断の趣旨=「これ以上の介入が作品を良くしない徴候で止まる」PLAN §7.3a に従う)
         if scores[-1] < scores[-2] - epsilon:
-            return {
+            return result({
                 "stop": True,
                 "path": "regression",
                 "reason": (
                     f"直近の改稿でスコアが {scores[-2]:.2f}→{scores[-1]:.2f} と下落した。"
                     "改稿が作品を損ねているため擱筆する。"
                 ),
-            }
+            })
 
         improvements = [b - a for a, b in zip(scores, scores[1:])]
         converged_score = all(delta < epsilon for delta in improvements)
@@ -76,20 +87,20 @@ def decide_stop(
         cycled = len(flattened) != len(set(flattened))
 
         if converged_score and cycled:
-            return {
+            return result({
                 "stop": True,
                 "path": "convergence",
                 "reason": (
                     f"直近{len(recent)}版のスコア改善幅がすべてepsilon={epsilon}未満で、"
                     "かつ改稿指示に同一指摘の再出現(循環)が確認された。"
                 ),
-            }
+            })
 
-    return {
+    return result({
         "stop": False,
         "path": None,
         "reason": "改善余地があるか、循環・過剰彫琢いずれの兆候も確認できない。",
-    }
+    })
 
 
 def completion_declaration(

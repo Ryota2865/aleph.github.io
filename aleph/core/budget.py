@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -73,6 +74,8 @@ class Budget:
         self.config = config
         self.state_path = Path(state_path) if state_path else None
         self._ledgers: dict[str, Ledger] = {}
+        self._charge_events: list[dict] = []
+        self._scope_limits: dict[str, tuple[str, float]] = {}
         self._period_keys: dict[str, str] = {}
         for name in LEDGERS:
             key, period = _LEDGER_LIMIT_KEY[name]
@@ -93,7 +96,25 @@ class Budget:
             ledger.events.clear()
             self._period_keys[name] = current
 
-    def precheck(self, ledger: str, amount: float, work_id: str | None = None) -> None:
+    def register_scope_limit(self, charged_to: str, *, ledger: str, limit: float) -> None:
+        """Register an immutable sub-envelope such as one complete experiment cap."""
+        if ledger not in LEDGERS or limit <= 0:
+            raise ValueError("scope limit requires a known ledger and positive limit")
+        existing = self._scope_limits.get(charged_to)
+        value = (ledger, float(limit))
+        if existing is not None and existing != value:
+            raise ValueError(f"scope limit is immutable: {charged_to}")
+        self._scope_limits[charged_to] = value
+        if self.state_path:
+            self._save()
+
+    def precheck(
+        self,
+        ledger: str,
+        amount: float,
+        work_id: str | None = None,
+        charged_to: str | None = None,
+    ) -> None:
         """消費前の照会。超過が予見されれば BudgetExceeded を送出し、消費しない."""
         self._roll_if_needed(ledger)
         l = self._ledgers[ledger]
@@ -103,6 +124,19 @@ class Budget:
             spent = self._work_spent.get(work_id, 0.0)
             if spent + amount > self._work_limit:
                 raise BudgetExceeded(f"api:{work_id}", self._work_limit, spent, amount)
+        scope = self._scope_limits.get(charged_to or "")
+        if scope is not None:
+            scope_ledger, scope_limit = scope
+            if scope_ledger != ledger:
+                raise ValueError(f"scope {charged_to} is registered for {scope_ledger}, not {ledger}")
+            spent = sum(
+                float(event.get("amount", 0.0))
+                for event in self._charge_events
+                if event.get("ledger") == ledger
+                and event.get("charged_to") == charged_to
+            )
+            if spent + amount > scope_limit:
+                raise BudgetExceeded(str(charged_to), scope_limit, spent, amount)
 
     def work_remaining(self, work_id: str) -> float | None:
         """作品別上限(usd_per_work)の残額。上限未宣言なら None."""
@@ -110,15 +144,42 @@ class Budget:
             return None
         return self._work_limit - self._work_spent.get(work_id, 0.0)
 
-    def charge(self, ledger: str, amount: float, meta: dict | None = None, work_id: str | None = None) -> None:
+    def charge(
+        self,
+        ledger: str,
+        amount: float,
+        meta: dict | None = None,
+        work_id: str | None = None,
+    ) -> dict:
         self._roll_if_needed(ledger)
         l = self._ledgers[ledger]
+        details = dict(meta or {})
+        self.precheck(
+            ledger,
+            amount,
+            # `charge` has historically also been the projection/recovery injection seam. The
+            # work cap is enforced by Router before provider execution; reapplying it here would
+            # reject legitimate aggregate recovery rows. Complete experiment scope and global
+            # ledger limits are still checked against the actual charge.
+            work_id=None,
+            charged_to=str(details.get("charged_to")) if details.get("charged_to") else None,
+        )
+        event = {
+            "charge_id": str(details.pop("charge_id", "") or uuid.uuid4()),
+            "ledger": ledger,
+            "amount": amount,
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "period_key": self._period_keys[ledger],
+            **details,
+        }
         l.spent += amount
-        l.events.append({"ts": _period_key("day"), "amount": amount, "meta": meta or {}})
+        l.events.append(event)
+        self._charge_events.append(event)
         if ledger == "api" and work_id:
             self._work_spent[work_id] = self._work_spent.get(work_id, 0.0) + amount
         if self.state_path:
             self._save()
+        return event
 
     def status(self) -> dict:
         """`aleph status` の表示元。3系統の残量を返す."""
@@ -138,6 +199,11 @@ class Budget:
                 for name, l in self._ledgers.items()
             },
             "work_spent": self._work_spent,  # 作品ごとの上限（Codex監査 finding 4）
+            "charge_events": self._charge_events,
+            "scope_limits": {
+                name: {"ledger": value[0], "limit": value[1]}
+                for name, value in self._scope_limits.items()
+            },
         }
         self.state_path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -152,3 +218,17 @@ class Budget:
                 self._ledgers[name].spent = data.get("spent", 0.0)
                 self._period_keys[name] = data.get("period_key", self._period_keys[name])
         self._work_spent.update(payload.get("work_spent", {}))
+        events = payload.get("charge_events", [])
+        if isinstance(events, list):
+            self._charge_events.extend(event for event in events if isinstance(event, dict))
+            for event in self._charge_events:
+                ledger = event.get("ledger")
+                if ledger in self._ledgers and event.get("period_key") == self._period_keys[ledger]:
+                    self._ledgers[ledger].events.append(event)
+        scopes = payload.get("scope_limits", {})
+        if isinstance(scopes, dict):
+            for name, value in scopes.items():
+                if isinstance(value, dict) and value.get("ledger") in LEDGERS:
+                    self._scope_limits[str(name)] = (
+                        str(value["ledger"]), float(value["limit"])
+                    )

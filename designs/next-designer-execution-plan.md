@@ -181,6 +181,12 @@ snapshot = WorkReader(work_dir).snapshot()
 
 ## Phase 3 — Experimentと評価文脈を一級化する
 
+状態: **正式PASS（2026-07-19）**。Codex施工後、Claude Codeの独立監査で
+P0–P2なし、必須7分類の故障注入がすべてfail closedと確認済み。設計ゲートは
+`designs/phase3-experiment-evaluation.md`、監査記録は
+`reports/PHASE3_EXPERIMENT_EVALUATION_AUDIT_20260719.md`。非local検証は
+293 passed, 1 deselected。
+
 ### 3.1 最小の`ExperimentRun`
 
 持つもの:

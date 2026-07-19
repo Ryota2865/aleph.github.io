@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable
 
 from aleph.critique.review import sanitize_critique
+from aleph.core.evaluation import EvaluationPacket
 
 
 def _split_heading_sections(text: str) -> list[str]:
@@ -107,7 +108,15 @@ def _targeted_section_revise(
     return "".join(revised_sections)
 
 
-def revise(work, report: dict, audience: str, author: Callable[[str], str], *, version: int) -> Path:
+def revise(
+    work,
+    report: dict,
+    audience: str,
+    author: Callable[[str], str],
+    *,
+    version: int,
+    packet: EvaluationPacket | None = None,
+) -> Path:
     """前版全文+批評+改稿指示(自然言語のみ)を author に渡し、次版を書く（PLAN §7.2）."""
     previous_text = work.draft_path(version).read_text(encoding="utf-8")
     criteria_review = report.get("criteria_review", {})
@@ -119,6 +128,7 @@ def revise(work, report: dict, audience: str, author: Callable[[str], str], *, v
         "",
         "以下は前版の草稿です。批評と改稿指示だけに基づいて改稿してください"
         "（数値の評点は与えられません。文章そのものの質で判断してください）。",
+        *( [packet.render_for("L5")] if packet is not None else [] ),
         "",
         "## 前版",
         previous_text,

@@ -38,6 +38,7 @@ class DraftSnapshot:
 
 @dataclass(frozen=True)
 class WorkSnapshot:
+    work_dir: str
     work_id: str
     title: str
     lifecycle: State | None
@@ -63,6 +64,7 @@ class WorkSnapshot:
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
+        payload.pop("work_dir", None)  # internal source locator, not repository/public status data
         payload["lifecycle"] = self.lifecycle.value if self.lifecycle else None
         payload["publication"] = self.publication.value
         return payload
@@ -170,6 +172,7 @@ class WorkReader:
             }
         )
         return WorkSnapshot(
+            work_dir=str(self.work_dir),
             work_id=self.work_id,
             title=title,
             lifecycle=lifecycle,
@@ -343,8 +346,14 @@ class WorkReader:
         experiment = seed.get("experiment")
         if not isinstance(experiment, dict):
             return ()
-        value = experiment.get("criteria_constraints")
-        return (value,) if isinstance(value, str) and value.strip() else ()
+        from aleph.core.constraints import ConstraintError, resolve_constraints
+
+        try:
+            resolution = resolve_constraints(experiment)
+        except ConstraintError as exc:
+            warnings.append(f"experiment constraints are invalid: {exc}")
+            return ()
+        return tuple(item.text for item in resolution.effective)
 
     def _colophon(
         self, rows: list[dict[str, Any]], warnings: list[str]
@@ -393,6 +402,25 @@ class WorkReader:
     def _canonical(
         self, payload: dict[str, Any], warnings: list[str]
     ) -> tuple[bool | None, str | None]:
+        experiment_root = self.work_dir
+        arm_name: str | None = None
+        if self.work_dir.parent.name == "ablation":
+            experiment_root = self.work_dir.parents[1]
+            arm_name = self.work_dir.name
+        if (experiment_root / "experiment" / "events.jsonl").exists():
+            try:
+                from aleph.core.experiment import ExperimentRun
+
+                events = ExperimentRun.open(experiment_root).events()
+                promotions = [event for event in events if event["type"] == "canonical_promotion"]
+                if not promotions:
+                    warnings.append("experiment has no canonical promotion event")
+                    return None, None
+                canonical_arm = str(promotions[-1]["arm"])
+                return (arm_name == canonical_arm if arm_name is not None else True), canonical_arm
+            except (OSError, RuntimeError, ValueError) as exc:
+                warnings.append(f"canonical promotion event is invalid: {exc}")
+                return None, None
         meta = _read_json(self.work_dir / "meta.json", warnings, "meta.json")
         canonical: bool | None = True
         if isinstance(meta, dict) and "canonical" in meta:

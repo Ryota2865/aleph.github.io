@@ -224,7 +224,8 @@ def test_pipeline_to_draft_passes_materials_to_generate_proposals(monkeypatch, t
     def fake_evolve(work_, proposals, criteria, audience, author, critic, *, generations=2):
         return proposals[0]
 
-    def fake_write(work_, composition, audience, author, *, version=1):
+    def fake_write(work_, composition, audience, author, *, version=1, packet=None):
+        assert packet is not None
         path = work_.draft_path(version)
         path.write_text("本文", encoding="utf-8")
         return path
@@ -420,6 +421,7 @@ def test_pipeline_to_draft_reuses_compose_artifacts_on_resume(monkeypatch, tmp_p
     import aleph.draft.write as write_module
 
     work = Work(tmp_path, "w6205")
+    work.create({})
     work.compositions.mkdir(parents=True, exist_ok=True)
     work.draft_path(1).parent.mkdir(parents=True, exist_ok=True)
     (work.compositions / "criteria.md").write_text("既存の基準", encoding="utf-8")
@@ -442,7 +444,8 @@ def test_pipeline_to_draft_reuses_compose_artifacts_on_resume(monkeypatch, tmp_p
     monkeypatch.setattr(write_module, "generate_proposals", must_not_call)
     monkeypatch.setattr(write_module, "evolve", must_not_call)
 
-    def fake_write(work_, composition, audience, author, *, version=1):
+    def fake_write(work_, composition, audience, author, *, version=1, packet=None):
+        assert packet is not None
         assert composition == proposal
         path = work_.draft_path(version)
         path.write_text("本文", encoding="utf-8")
