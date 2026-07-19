@@ -1,0 +1,62 @@
+{
+  "rows": [
+    {
+      "arm": "era_unpinned",
+      "call_evidence": [
+        {
+          "call_id": "adc6853d-a73e-4b40-b1cc-ed6bffc9fc58",
+          "charge_id": "4dfc39f1-b01a-4099-a94b-6bc3f3d9c605",
+          "model": "claude-opus-4-8",
+          "response_hash": "1a3c9acb575f6e13727632097279c86b0ae872b69dbceb0f7e6b59f4d9dca8fe"
+        },
+        {
+          "call_id": "7779839c-bea1-4edd-a514-372b187f9cd7",
+          "charge_id": "13bea900-4835-4303-8f05-eb847093cc48",
+          "model": "gpt-5.5",
+          "response_hash": "d18c4c2733474f79f818787a9a8b374c4779b687aa0b6e7fc7493e7c0dca4bb9"
+        },
+        {
+          "call_id": "820892b4-1a75-4583-a9e0-0c28864791ef",
+          "charge_id": "03b102fa-c9b2-4560-a046-5cb4ee49119f",
+          "model": "Qwen3.6-27B-Q4_K_M",
+          "response_hash": "84ff24715c895b5d81d9dee5d451699fb1095795ae575eabc10b173bd520b9e6"
+        }
+      ],
+      "effective_constraints_hash": "2a42c728906152549fbd074c8fb4c03916ead086ecd2a3e21a44f09580dea346",
+      "packet_hash": "eea9ff9c7bb90ce47fbeb8b18868e08ad2ae9b2a89f8dc9c018dc87b6499e08f",
+      "rationales": [],
+      "reveal_event_id": "exp-w0009-l2-era-pin:000009",
+      "scores": [],
+      "status": "INCOMPLETE_PARSE"
+    },
+    {
+      "arm": "era_pinned",
+      "call_evidence": [
+        {
+          "call_id": "d7823d60-af46-4542-ad31-fc16fa403880",
+          "charge_id": "ffa2c5aa-5c6d-4827-839b-5a170dcc7b7a",
+          "model": "claude-opus-4-8",
+          "response_hash": "2bfb5b636bd230d078271863d8f6dba9d9be44a37f93f0e481caf1093d5e7cf2"
+        },
+        {
+          "call_id": "b414cd57-43cd-4b6d-9874-f5b584e625ae",
+          "charge_id": "ee316b36-94ca-4010-aad1-2532112276ff",
+          "model": "gpt-5.5",
+          "response_hash": "a33edde3afd1bc4201e7615f52780d3a28510634f0cdcbcb1d40b738a108406c"
+        },
+        {
+          "call_id": "455551fc-dc1c-4d33-a1c0-6478b24443e0",
+          "charge_id": "11e3a980-6a9c-41a9-96b8-445765aac1f2",
+          "model": "Qwen3.6-27B-Q4_K_M",
+          "response_hash": "cb308ac8ecff4777b1b1a68b8e4c8b831a1af264cc2bdfbdd552b79d56c0e161"
+        }
+      ],
+      "effective_constraints_hash": "2a42c728906152549fbd074c8fb4c03916ead086ecd2a3e21a44f09580dea346",
+      "packet_hash": "1ce67789cd2428744cb6e795614a8661c490b0bdd34450ec1c87ccd689557329",
+      "rationales": [],
+      "reveal_event_id": "exp-w0009-l2-era-pin:000009",
+      "scores": [],
+      "status": "INCOMPLETE_PARSE"
+    }
+  ]
+}

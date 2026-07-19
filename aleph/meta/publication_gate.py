@@ -80,6 +80,7 @@ def decide_publication(
     author,
     decided_by: str,
     first_publish_ack: bool = True,
+    budget_exhausted: bool = False,
     packet: EvaluationPacket | None = None,
 ) -> dict:
     """公開可否を判定し、L7判断としてdecisions.jsonlに記録する（PLAN §7.3d・§3）.
@@ -93,7 +94,10 @@ def decide_publication(
         packet.validate()
     comparison = None
 
-    if not quality_floor_passed:
+    if budget_exhausted:
+        decision = "SHELVE"
+        reason = "API予算残額が追加の公開意思確認に足りないため、再課金せず棚に戻す。"
+    elif not quality_floor_passed:
         decision = "SHELVE"
         reason = "品質の床を通過していないため、公開せず棚に戻す。"
     elif monthly_published >= max_per_month:

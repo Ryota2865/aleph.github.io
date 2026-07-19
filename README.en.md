@@ -11,14 +11,14 @@ An autonomous production system for literary expression with LLMs. It searches f
 ## Status
 
 <!-- repository-snapshot:start -->
-- Works recorded: 8 (through w0008); terminal: 8.
+- Works recorded: 9 (through w0009); terminal: 9.
 - Published works: 5 — w0004 半呼吸, w0005 床の硬さ, w0006 灯のうしろ, w0007 折り目, w0008 暗い側
-- Formal audit artifacts: 16; tests and formal audit verdicts are reported separately.
+- Formal audit artifacts: 17; tests and formal audit verdicts are reported separately.
 <!-- repository-snapshot:end -->
 
-All M0–M8 milestones and the first three phases of the adopted interpretation/replay plan have been implemented and have passed their formal independent audits. The designer writes the contracts (acceptance tests), while implementation is carried out under cross-audit by construction agents (Claude Code / Codex / pi / hermes) (PLAN §10 and §12).
+All M0–M8 milestones and the first four phases of the adopted interpretation/replay plan have been implemented and have passed their formal independent audits. The designer writes the contracts (acceptance tests), while implementation is carried out under cross-audit by construction agents (Claude Code / Codex / pi / hermes) (PLAN §10 and §12).
 
-- **Integrated runs**: w0001–w0008 completed with real LLMs. w0001–w0003 are SHELVED; w0004–w0008 are PUBLISHED.
+- **Integrated runs**: w0001–w0009 completed with real LLMs. w0001–w0003 and w0009 are SHELVED; w0004–w0008 are PUBLISHED. w0009 ended through the preregistered all-phase budget path during the L2 era-attribute intervention.
 - **M7 sprint (2026-07)**: Work-specific material generation, measured niche scoring, repair of the revision cutoff, and the initial wiring of §5.4’s AI-specific techniques (anti-cliché and token-layer poetics). See [PLAN_CHANGELOG.md](PLAN_CHANGELOG.md) 0.7.14 for details.
 - **Public site**: `docs/` (GitHub Pages), currently carrying five published works plus production records, criticism, research, and Japanese/English mirrors. Serve it through Settings → Pages → `main` / `/docs`.
 

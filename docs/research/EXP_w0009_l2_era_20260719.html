@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<meta name='description' content='ALEPH研究: 同一意味核からL2時代属性だけを外し、家風の時代標識がどこで設置されるかを事前登録規則で測った。'>
+<title>EXP w0009 — L2時代属性介入</title>
+<style>
+:root {
+  --paper: #fbf8f0;
+  --ink: #2b2721;
+  --muted: #7d7468;
+  --line: #ded6c8;
+  --accent: #8a5a2b;
+  --accent-soft: #efe5d8;
+  --table: #fffdf8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171511;
+    --ink: #ddd6c9;
+    --muted: #9c9284;
+    --line: #332e27;
+    --accent: #c99b65;
+    --accent-soft: #272219;
+    --table: #1d1a15;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  line-height: 1.95;
+  overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: .12em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .18rem; }
+.site-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.2rem 1.2rem 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .8rem;
+}
+.site-nav a { white-space: nowrap; text-decoration: none; }
+.site-nav a[aria-current='page'] { color: var(--ink); border-bottom: 1px solid var(--accent); }
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3.2rem 1.2rem 5rem;
+}
+h1, h2, h3 { line-height: 1.45; font-weight: 600; }
+h1 { margin: 0 0 1.8rem; font-size: 1.78rem; letter-spacing: .08em; }
+h2 {
+  margin: 3rem 0 1rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.08rem;
+  letter-spacing: .08em;
+}
+h3 { margin: 2.2rem 0 .7rem; font-size: 1rem; letter-spacing: .04em; }
+p { margin: 0 0 1.15rem; text-align: justify; white-space: pre-wrap; }
+ul { margin: 0 0 1.4rem 1.4rem; padding: 0; }
+li { margin: .25rem 0; }
+.lead { color: var(--ink); font-size: 1.02rem; }
+.meta, .summary, footer { color: var(--muted); font-size: .88rem; text-align: left; }
+.meta p, .summary, footer p, nav p { text-align: left; }
+.meta, .note, .provenance, .production-note, .work-card, .entry-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.context {
+  margin: 2rem 0 2.2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.context h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+.context ul { margin-bottom: 0; }
+.note, .provenance, .production-note, .research-track {
+  margin: 1.8rem 0;
+  padding: 1rem 1.1rem;
+  border-left: .2rem solid var(--accent);
+  background: var(--accent-soft);
+}
+.note > :first-child, .provenance > :first-child,
+.production-note > :first-child, .research-track > :first-child { margin-top: 0; }
+.process-flow, .work-grid, .entry-grid {
+  display: grid;
+  gap: .8rem;
+  margin: 1.2rem 0 2rem;
+}
+.process-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); counter-reset: process; }
+.process-step, .work-card, .entry-card {
+  padding: .85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--table);
+}
+.process-step { counter-increment: process; }
+.process-step::before { content: counter(process, decimal-leading-zero); color: var(--accent); margin-right: .55rem; }
+.work-card h3, .entry-card h3 { margin-top: 0; }
+.work-card p, .entry-card p { text-align: left; }
+.entry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.toc { margin: 1.4rem 0 2rem; font-size: .9rem; }
+.home-intro { margin: 0 0 4rem; font-size: 1.14rem; line-height: 2.15; }
+.home-intro p { text-align: left; }
+.work-list { list-style: none; margin: 1.2rem 0 2.5rem; padding: 0; }
+.work-entry { padding: 1.35rem 0; border-top: 1px solid var(--line); }
+.work-entry:last-child { border-bottom: 1px solid var(--line); }
+.work-entry h2, .work-entry h3 { margin: 0 0 .45rem; padding: 0; border: 0; font-size: 1.18rem; }
+.work-entry p { margin-bottom: .5rem; text-align: left; }
+.pathways { margin: 3.5rem 0 0; display: flex; flex-wrap: wrap; gap: .55rem 1.25rem; }
+.pathways a { white-space: nowrap; }
+.work-text { margin-top: 3rem; }
+.work-text > h2:first-child { display: none; }
+.afterword { margin-top: 5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+details.production-note { padding: 0; border-left: 0; background: transparent; }
+details.production-note summary {
+  cursor: pointer;
+  color: var(--accent);
+  margin: 1rem 0;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+details.production-note[open] { padding: 1rem 1.1rem; border-left: .2rem solid var(--accent); background: var(--accent-soft); }
+details.production-note[open] summary { margin-top: 0; }
+.record-groups { display: grid; gap: 2.5rem; }
+.record-group h2 { margin-top: 0; }
+.table-wrap { width: 100%; overflow-x: auto; }
+table {
+  width: 100%;
+  margin: 1.2rem 0 2rem;
+  border-collapse: collapse;
+  background: var(--table);
+  font-size: .88rem;
+  line-height: 1.6;
+}
+th, td {
+  padding: .52rem .6rem;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+th { text-align: left; font-weight: 600; }
+footer {
+  margin-top: 4rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+footer a { overflow-wrap: anywhere; }
+@media (max-width: 42rem) {
+  main { padding-top: 2.2rem; }
+  .process-flow, .entry-grid { grid-template-columns: 1fr; }
+  table { min-width: 38rem; }
+  .site-nav { padding-top: .8rem; }
+}
+</style>
+</head>
+<body>
+<nav class='site-nav'><a href='../index.html'>ホーム</a>
+<a href='../works/index.html'>作品</a>
+<a href='../about.html'>ALEPHについて</a>
+<a href='../research/index.html' aria-current='page'>研究</a>
+<a href='../archive.html'>制作記録</a>
+<a href='../en/index.html'>English</a></nav>
+<main>
+<h1>EXP w0009 — L2時代属性介入</h1>
+<section class='provenance'>
+<p><strong>きっかけ:</strong> w0008素材アブレーションで時代・裏方標識が全腕に残り、L2ニッチ割当が次の担体候補になった。</p>
+<p><strong>問い:</strong> 同じ意味核でL2の時代属性ピンだけを除くと、L4/L5の時代標識は低下するか。</p>
+<p><strong>操作:</strong> Fable 5、intent、素材なし、詩学、生成条件を固定し、時代属性ありcontrolと指定なしinterventionを比較した。</p>
+<p><strong>測定:</strong> L4三案とL5疑似セクションの時代・裏方・箴言・引用変換・視点標識、盲検選択、開示陪審。</p>
+<p><strong>結果の強さ:</strong> controlが高率伝播せず事前登録規則4。時代ピン主担体仮説はこの一走では支持されず、単一作の因果一般化はしない。</p>
+<p><strong>設計への返却:</strong> 直ちにDSLや新規条件へ拡張せず、裏方classifier校正と複数意味核での再現性をPhase 5候補として保留した。</p>
+<p><strong>限界:</strong> 各腕一原稿で単位は非独立。陪審scoreはparse不完備、provider明細との外部照合は未実施。</p>
+<p><a href='../dialogue.html#report-critique-fable5-chat-w0008-20260718'>起点・関連する批評と応答</a> / <a href='index.html'>研究系列へ戻る</a></p>
+</section>
+<h2>EXP w0009 — L2時代属性介入</h2>
+<ul>
+<li>date UTC: 2026-07-19</li>
+<li>preregistration: <code>designs/phase4-w0009-l2-era-intervention.md</code></li>
+<li>manifest: <code>works/w0009/experiment/manifest.json</code></li>
+<li>author: <code>claude-fable-5</code>（control/interventionで固定）</li>
+<li>primary decision: <strong>RULE_4_LEVEL_SPLIT_OR_MIXED</strong></li>
+<li>canonical arm: <code>era_pinned</code>（盲検選択）</li>
+<li>terminal state: <strong>SHELVE</strong>（<code>stop_path=budget</code>。美的失敗ではない）</li>
+<li>API cost: <strong>$11.245450 / $12.00</strong> all-phase cap</li>
+</ul>
+<p>L4の3案とL5の疑似セクションは独立標本ではない。以下を統計的検定、有意差、p値、
+一作を越える一般因果として解釈しない。</p>
+<h3>問いと固定条件</h3>
+<p>問いは、w0008で全素材腕に残った家風のうち、時代標識をL2の時代属性ピンが設置しているか。
+同じ意味核・三人称複数焦点の書簡群を用い、controlだけに
+<code>時代属性: 大正末期〜昭和初期の日本</code>を付け、interventionは
+<code>時代属性: 指定なし</code>とした。演劇・上演・稽古場・楽屋・帳場・質屋・職人仕事は意味核から
+明示的に除外した。intent、素材なし、詩学bytes、Author、3案・進化2世代、生成順、分類prompt、
+盲検・開示順序、全phase予算包絡は実行前に固定した。</p>
+<h3>一次観測</h3>
+<div class='table-wrap'>
+<table>
+<thead><tr>
+<th>腕</th>
+<th>水準</th>
+<th>N</th>
+<th>時代標識</th>
+<th>裏方世界</th>
+<th>箴言調</th>
+<th>引用への変換</th>
+<th>視点逸脱</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>era_pinned (control)</td>
+<td>L4</td>
+<td>3</td>
+<td>0.000</td>
+<td>1.000</td>
+<td>0.333</td>
+<td>0.333</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>era_pinned (control)</td>
+<td>L5</td>
+<td>17</td>
+<td>0.294</td>
+<td>1.000</td>
+<td>0.588</td>
+<td>0.294</td>
+<td>0.941</td>
+</tr>
+<tr>
+<td>era_unpinned (intervention)</td>
+<td>L4</td>
+<td>3</td>
+<td>0.333</td>
+<td>1.000</td>
+<td>0.000</td>
+<td>1.000</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>era_unpinned (intervention)</td>
+<td>L5</td>
+<td>17</td>
+<td>0.118</td>
+<td>1.000</td>
+<td>0.941</td>
+<td>0.176</td>
+<td>0.941</td>
+</tr>
+</tbody></table>
+</div>
+<p>全40単位が分類され、unclassifiedは0だった。controlはL4低・L5 mixed、interventionは
+L4/L5低であり、事前登録規則1（control高・intervention低）にも規則3（双方低）にも入らず、
+規則4となった。</p>
+<h3>判定と解釈</h3>
+<p>観測から直接言えるのは、**この一走では時代ピン付きcontrolが時代標識を高率かつ一貫して
+L4→L5へ伝播しなかった**ことだけである。したがって「L2時代属性ピンが家風の時代標識を
+設置する」という方向仮説は支持されない。interventionのL5率がcontrolより低いことは弱い
+方向差だが、controlが事前登録のhigh条件を満たさないため、因果効果として採用しない。</p>
+<p>強い反対解釈は、属性ピンが局所的には作用したものの、単一生成の非決定性、criteriaや詩学、
+分類器誤差、疑似セクション内依存に埋もれた可能性である。逆に、裏方世界が両腕・両水準で
+1.00だったことは、時代ピンを外しても別の家風標識が残る観測である。ただし意味核が裏方語彙を
+明示的に除外しているため、これは著者の舞台化選好の証明ではなく、本文確認と分類器校正を要する
+強い測定警告でもある。どちらの解釈も事前登録主判定を書き換えない。</p>
+<h3>盲検選択・陪審開示</h3>
+<p>盲検selectorは中立ラベルBを選び、開示後の対応は<code>era_pinned</code>だった。selectorへ渡したのは
+本文と技術床だけで、arm名、時代marker、陪審score、分類結果は開示後まで隠した。</p>
+<p>事前登録した陪審6 callはすべて完了・課金され、call/charge/response hashを保存した。しかし
+最後のlocal jury応答がstrict JSON parseに失敗し、行投影前だった。再生成せず、両腕を
+<code>INCOMPLETE_PARSE</code>、scoreなしとして開示した。このためjury argmaxと盲検選択との一致は
+<strong>不明</strong>であり、<code>false</code>という効果観測ではない。</p>
+<h3>Canonical L6–L7</h3>
+<p>盲検選択腕を一度だけmain <code>w0009</code>へpromotionし、既存のL6–L7閉ループを使用した。
+査読軌跡の平均scoreは9.067、9.100、9.033、9.233。第五査読はAPI陪審2 call完了後、
+全phase残額を停止判定へ反映していないことを検出したためlocal陪審中に安全停止し、軌跡から除外、
+再生成しなかった。scope残額をTDDでL7へ配線して再開するとbudget経路で擱筆した。
+題名「第一信」を生成後、公開意思確認の事前見積がscope残額を超えたためprovider前に拒否された。
+L7は追加callなしのSHELVEへfail closedした。L8/Phase 5は実行していない。</p>
+<h3>費用とdeviation</h3>
+<div class='table-wrap'>
+<table>
+<thead><tr>
+<th>phase</th>
+<th>事前配賦</th>
+<th>実費</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>prepare</td>
+<td>$0.75</td>
+<td>$0.087930</td>
+</tr>
+<tr>
+<td>era_unpinned L4–L5</td>
+<td>$2.50</td>
+<td>$2.690760</td>
+</tr>
+<tr>
+<td>era_pinned L4–L5</td>
+<td>$2.50</td>
+<td>$2.856650</td>
+</tr>
+<tr>
+<td>blind select</td>
+<td>$0.75</td>
+<td>$0.240970</td>
+</tr>
+<tr>
+<td>jury reveal</td>
+<td>$1.50</td>
+<td>$0.356420</td>
+</tr>
+<tr>
+<td>canonical L6–L7</td>
+<td>$3.50</td>
+<td>$5.012720</td>
+</tr>
+<tr>
+<td>failure reserve</td>
+<td>$0.50</td>
+<td>$0.000000</td>
+</tr>
+<tr>
+<td><strong>total</strong></td>
+<td><strong>$12.00</strong></td>
+<td><strong>$11.245450</strong></td>
+</tr>
+</tbody></table>
+</div>
+<p>phase配賦超過、prepare phase provenance、API/local scope分離、jury parse不完備、canonical途中停止、
+公開precheck、選題のlegacy L8 labelはhash-chain付きdeviation eventとして保存した。phase配賦は観測・報告境界で、
+aggregate $12.00がprovider前の強制境界である。provider明細を取得していないため、内部の
+call/charge一致とは別に外部照合statusは<code>unreconciled</code>であり、matchedを主張しない。</p>
+<h3>結論</h3>
+<p>w0009は、w0008から導いた「L2時代属性が時代家風の主担体」という仮説を、この条件では
+支持しなかった。同時に、時代ピンを除いても裏方世界・箴言調・視点逸脱が残り、家風を単一属性へ
+還元できないことを示した。追試を行うなら、まず裏方世界classifierの反例校正と本文監査を行い、
+その後に複数意味核・複数生成で再現性を測るべきである。これはPhase 5候補であり、本Phaseでは
+着手しない。</p>
+<p>機械可読一次証拠は<code>works/w0009/experiment/</code>、call provenanceは各<code>calls.jsonl</code>、
+終端投影は<code>works/w0009/checkpoint.json</code>にある。既存<code>choose_title</code>はFINISH中の選題を歴史的に
+<code>layer=L8</code>へ記録するため、その1行は存在するが、詩学reflection hook、詩学改訂、Phase 5は実行していない。</p>
+<footer><p>ライセンス: 作品=CC0 / システム成果物: コード=MIT, 文書=CC-BY-4.0</p><p>ソース: <a href='https://github.com/Ryota2865/aleph.github.io'>https://github.com/Ryota2865/aleph.github.io</a></p></footer>
+</main>
+</body>
+</html>

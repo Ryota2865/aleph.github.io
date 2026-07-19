@@ -1,0 +1,76 @@
+{
+  "hint": "実験w0009: 同一意味核からL2時代属性だけを除き、題材の家風の担体仮説を更新する。",
+  "experiment": {
+    "id": "exp-w0009-l2-era-pin",
+    "version": 1,
+    "hypothesis": "同一意味核に対してL2が大正末期〜昭和初期の時代属性を付与したcontrolでは時代標識が高く、時代属性を供給しないinterventionでは低くなる。方向差が出れば、L2時代属性ピンがこの条件で題材の家風を運ぶことを支持する。",
+    "intervention": "era_unpinned腕では、共有意味核に『時代属性は指定しない』だけを付す。現代化を強制せず、時代語・年代・制度も禁止しない。",
+    "control": "era_pinned腕では、共有意味核に『時代属性: 大正末期〜昭和初期の日本』だけを付す。",
+    "observations": [
+      "L4構成案とL5疑似セクションにおけるera_taisho_showaの腕別率",
+      "backstage_world / aphoristic_voice / quotation_transform / perspective_deviation",
+      "L6陪審平均と不一致、盲検選択と陪審argmaxの一致",
+      "L4〜L7のevaluation packet hashとeffective constraints hash",
+      "公開意思とcall/charge/provider reconciliation"
+    ],
+    "budget_cap_usd": 12.0,
+    "budget_envelope": {
+      "prepare": 0.75,
+      "era_unpinned_L4_L5": 2.5,
+      "era_pinned_L4_L5": 2.5,
+      "blind_select": 0.75,
+      "jury_reveal": 1.5,
+      "canonical_L6_L7": 3.5,
+      "failure_reserve": 0.5
+    },
+    "arms": ["era_pinned", "era_unpinned"],
+    "generation_order": ["era_unpinned", "era_pinned"],
+    "blind": {"seed": 9009},
+    "semantic_kernel": "離れた二つの島で、互いに一度も会わない観測者たちが、渡り鳥の到着と不在だけを記した季節ごとの通信を交換し、その欠落から一つの共同体の輪郭を組み上げる。形式は三人称複数焦点の書簡群とし、演劇・上演・稽古場・楽屋・帳場・質屋・職人仕事を意味核に含めない。",
+    "niche_variants": {
+      "era_pinned": "時代属性: 大正末期〜昭和初期の日本",
+      "era_unpinned": "時代属性は指定しない。現代化を強制せず、時代語・年代・制度を禁止しない。"
+    },
+    "fixed_conditions": {
+      "author_model": "claude-fable-5",
+      "intent": "main workで一度だけ自律選択し両腕で共有",
+      "materials": "両腕とも空配列",
+      "poetics": "実走時の詩学第1版の同一bytes",
+      "composition": "3案・進化2世代",
+      "draft_segmentation_min_chars": 600,
+      "classifier_prompt_version": "w0009-house-style-v1"
+    },
+    "constraints": [
+      {
+        "id": "shared-semantic-form",
+        "text": "意味核、三人称複数焦点、書簡群の形式を両腕で同一に保つ。",
+        "source": "designs/phase4-w0009-l2-era-intervention.md",
+        "scope": ["L4", "L5", "L6", "L7"],
+        "priority": 10
+      },
+      {
+        "id": "era-is-not-aesthetic-merit",
+        "text": "時代属性の有無それ自体を文学的な優劣として加点・減点しない。era_unpinnedは現代化の強制でも時代語の禁止でもない。",
+        "source": "designs/phase4-w0009-l2-era-intervention.md",
+        "scope": ["L4", "L5", "L6", "L7"],
+        "priority": 20
+      }
+    ],
+    "amendments": [],
+    "decision_rules": {
+      "high": "L4 >= 2/3 and L5 >= 0.50",
+      "low": "L4 <= 1/3 and L5 <= 0.20",
+      "classified_minimum": "L4 == 3 and L5 >= 2 per arm",
+      "rules": [
+        "RULE_1_DIRECTIONAL_SUPPORT",
+        "RULE_2_PIN_NOT_NECESSARY_HERE",
+        "RULE_3_CONTROL_DID_NOT_PROPAGATE",
+        "RULE_4_LEVEL_SPLIT_OR_MIXED",
+        "INCONCLUSIVE_CLASSIFICATION"
+      ]
+    },
+    "deviation_policy": "固定条件・順序・閾値・prompt・包絡の変更はdeviation eventを先行記録し、影響する有料call前に停止する。両腕未完、分類不足、hash不一致、unreconciled callでは主判定を出さない。",
+    "preregistered_by": "Codex next-designer review, 2026-07-19",
+    "status": "preregistered_not_run"
+  }
+}

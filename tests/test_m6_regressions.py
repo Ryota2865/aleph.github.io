@@ -361,6 +361,45 @@ def test_remaining_api_budget_uses_min_of_work_and_month(cfg, tmp_path):
     assert remaining == pytest.approx(min(1.0, work_limit))
 
 
+def test_remaining_api_budget_includes_registered_experiment_scope(cfg, tmp_path):
+    """実験全phase包絡の残額をL7停止判定へ渡し、precheck直前の再課金を防ぐ."""
+    from aleph.pipeline import _remaining_api_budget
+
+    budget = Budget(cfg, state_path=tmp_path / "budget.json")
+    charged_to = "experiment:exp-test"
+    budget.register_scope_limit(charged_to, ledger="api", limit=2.0)
+    budget.charge("api", 1.25, meta={"charged_to": charged_to}, work_id="wY")
+
+    assert budget.scope_remaining(charged_to) == pytest.approx(0.75)
+    assert _remaining_api_budget(budget, "wY", charged_to=charged_to) == pytest.approx(0.75)
+
+
+def test_publication_gate_shelves_without_author_call_when_budget_exhausted(tmp_path):
+    """L7停止後の公開意思確認も、予算切れなら再課金せず安全にSHELVEする."""
+    from aleph.meta.publication_gate import decide_publication
+
+    work = Work(tmp_path, "w-budget-publication")
+    work.create({})
+
+    def author(_prompt):
+        raise AssertionError("budget-exhausted publication must not call the author")
+
+    result = decide_publication(
+        work,
+        audience=AUDIENCE,
+        quality_floor_passed=True,
+        monthly_published=0,
+        max_per_month=4,
+        shelf_summaries=[],
+        author=author,
+        decided_by="test",
+        budget_exhausted=True,
+    )
+
+    assert result["decision"] == "SHELVE"
+    assert "予算" in result["reason"]
+
+
 def test_run_work_resume_skips_duplicate_critique_when_trajectory_full(tmp_path):
     """CRITIQUE再開時、査読軌跡が2ラウンド分あれば擱筆判定を先に行い重複査読しない.
 

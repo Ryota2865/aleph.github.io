@@ -37,6 +37,24 @@ def _hash(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
 
 
+def _normalize_budget_envelope(raw: Any, *, cap: float) -> dict[str, float] | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping) or not raw:
+        raise ExperimentError("budget_envelope must be a non-empty mapping")
+    normalized: dict[str, float] = {}
+    for key, value in raw.items():
+        phase = str(key).strip() if isinstance(key, str) else ""
+        if not phase:
+            raise ExperimentError("budget_envelope phase keys must be non-empty strings")
+        if type(value) not in (int, float) or float(value) <= 0:
+            raise ExperimentError("budget_envelope allocations must be positive numbers")
+        normalized[phase] = float(value)
+    if abs(sum(normalized.values()) - cap) > 1e-9:
+        raise ExperimentError("budget_envelope allocations must sum to budget_cap_usd")
+    return normalized
+
+
 class ExperimentRun:
     """Deep module for the minimum adopted experiment lifecycle."""
 
@@ -66,6 +84,7 @@ class ExperimentRun:
         cap = raw.get("budget_cap_usd", ablation.get("budget_cap_usd"))
         if type(cap) not in (int, float) or float(cap) <= 0:
             raise ExperimentError("experiment manifest requires a positive budget_cap_usd")
+        envelope = _normalize_budget_envelope(raw.get("budget_envelope"), cap=float(cap))
         normalized = {
             "experiment_id": str(raw["id"]),
             "manifest_version": int(raw.get("version", 1)),
@@ -74,6 +93,7 @@ class ExperimentRun:
             "control": raw["control"],
             "observations": raw["observations"],
             "budget_cap_usd": float(cap),
+            **({"budget_envelope": envelope} if envelope is not None else {}),
             "arms": list(ablation.get("arms", raw.get("arms", []))),
             "blind": raw.get("blind", {}),
             "constraints": raw.get("constraints", []),

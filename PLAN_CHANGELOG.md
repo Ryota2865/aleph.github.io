@@ -1,5 +1,51 @@
 # PLAN 変更履歴
 
+## 0.7.20-14 (2026-07-19) — Phase 4 w0009正式独立監査PASS
+
+Codex施工のPhase 4候補をstaged tree
+`780a70ec6b80e92cb5f6ab3dab78ab7e49744244`として固定し、別Claude Code（Opus）担当が
+read-only正式監査した。正式記録は`reports/PHASE4_W0009_L2_ERA_AUDIT_20260719.md`。
+
+監査者はfocused 23件、全非local **320 passed, 1 deselected**、doctor failures=0、独自の
+public-interface故障注入を再現した。Phase 3 interface再利用、Fable 5固定、事前登録・全phase
+包絡、blind/reveal/promotion順序、API/local provenance、scope fail closed、packet hash、
+非再生成、三面一致、budget SHELVE、poetics reflection・Phase 5未実行を確認した。
+P0/P1/P2なしで**VERDICT: PASS**。phase配賦超過、raw prepare L1、jury二次比較不明を
+P3残余として保持する。本項は監査証拠と機械的closureだけを追加し、監査済みcode、tests、
+契約、実験条件、主判定を変更しない。Phase 4を完了し、Phase 5には進まない。
+
+## 0.7.20-13 (2026-07-19) — Phase 4 w0009実走（正式監査待ち）
+
+事前登録`designs/phase4-w0009-l2-era-intervention.md`に従い、Authorを
+`claude-fable-5`、全phase API capを$12.00に固定してw0009を実走した。主判定は
+`RULE_4_LEVEL_SPLIT_OR_MIXED`で、L2時代属性ピンが時代標識を高率伝播させる方向仮説は
+この一走では支持されなかった。盲検選択は`era_pinned`、終端は全phase予算経路の`SHELVE`。
+既存選題処理が残すlegacy `layer=L8`行を除き詩学reflectionは実行せず、Phase 5にも進んでいない。
+実費$11.245450、9 deviation、陪審parse不完備、
+provider明細なしの`unreconciled`を含む完全記録は
+`reports/EXP_w0009_l2_era_20260719.md`と`works/w0009/experiment/`に保存した。
+
+実走で観測した二つのfail-closed欠陥をobservable REDから修繕した。L7停止は作品・月次に加えて
+登録済みexperiment scope残額を参照し、予算切れ後の公開意思確認はAuthorを再呼出しせず
+SHELVEへ倒す。w0009固有の実験条件や判定を汎用DSL化せず、Phase 3の`ExperimentRun`、
+`EvaluationPacket`、call/charge provenanceを再利用した。本項はPLANの受入条件、終端状態、
+予算規則・上限を変更しない。正式Claude Code監査PASSまではPhase 4完了としない。
+
+## 0.7.20-12 (2026-07-19) — w0009全phase包絡の月次上限$71承認
+
+オーナーは、Phase 4 `w0009`のprepareからcanonical L7までの全phase API包絡$12を
+実走行前に確保するため、従量API月次上限を**$65から$71**へ変更した。設計時台帳
+$58.383502に包絡$12を加えた$70.383502を上回る。これは支出目標ではなくfail-closed上限であり、
+作品別$9、実験scope $12、phase別配賦、call/charge provenance、provider明細との照合規則は変更しない。
+
+Author model変更はw0008からの比較可能性と陪審独立性に関わる別の実験条件であるため、本項では
+決定しない。選択モデルを事前登録manifest・role config・設計へ固定し、審査を終えるまでw0009の
+有料callを禁止する。
+
+後続のオーナー決定により、w0008との比較可能性を優先してw0009 Authorを
+`claude-fable-5`で維持する。事前登録manifestのfixed conditionと実行時role宣言が一致しなければ、
+prepareの外部adapter呼出し前にfail closedとする。
+
 ## 0.7.20-11 (2026-07-19) — Phase 3正式独立監査PASS
 
 全面採用済み`designs/next-designer-execution-plan.md` Phase 3をCodexが施工し、

@@ -1,5 +1,37 @@
 # PROGRESS
 
+## 2026-07-19 — Phase 4 w0009正式独立監査PASS
+
+- staged tree `780a70ec6b80e92cb5f6ab3dab78ab7e49744244`を、施工者と異なる
+  Claude Code（Opus）担当がread-only正式監査した。
+- 監査者はfocused 23 passed、全非local **320 passed, 1 deselected**、doctor failures=0、
+  独自故障注入を再現。manifest固定、blind/reveal/promotion順序、scope cap、provenance、
+  packet hash、非再生成、三面一致、SHELVE終端、poetics reflection/Phase 5未実行を確認した。
+- P0/P1/P2なし、**VERDICT: PASS**。原文は
+  `reports/PHASE4_W0009_L2_ERA_AUDIT_20260719.md`。
+- P3残余はcanonical phase配賦超過、raw prepare `phase=L1`、jury二次比較不明の3件。
+  すべて実走artifactで既開示であり、aggregate $12 capと主判定を損なわない。
+- これによりPhase 4を完了する。Phase 5には進んでいない。commit/pushはオーナー承認待ち。
+
+## 2026-07-19 — Phase 4 w0009実走完了・正式独立監査待ち
+
+- Fable 5をAuthorに固定し、同一意味核のL2時代属性ありcontrol／指定なしinterventionを
+  事前登録どおり実走した。w0008と既存state artifactは書き換えていない。
+- 一次判定は`RULE_4_LEVEL_SPLIT_OR_MIXED`。controlの時代標識はL4=0.000 / L5=0.294、
+  interventionはL4=0.333 / L5=0.118で、control highを満たさず方向仮説は支持されなかった。
+- 盲検選択は`era_pinned`。陪審6 callは全てprovenanceを保存したが、最終local juryの
+  strict parse失敗により二次score比較は`INCOMPLETE_PARSE`。裁量再生成はしていない。
+- canonical L6–L7は全phase scope残額をL7停止へ配線してbudget擱筆。題名「第一信」、
+  公開意思callはprovider前precheckで拒否し、resource stopの`SHELVE`へ終端。選題の既存
+  legacy `layer=L8`行はあるが、詩学reflection・詩学改訂・Phase 5は未実行。
+- API実費$11.245450/$12.00。phase配賦超過等は9 deviationに保存。外部provider明細が
+  ないためreconciliationは正直に`unreconciled`。
+- `reports/EXP_w0009_l2_era_20260719.md`、works一次証拠、公開siteを同じ説明へ揃える。
+  tests green、Hermes事前監査、Claude Code正式監査は別証拠として扱い、正式PASSまでは
+  Phase 4を完了扱いにしない。Phase 5へ進まない。
+- Hermes/Qwen3.6 read-only事前監査はserver起動直後にrunnerが終了し、所見・VERDICTなしの
+  **INCONCLUSIVE(runtime)**。worktreeは不変。tests green、正式Claude監査と混同しない。
+
 ## 2026-07-19 — Phase 2正式独立再監査PASS
 
 ### 完了したこと

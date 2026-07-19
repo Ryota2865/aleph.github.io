@@ -45,10 +45,11 @@ def test_no_hardcoded_model_names_outside_config():
 
 def test_budget_declares_owner_decisions():
     cfg = load_config(ROOT)
-    # PLAN §14-3 の$10からオーナー決定で改定（10→...→28→36→44→52→65）。2026-07-18:
+    # PLAN §14-3 の$10からオーナー決定で改定（10→...→28→36→44→52→65→71）。2026-07-19:
     # 52→65（w0008三腕アブレーション＋正典L6ループ。実験キャップ$15とクレジット追加を
     # オーナー承認済み。上限であり支出目標ではない）
-    assert cfg.budgets["api"]["usd_per_month"] == 65.0
+    # 65→71（w0009の全phase包絡$12を月次台帳内に事前確保）。
+    assert cfg.budgets["api"]["usd_per_month"] == 71.0
     # PLAN §14.3-7の既定は4（週刊連載のリズム）。2026-07限定でオーナーが撤廃
     # （PLAN_CHANGELOG 0.7.18-2: Fable5のサブスク失効(7/19)前に批評を多く得るため）。
     # 2026-08には既定の4へ戻すこと。

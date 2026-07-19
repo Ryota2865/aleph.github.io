@@ -1,0 +1,652 @@
+{
+  "aggregates": {
+    "era_pinned": {
+      "L4": {
+        "classified": 3,
+        "marker_rates": {
+          "aphoristic_voice": 0.3333333333333333,
+          "backstage_world": 1.0,
+          "era_taisho_showa": 0.0,
+          "perspective_deviation": 1.0,
+          "quotation_transform": 0.3333333333333333
+        },
+        "observed": 3,
+        "unclassified": 0
+      },
+      "L5": {
+        "classified": 17,
+        "marker_rates": {
+          "aphoristic_voice": 0.5882352941176471,
+          "backstage_world": 1.0,
+          "era_taisho_showa": 0.29411764705882354,
+          "perspective_deviation": 0.9411764705882353,
+          "quotation_transform": 0.29411764705882354
+        },
+        "observed": 17,
+        "unclassified": 0
+      }
+    },
+    "era_unpinned": {
+      "L4": {
+        "classified": 3,
+        "marker_rates": {
+          "aphoristic_voice": 0.0,
+          "backstage_world": 1.0,
+          "era_taisho_showa": 0.3333333333333333,
+          "perspective_deviation": 1.0,
+          "quotation_transform": 1.0
+        },
+        "observed": 3,
+        "unclassified": 0
+      },
+      "L5": {
+        "classified": 17,
+        "marker_rates": {
+          "aphoristic_voice": 0.9411764705882353,
+          "backstage_world": 1.0,
+          "era_taisho_showa": 0.11764705882352941,
+          "perspective_deviation": 0.9411764705882353,
+          "quotation_transform": 0.17647058823529413
+        },
+        "observed": 17,
+        "unclassified": 0
+      }
+    }
+  },
+  "rows": [
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L4",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "unit_id": "proposal_1.json",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L4",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "unit_id": "proposal_2.json",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L4",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "unit_id": "proposal_3.json",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 804,
+      "unit_id": "section_1",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 721,
+      "unit_id": "section_2",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 644,
+      "unit_id": "section_3",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 757,
+      "unit_id": "section_4",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 791,
+      "unit_id": "section_5",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "text_chars": 728,
+      "unit_id": "section_6",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 672,
+      "unit_id": "section_7",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 741,
+      "unit_id": "section_8",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 636,
+      "unit_id": "section_9",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": false,
+        "quotation_transform": false
+      },
+      "text_chars": 717,
+      "unit_id": "section_10",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 648,
+      "unit_id": "section_11",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 666,
+      "unit_id": "section_12",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 704,
+      "unit_id": "section_13",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 707,
+      "unit_id": "section_14",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "text_chars": 825,
+      "unit_id": "section_15",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 643,
+      "unit_id": "section_16",
+      "warnings": []
+    },
+    {
+      "arm": "era_unpinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "text_chars": 591,
+      "unit_id": "section_17",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L4",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "unit_id": "proposal_1.json",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L4",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "unit_id": "proposal_2.json",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L4",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "unit_id": "proposal_3.json",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 765,
+      "unit_id": "section_1",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "text_chars": 829,
+      "unit_id": "section_2",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 648,
+      "unit_id": "section_3",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 603,
+      "unit_id": "section_4",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 620,
+      "unit_id": "section_5",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 621,
+      "unit_id": "section_6",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "text_chars": 629,
+      "unit_id": "section_7",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 749,
+      "unit_id": "section_8",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 734,
+      "unit_id": "section_9",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 718,
+      "unit_id": "section_10",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": false,
+        "quotation_transform": true
+      },
+      "text_chars": 635,
+      "unit_id": "section_11",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": true,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 752,
+      "unit_id": "section_12",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 636,
+      "unit_id": "section_13",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "text_chars": 614,
+      "unit_id": "section_14",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 760,
+      "unit_id": "section_15",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": true,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": true
+      },
+      "text_chars": 639,
+      "unit_id": "section_16",
+      "warnings": []
+    },
+    {
+      "arm": "era_pinned",
+      "classified": true,
+      "level": "L5",
+      "markers": {
+        "aphoristic_voice": false,
+        "backstage_world": true,
+        "era_taisho_showa": false,
+        "perspective_deviation": true,
+        "quotation_transform": false
+      },
+      "text_chars": 127,
+      "unit_id": "section_17",
+      "warnings": []
+    }
+  ]
+}

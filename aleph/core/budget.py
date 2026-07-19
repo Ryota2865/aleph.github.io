@@ -144,6 +144,24 @@ class Budget:
             return None
         return self._work_limit - self._work_spent.get(work_id, 0.0)
 
+    def scope_remaining(self, charged_to: str) -> float | None:
+        """登録済みsub-envelopeの残量。未登録なら None.
+
+        停止判断が provider precheck と同じ全phase包絡を参照するための
+        read-only query であり、台帳やscope定義は変更しない。
+        """
+        scope = self._scope_limits.get(charged_to)
+        if scope is None:
+            return None
+        ledger, limit = scope
+        spent = sum(
+            float(event.get("amount", 0.0))
+            for event in self._charge_events
+            if event.get("ledger") == ledger
+            and event.get("charged_to") == charged_to
+        )
+        return limit - spent
+
     def charge(
         self,
         ledger: str,

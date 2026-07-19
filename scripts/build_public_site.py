@@ -1303,6 +1303,7 @@ _RESEARCH_ORDER = (
     "EXP_publish_framing_20260712.md",
     "EXP_publish_border_20260712.md",
     "EXP_publish_border2_20260712.md",
+    "EXP_w0009_l2_era_20260719.md",
 )
 
 _RESEARCH_META = {
@@ -1365,6 +1366,18 @@ _RESEARCH_META = {
         "change": "実ゲートでは中立文面を維持し、品質床を先に適用する設計を支持した。",
         "limit": "GPT-5.5のみ、各条件N=3。境界域一般の効果量は未確定。",
         "dialogue": "CRITIQUE_FABLE5_CHAT_expE_20260713.md",
+    },
+    "EXP_w0009_l2_era_20260719.md": {
+        "label": "系列C / w0009 L2時代属性介入",
+        "summary": "同一意味核からL2時代属性だけを外し、家風の時代標識がどこで設置されるかを事前登録規則で測った。",
+        "trigger": "w0008素材アブレーションで時代・裏方標識が全腕に残り、L2ニッチ割当が次の担体候補になった。",
+        "question": "同じ意味核でL2の時代属性ピンだけを除くと、L4/L5の時代標識は低下するか。",
+        "operation": "Fable 5、intent、素材なし、詩学、生成条件を固定し、時代属性ありcontrolと指定なしinterventionを比較した。",
+        "measure": "L4三案とL5疑似セクションの時代・裏方・箴言・引用変換・視点標識、盲検選択、開示陪審。",
+        "result": "controlが高率伝播せず事前登録規則4。時代ピン主担体仮説はこの一走では支持されず、単一作の因果一般化はしない。",
+        "change": "直ちにDSLや新規条件へ拡張せず、裏方classifier校正と複数意味核での再現性をPhase 5候補として保留した。",
+        "limit": "各腕一原稿で単位は非独立。陪審scoreはparse不完備、provider明細との外部照合は未実施。",
+        "dialogue": "CRITIQUE_FABLE5_CHAT_w0008_20260718.md",
     },
 }
 

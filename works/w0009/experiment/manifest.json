@@ -1,0 +1,59 @@
+{
+  "amendments": [],
+  "arms": [
+    "era_pinned",
+    "era_unpinned"
+  ],
+  "blind": {
+    "seed": 9009
+  },
+  "budget_cap_usd": 12.0,
+  "budget_envelope": {
+    "blind_select": 0.75,
+    "canonical_L6_L7": 3.5,
+    "era_pinned_L4_L5": 2.5,
+    "era_unpinned_L4_L5": 2.5,
+    "failure_reserve": 0.5,
+    "jury_reveal": 1.5,
+    "prepare": 0.75
+  },
+  "constraints": [
+    {
+      "id": "shared-semantic-form",
+      "priority": 10,
+      "scope": [
+        "L4",
+        "L5",
+        "L6",
+        "L7"
+      ],
+      "source": "designs/phase4-w0009-l2-era-intervention.md",
+      "text": "意味核、三人称複数焦点、書簡群の形式を両腕で同一に保つ。"
+    },
+    {
+      "id": "era-is-not-aesthetic-merit",
+      "priority": 20,
+      "scope": [
+        "L4",
+        "L5",
+        "L6",
+        "L7"
+      ],
+      "source": "designs/phase4-w0009-l2-era-intervention.md",
+      "text": "時代属性の有無それ自体を文学的な優劣として加点・減点しない。era_unpinnedは現代化の強制でも時代語の禁止でもない。"
+    }
+  ],
+  "control": "era_pinned腕では、共有意味核に『時代属性: 大正末期〜昭和初期の日本』だけを付す。",
+  "experiment_id": "exp-w0009-l2-era-pin",
+  "hypothesis": "同一意味核に対してL2が大正末期〜昭和初期の時代属性を付与したcontrolでは時代標識が高く、時代属性を供給しないinterventionでは低くなる。方向差が出れば、L2時代属性ピンがこの条件で題材の家風を運ぶことを支持する。",
+  "intervention": "era_unpinned腕では、共有意味核に『時代属性は指定しない』だけを付す。現代化を強制せず、時代語・年代・制度も禁止しない。",
+  "legacy_criteria_constraints": null,
+  "manifest_version": 1,
+  "observations": [
+    "L4構成案とL5疑似セクションにおけるera_taisho_showaの腕別率",
+    "backstage_world / aphoristic_voice / quotation_transform / perspective_deviation",
+    "L6陪審平均と不一致、盲検選択と陪審argmaxの一致",
+    "L4〜L7のevaluation packet hashとeffective constraints hash",
+    "公開意思とcall/charge/provider reconciliation"
+  ]
+}

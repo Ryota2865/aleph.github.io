@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from types import SimpleNamespace
 
 import pytest
 
@@ -17,6 +18,61 @@ from aleph.critique.review import run_review
 pytestmark = pytest.mark.m6
 
 ROOT = __import__("pathlib").Path(__file__).resolve().parents[1]
+
+
+def test_experiment_phase_pin_survives_pipeline_layer_phase_changes():
+    from aleph.pipeline import RealDeps
+
+    observed = []
+
+    class RouterCapture:
+        def call(self, role, messages, **overrides):
+            observed.append(overrides["call_context"])
+            return SimpleNamespace(text="ok")
+
+    deps = RealDeps.__new__(RealDeps)
+    deps.router = RouterCapture()
+    deps._work_id = "w0009-era_unpinned"
+    deps._experiment_id = "exp-w0009-l2-era-pin"
+    deps._experiment_arm = "era_unpinned"
+    deps._phase = "L1"
+    deps.set_experiment_phase("prepare")
+    deps._phase = "L4-L5"
+
+    deps._author("prompt")
+
+    assert observed[0].phase == "prepare"
+    assert ":prepare:" in observed[0].command_id
+
+
+def test_experiment_local_call_uses_a_non_api_charge_target():
+    from aleph.pipeline import RealDeps
+
+    observed = []
+
+    class RouterCapture:
+        def call(self, role, messages, **overrides):
+            observed.append(overrides["call_context"])
+            return SimpleNamespace(text="ok")
+
+        def _role_decls(self, role):
+            return [{"provider": "llamacpp", "model": "scout-test"}]
+
+    deps = RealDeps.__new__(RealDeps)
+    deps.router = RouterCapture()
+    deps.config = SimpleNamespace(
+        models={"providers": {"llamacpp": {"kind": "local"}}}
+    )
+    deps._work_id = "era_unpinned"
+    deps._experiment_id = "exp-w0009-l2-era-pin"
+    deps._experiment_arm = "era_unpinned"
+    deps._phase = "L4-L5"
+    deps._experiment_phase = "era_unpinned_L4_L5"
+
+    deps._scout("prompt")
+
+    assert observed[0].charged_to == "work:era_unpinned:local"
+    assert observed[0].experiment_id == "exp-w0009-l2-era-pin"
 
 
 class CountingProvider:

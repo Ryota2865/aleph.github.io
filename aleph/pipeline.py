@@ -405,8 +405,10 @@ def _reflect_poetics_if_available(work, deps, decided_by: str) -> None:
     })
 
 
-def _remaining_api_budget(budget, work_id: str) -> float | None:
-    """作品別上限と月上限のうち、小さい方の残額。どちらも未宣言なら None.
+def _remaining_api_budget(
+    budget, work_id: str, *, charged_to: str | None = None
+) -> float | None:
+    """作品別・月次・任意scope上限のうち、小さい方の残額。
 
     擱筆判断の予算経路は両方の防壁を見る必要がある(w0002実ランで作品残額だけを見て
     続行し、月上限precheckでクラッシュする経路が観測された)。
@@ -418,6 +420,10 @@ def _remaining_api_budget(budget, work_id: str) -> float | None:
     api = budget.status().get("api")
     if api and api.get("limit") is not None:
         candidates.append(float(api["limit"]) - float(api["spent"]))
+    if charged_to is not None:
+        scope_rem = budget.scope_remaining(charged_to)
+        if scope_rem is not None:
+            candidates.append(scope_rem)
     return min(candidates) if candidates else None
 
 
@@ -494,6 +500,7 @@ class RealDeps:
         self.force_audience = force_audience  # 実験: L1自律選択を上書き（0.7.14）
         self._work_id = work.work_id
         self._phase = "L0"
+        self._experiment_phase: str | None = None
         self._experiment_id: str | None = None
         self._experiment_arm = "main"
         try:
@@ -598,19 +605,40 @@ class RealDeps:
         return result
 
     # -- 役割呼び出しヘルパ（work_id で作品別予算を効かせる） -----------------
-    def _call_overrides(self) -> dict:
+    def set_experiment_phase(self, phase: str) -> None:
+        """Pin experiment billing provenance independently of pipeline layer names."""
+        if not str(phase).strip():
+            raise ValueError("experiment phase must be non-empty")
+        self._experiment_phase = str(phase)
+
+    def _experiment_charge_target(self, role: str, decl: dict | None = None) -> str:
+        """Keep the API experiment cap separate from local/harness ledgers."""
+        target = f"experiment:{self._experiment_id}"
+        try:
+            declaration = decl or self.router._role_decls(role)[0]
+            provider = str(declaration["provider"])
+            provider_config = self.config.models["providers"][provider]
+            ledger = str(provider_config.get("kind") or provider)
+        except (AttributeError, IndexError, KeyError, TypeError):
+            return target
+        if ledger == "api":
+            return target
+        return f"work:{self._work_id}:{ledger}"
+
+    def _call_overrides(self, role: str, *, decl: dict | None = None) -> dict:
         values = {"work_id": self._work_id}
         if self._experiment_id is not None:
             from aleph.core.llm import CallContext
 
+            phase = self._experiment_phase or self._phase
             values = {
                 "call_context": CallContext(
-                    command_id=f"{self._experiment_id}:{self._phase}:{uuid.uuid4()}",
+                    command_id=f"{self._experiment_id}:{phase}:{uuid.uuid4()}",
                     work_id=self._work_id,
                     experiment_id=self._experiment_id,
-                    phase=self._phase,
+                    phase=phase,
                     arm=self._experiment_arm,
-                    charged_to=f"experiment:{self._experiment_id}",
+                    charged_to=self._experiment_charge_target(role, decl),
                 )
             }
         return values
@@ -619,26 +647,28 @@ class RealDeps:
         from aleph.core.llm import Message
 
         return self.router.call(
-            "author_primary", [Message("user", prompt)], **self._call_overrides(),
+            "author_primary", [Message("user", prompt)], **self._call_overrides("author_primary"),
         ).text
 
     def _scout(self, prompt: str) -> str:
         from aleph.core.llm import Message
 
         return self.router.call(
-            "scout", [Message("user", prompt)], **self._call_overrides(),
+            "scout", [Message("user", prompt)], **self._call_overrides("scout"),
         ).text
 
     def _reader(self, prompt: str) -> str:
         from aleph.core.llm import Message
 
         return self.router.call(
-            "reader_model", [Message("user", prompt)], **self._call_overrides(),
+            "reader_model", [Message("user", prompt)], **self._call_overrides("reader_model"),
         ).text
 
     def _reader_llm(self, messages, **overrides):
         """完全な LLMResponse を返す reader 呼び出し（anti_cliche が logprobs を読むため）."""
-        return self.router.call("reader_model", messages, **self._call_overrides(), **overrides)
+        return self.router.call(
+            "reader_model", messages, **self._call_overrides("reader_model"), **overrides
+        )
 
     def _audience_hint(self, work) -> str:
         """現在の宛先配合を得る（checkpoint.payload 優先、無ければ force_audience）."""
@@ -665,7 +695,8 @@ class RealDeps:
         )
         try:
             resp = self.router.call(
-                "author_primary", [Message("user", prompt)], **self._call_overrides(), max_tokens=2048,
+                "author_primary", [Message("user", prompt)],
+                **self._call_overrides("author_primary"), max_tokens=2048,
             )
             parsed = parse_model_output(resp.text, schema=dict).value or {}
             title = str(parsed.get("title") or "").strip()
@@ -708,7 +739,7 @@ class RealDeps:
             def juror(prompt: str, _idx=idx):
                 resp = self.router._invoke(
                     "critic_jury", decls[_idx], [Message("user", prompt)],
-                    **self._call_overrides(),
+                    **self._call_overrides("critic_jury", decl=decls[_idx]),
                 )
                 return resp.text
 
@@ -929,7 +960,12 @@ class RealDeps:
         # 予算切れ経路（PLAN §7.3a）: 残額が改稿1サイクルの想定費を下回ったら
         # precheckクラッシュではなく擱筆判断として品位ある停止をする（w0001実ランの回帰）
         min_cycle = float(self.config.budgets.get("api", {}).get("usd_min_revise_cycle", 1.2))
-        remaining = _remaining_api_budget(self.router.budget, work.work_id)
+        charged_to = (
+            f"experiment:{self._experiment_id}" if self._experiment_id else None
+        )
+        remaining = _remaining_api_budget(
+            self.router.budget, work.work_id, charged_to=charged_to
+        )
         exhausted = remaining is not None and remaining < min_cycle
         packet = None
         if trajectory:
@@ -948,8 +984,26 @@ class RealDeps:
         from aleph.core.evaluation import EvaluationPacket
         from aleph.core.work_snapshot import WorkReader
 
-        # 完成時に作品自身へ題を聞く（フロー化, 0.7.14）。公開/棚の双方が title.txt を読む。
-        self._ensure_title(work)
+        min_cycle = float(self.config.budgets.get("api", {}).get("usd_min_revise_cycle", 1.2))
+        charged_to = (
+            f"experiment:{self._experiment_id}" if self._experiment_id else None
+        )
+
+        def budget_exhausted() -> bool:
+            budget = getattr(self.router, "budget", None)
+            if budget is None:
+                return False
+            remaining = _remaining_api_budget(
+                budget, work.work_id, charged_to=charged_to
+            )
+            return remaining is not None and remaining < min_cycle
+
+        exhausted = budget_exhausted()
+        # 完成時に作品自身へ題を聞く（フロー化, 0.7.14）。予算経路で停止した場合は
+        # 新規課金を起こさず、既存題または終端artifact側の決定的fallbackを使う。
+        if not exhausted:
+            self._ensure_title(work)
+            exhausted = budget_exhausted()
 
         # 完成度の床: **採用される版（mean_score最大）**の査読合意スコア（PLAN §7.1・§14.3-8）。
         # w0007実ラン: 床が「最後の版」(退行v2=5.57)を見て、公開対象のbest版(v1=8.53)と
@@ -1000,6 +1054,7 @@ class RealDeps:
             author=self._author,
             decided_by="L7/publication_gate",
             first_publish_ack=first_publish_ack,
+            budget_exhausted=exhausted,
             packet=packet,
         )
         if result.get("decision") == "PUBLISH":
