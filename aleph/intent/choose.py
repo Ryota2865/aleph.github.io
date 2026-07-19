@@ -7,25 +7,9 @@
 """
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 
-
-# ---------------------------------------------------------------- JSON頑健パース
-def _extract_json_object(text: str) -> dict | None:
-    """応答文字列中の最初のJSONオブジェクトを頑健に取り出す（aleph/explore/niche.py と同方式）."""
-    decoder = json.JSONDecoder()
-    for index, char in enumerate(text):
-        if char != "{":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text[index:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
-
+from aleph.core.model_output import parse_model_output, string_map
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -75,13 +59,15 @@ def choose_intent(work, author, policies: dict, *, poetics: str = "") -> str:
     prompt = "\n".join(lines)
 
     response = author(prompt)
-    parsed = _extract_json_object(response) or {}
-    mixture = parsed.get("mixture")
-    reasons = parsed.get("reasons")
-    if not isinstance(mixture, dict):
-        mixture = {}
-    if not isinstance(reasons, dict):
-        reasons = {}
+    parsed = parse_model_output(
+        response,
+        schema={
+            "mixture": string_map(float, allowed_keys=frozenset({"LLM", "人間", "自分"})),
+            "reasons": string_map(str, allowed_keys=frozenset({"LLM", "人間", "自分"})),
+        },
+    ).require_value()
+    mixture = parsed["mixture"]
+    reasons = parsed["reasons"]
 
     # 配合比の文字列表現（係数を含める）
     audience = " / ".join(f"{dest} {coef}" for dest, coef in mixture.items())

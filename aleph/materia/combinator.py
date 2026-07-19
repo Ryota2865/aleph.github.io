@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import itertools
 
-from aleph.explore.niche import _extract_json_object
+from aleph.core.model_output import parse_model_output
 
 
 def generate_combinations(axes: dict[str, list[str]], existing: set[tuple]) -> list[dict]:
@@ -39,7 +39,7 @@ def assess(combos: list[dict], scout) -> list[dict]:
             f"組合せ: {description}"
         )
         response = scout(prompt)
-        parsed = _extract_json_object(response)
+        parsed = parse_model_output(response, schema=dict).value
         if parsed is None:
             feasibility, interest, rationale = 0.5, 0.5, response.strip()
         else:

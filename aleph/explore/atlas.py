@@ -232,7 +232,7 @@ def annotate_clusters(
     confidence・ts）で保存する。過剰設計を避けるため、複数注釈器の合議は行わない
     （Q4決定: 単一注釈の品質を実監査してから要否判断）。
     """
-    from aleph.explore.niche import _extract_json_object
+    from aleph.core.model_output import parse_model_output
 
     chunk_by_id = {chunk.get("chunk_id"): chunk for chunk in atlas.chunks}
     annotations: list[dict] = []
@@ -247,7 +247,7 @@ def annotate_clusters(
             '"confidence":0.0} だけを返してください。\n'
             + "\n---\n".join(excerpts)
         )
-        parsed = _extract_json_object(response) or {}
+        parsed = parse_model_output(response, schema=dict).value or {}
         record = {
             "label": cluster.get("label"),
             "size": cluster.get("size"),

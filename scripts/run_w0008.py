@@ -34,7 +34,7 @@ from aleph.core.artifacts import Work  # noqa: E402
 from aleph.core.loop import Checkpoint, State  # noqa: E402
 from aleph.core.transition_commit import initialize  # noqa: E402
 from aleph.draft.write import pipeline_to_draft  # noqa: E402
-from aleph.explore.niche import _extract_json_object  # noqa: E402
+from aleph.core.model_output import parse_model_output
 from aleph.materia.similarity import find_hidden_pairs, to_material_cards  # noqa: E402
 from aleph.materia.transmute import transmute  # noqa: E402
 from aleph.pipeline import _llm_is_primary_audience  # noqa: E402
@@ -277,13 +277,18 @@ def _classify_prompt(text: str) -> str:
 
 
 def classify_text(scout: Callable[[str], str], text: str) -> dict:
-    parsed = _extract_json_object(scout(_classify_prompt(text))) or {}
-    markers = {key: bool(parsed.get(key)) for key in MARKER_KEYS}
-    if not all(isinstance(parsed.get(key), bool) for key in MARKER_KEYS):
-        markers["parse_error"] = True
-    if "confidence" in parsed:
-        markers["confidence"] = parsed.get("confidence")
-    return markers
+    output = parse_model_output(
+        scout(_classify_prompt(text)),
+        schema={key: bool for key in MARKER_KEYS},
+    )
+    if not output.ok:
+        return {key: False for key in MARKER_KEYS} | {
+            "parse_error": True,
+            "warnings": list(output.warnings),
+        }
+    return {key: output.value[key] for key in MARKER_KEYS} | {
+        **({"confidence": output.value["confidence"]} if "confidence" in output.value else {})
+    }
 
 
 def stage_prepare(root: Path, deps: RunnerDeps) -> dict:
@@ -811,11 +816,15 @@ def stage_tech_floor(root: Path, deps: RunnerDeps) -> dict:
         draft_path = arm_work(main, arm).draft_path(1)
         if not draft_path.exists():
             continue
-        parsed = _extract_json_object(deps.main_roles.scout(_tech_floor_prompt(draft_path.read_text(encoding="utf-8")))) or {}
-        issues = parsed.get("issues")
-        if not isinstance(issues, list):
-            issues = []
-        rows[arm] = {"pass": bool(parsed.get("pass")), "issues": [str(issue) for issue in issues]}
+        output = parse_model_output(
+            deps.main_roles.scout(_tech_floor_prompt(draft_path.read_text(encoding="utf-8"))),
+            schema={"pass": bool, "issues": [str]},
+        )
+        if output.ok:
+            parsed = output.value
+            rows[arm] = {"pass": parsed["pass"], "issues": list(parsed["issues"])}
+        else:
+            rows[arm] = {"pass": False, "issues": list(output.warnings)}
     _write_json(out, rows)
     append_decision(
         main,
@@ -883,7 +892,7 @@ def stage_blind_selection(root: Path, deps: RunnerDeps, tech_floor: dict) -> dic
     drafts = {arm: arm_work(main, arm).draft_path(1).read_text(encoding="utf-8") for arm in drafted_arms}
     mapping = blind_label_mapping(drafted_arms)
     prompt = build_blind_selection_prompt(mapping, tech_floor, drafts)
-    parsed = _extract_json_object(deps.main_roles.author(prompt)) or {}
+    parsed = parse_model_output(deps.main_roles.author(prompt), schema=dict).value or {}
     choice = str(parsed.get("choice", "")).strip().upper()
     if choice not in set(mapping.values()):
         raise RuntimeError(f"select: invalid blind selection choice: {choice!r}")
@@ -918,7 +927,7 @@ def _jury_prompt(criteria: str, draft: str) -> str:
 
 
 def _score_from_response(text: str) -> float:
-    parsed = _extract_json_object(text) or {}
+    parsed = parse_model_output(text, schema=dict).value or {}
     try:
         return float(parsed.get("score"))
     except (TypeError, ValueError):

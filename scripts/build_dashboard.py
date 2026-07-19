@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 
 from aleph.core.config import load_config
+from aleph.core.repository_snapshot import RepositoryReader
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -67,60 +68,28 @@ def _pid_alive(pid_path: Path) -> bool | None:
 
 
 def collect_works(root: Path) -> list[dict]:
-    """works/<id>/checkpoint.json と decisions.jsonl・run PIDから走行状態を集める."""
-    works_dir = root / "works"
-    if not works_dir.exists():
-        return []
-    out = []
-    for wdir in sorted(works_dir.iterdir()):
-        if not (wdir.is_dir() and wdir.name.startswith("w")):
-            continue
-        ckpt_path = wdir / "checkpoint.json"
-        if not ckpt_path.exists():
-            continue
-        ckpt = json.loads(ckpt_path.read_text(encoding="utf-8"))
-        decisions = _rows(wdir / "decisions.jsonl")
-        audience = next(
-            (d["decision"] for d in decisions if d.get("layer") == "L1" and "配合比" in str(d.get("decision"))),
-            "",
-        )
-        out.append(
-            {
-                "id": wdir.name,
-                "state": ckpt.get("state"),
-                "step": ckpt.get("step"),
-                "audience": audience,
-                "last_ts": decisions[-1]["ts"] if decisions else None,
-                "alive": _pid_alive(root / "state" / f"run_{wdir.name}.pid"),
-            }
-        )
-    return out
+    """Adapt the authoritative RepositorySnapshot to the historical dashboard shape."""
+    repository = RepositoryReader(root).snapshot()
+    jobs = {job["work_id"]: job.get("alive") for job in repository.active_jobs}
+    return [
+        {
+            "id": work.work_id,
+            "state": work.lifecycle.value,
+            "step": work.step,
+            "audience": work.audience or "",
+            "last_ts": work.last_decision_ts,
+            "alive": jobs.get(work.work_id),
+            "title": work.title,
+            "best_draft": work.best_draft.path if work.best_draft else None,
+        }
+        for work in repository.works
+        if work.lifecycle is not None
+    ]
 
 
 def collect_budget_status(root: Path, budgets: dict) -> dict:
-    """config/budgets.yaml の宣言と state/budget.json の実残高を突き合わせる."""
-    ledger_path = root / "state" / "budget.json"
-    ledger = json.loads(ledger_path.read_text(encoding="utf-8")) if ledger_path.exists() else {}
-    api_ledger = ledger.get("ledgers", {}).get("api", {})
-    period_key = api_ledger.get("period_key")
-    publish_count = 0
-    works_dir = root / "works"
-    if period_key and works_dir.exists():
-        for wdir in works_dir.iterdir():
-            if not wdir.is_dir():
-                continue
-            for d in _rows(wdir / "decisions.jsonl"):
-                if d.get("decision") == "FINISH->PUBLISH" and str(d.get("ts", "")).startswith(period_key):
-                    publish_count += 1
-    return {
-        "period_key": period_key,
-        "api_spent": api_ledger.get("spent", 0.0),
-        "api_cap": budgets.get("api", {}).get("usd_per_month", 0.0),
-        "usd_per_work": budgets.get("api", {}).get("usd_per_work", 0.0),
-        "work_spent": ledger.get("work_spent", {}),
-        "publish_count": publish_count,
-        "publish_cap": budgets.get("publish", {}).get("max_per_month", 0),
-    }
+    """Adapt the authoritative RepositorySnapshot budget projection."""
+    return RepositoryReader(root, budget_config=budgets).snapshot().budget
 
 
 def collect_pending_gates(policies: dict, budget_status: dict) -> list[str]:

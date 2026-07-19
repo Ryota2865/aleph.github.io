@@ -20,7 +20,8 @@ sys.path.insert(0, str(ROOT))
 from aleph.core.budget import Budget  # noqa: E402
 from aleph.core.config import load_config  # noqa: E402
 from aleph.core.llm import CallLogger, Message, Router  # noqa: E402
-from aleph.meta.publication_gate import _coerce_publish, _extract_json_object  # noqa: E402
+from aleph.core.model_output import parse_model_output  # noqa: E402
+from aleph.meta.publication_gate import _coerce_publish  # noqa: E402
 
 WORK_ID = "exp-e"
 MAX_TOKENS = 2048
@@ -64,7 +65,7 @@ def build_prompt(framing: str, stimulus: str) -> str:
 
 def parse_publish(text: str) -> bool | None:
     # 監査 finding 2: bool("false") が True になるバグを避け、頑健に真偽化する。
-    parsed = _extract_json_object(text) or {}
+    parsed = parse_model_output(text, schema=dict).value or {}
     if "publish" in parsed:
         coerced = _coerce_publish(parsed.get("publish"))
         if coerced is not None:

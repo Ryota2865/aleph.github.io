@@ -50,7 +50,7 @@ def test_collect_works_reads_checkpoint_and_audience(tmp_path):
     assert w["id"] == "w0001"
     assert w["state"] == "DRAFT"
     assert w["step"] == 3
-    assert w["audience"] == "志向配合比: LLM 1.0"
+    assert w["audience"] == "LLM 1.0"
     assert w["last_ts"] == "2026-07-16T01:00:00+00:00"
     assert w["alive"] is None  # PIDファイルが無い
 

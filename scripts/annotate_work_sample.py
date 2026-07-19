@@ -90,7 +90,7 @@ def noise_share_by_work(index_dir: Path) -> dict[str, float]:
 
 def annotate_works(sample: list[dict], texts: dict[str, str], scout, *,
                    annotator_model: str, max_chars: int = 1500) -> list[dict]:
-    from aleph.explore.niche import _extract_json_object
+    from aleph.core.model_output import parse_model_output
 
     records: list[dict] = []
     for w in sample:
@@ -104,7 +104,7 @@ def annotate_works(sample: list[dict], texts: dict[str, str], scout, *,
             "だけを返してください。\n"
             f"題: {w.get('title', '')} / 著者: {w.get('author', '')}\n---\n{excerpt}"
         )
-        parsed = _extract_json_object(response) or {}
+        parsed = parse_model_output(response, schema=dict).value or {}
         record = {
             "work_id": w["id"],
             "title": w.get("title"),

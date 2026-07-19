@@ -10,6 +10,7 @@ from typing import Callable
 
 import numpy as np
 
+from aleph.core.model_output import parse_model_output
 from aleph.explore.atlas import load_failures
 
 
@@ -22,23 +23,9 @@ class VacancyClass:
     ai_native_candidate: bool
 
 
-def _extract_json_object(text: str) -> dict | None:
-    decoder = json.JSONDecoder()
-    for index, char in enumerate(text):
-        if char != "{":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text[index:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
-
-
 def classify_vacancy(text: str) -> VacancyClass:
     """scout応答中の最初のJSONオブジェクトから空きの三分類を読む."""
-    parsed = _extract_json_object(text)
+    parsed = parse_model_output(text, schema=dict).value
     if parsed is None:
         return VacancyClass("未着手型", "中", text, False, False)
     vacancy_type = str(parsed.get("vacancy_type", "未着手型"))
@@ -137,7 +124,7 @@ def _sparse_candidates(atlas, scout: Callable[[str], str], top_n: int, context: 
             f"作品: {region['title']}\nテキスト:\n{text[:4000]}{context}"
         )
         response = scout(prompt)
-        parsed = _extract_json_object(response) or {}
+        parsed = parse_model_output(response, schema=dict).value or {}
         description = str(
             parsed.get("description")
             or parsed.get("rationale")
@@ -210,7 +197,7 @@ def _cell_candidates(atlas, scout: Callable[[str], str], top_n: int, context: st
                 + "\n---\n".join(excerpts)
                 + context
             )
-            parsed = _extract_json_object(response)
+            parsed = parse_model_output(response, schema=dict).value
             if parsed and all(parsed.get(axis) for axis in ("theme", "form", "viewpoint", "era")):
                 labelled.append(parsed)
     if len(labelled) < 2:
@@ -265,7 +252,7 @@ def find_niches(
             f"候補ID: {candidate['id']}\n候補: {candidate['description']}{context}"
         )
         vacancy = classify_vacancy(response)
-        parsed = _extract_json_object(response) or {}
+        parsed = parse_model_output(response, schema=dict).value or {}
         try:
             interpretability = float(parsed.get("interpretability", 0.5))
         except (TypeError, ValueError):

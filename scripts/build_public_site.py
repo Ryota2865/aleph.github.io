@@ -16,7 +16,8 @@ import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from aleph.publish.status import is_published
+from aleph.core.repository_snapshot import RepositoryReader
+from aleph.core.work_snapshot import WorkReader
 
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -785,12 +786,13 @@ def _first_author_model(root: Path, work_id: str) -> str:
 
 def _work_fact(root: Path, work_id: str) -> dict:
     """Derive public work facts from historical artifacts, never current config."""
+    snapshot = WorkReader(root / "works" / work_id).snapshot()
     payload = _checkpoint_payload(root, work_id)
     decisions = _work_decisions(root, work_id)
     seed = _read_json(root / "works" / work_id / "seed.json")
     hint = str(seed.get("hint") or "") if isinstance(seed, dict) else ""
     niche = payload.get("niche") if isinstance(payload.get("niche"), dict) else {}
-    audience = str(payload.get("audience") or "記録なし")
+    audience = snapshot.audience or "記録なし"
     l1 = next((row for row in decisions if row.get("layer") == "L1"), {})
     forced = "強制" in str(l1.get("decision", "")) or l1.get("decided_by") == "owner-experiment"
     trajectories: dict[int, dict] = {}
@@ -811,7 +813,7 @@ def _work_fact(root: Path, work_id: str) -> dict:
         "forced": forced,
         "niche": niche,
         "trajectories": trajectories,
-        "best_version": best.get("best_version"),
+        "best_version": snapshot.best_draft.version if snapshot.best_draft else best.get("best_version"),
         "publications": publications,
         "finish": finish,
         "criteria_model": _first_author_model(root, work_id),
@@ -1011,17 +1013,15 @@ def _build_works_index(root: Path, out_dir: Path) -> None:
 def iter_published(root: Path) -> list[tuple[str, dict, str]]:
     """works/*/final/{meta.json,text.md} を持つ公開作品を (work_id, meta, text) で列挙する."""
     out: list[tuple[str, dict, str]] = []
-    for meta_path in sorted((root / "works").glob("*/final/meta.json")):
-        if "ablation" in meta_path.relative_to(root / "works").parts:
+    for snapshot in RepositoryReader(root).snapshot().works:
+        if not snapshot.is_published or snapshot.canonical is False or snapshot.best_draft is None:
             continue
-        work_id = meta_path.parent.parent.name
-        if not is_published(meta_path.parent.parent):
-            continue
-        text = _read_text(meta_path.parent / "text.md")
-        if text is None:
-            continue
+        work_id = snapshot.work_id
+        meta_path = root / "works" / work_id / "final" / "meta.json"
         meta = _read_json(meta_path)
-        out.append((work_id, meta if isinstance(meta, dict) else {}, text))
+        public_meta = dict(meta) if isinstance(meta, dict) else {}
+        public_meta["title"] = snapshot.title
+        out.append((work_id, public_meta, snapshot.best_draft.text))
     return out
 
 

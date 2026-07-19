@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
-from aleph.explore.niche import _extract_json_object
+from aleph.core.model_output import parse_model_output
 
 
 def _load_index(index_dir: Path) -> tuple[list[dict], np.ndarray]:
@@ -173,7 +173,7 @@ def annotate_pairs(pairs: list[dict], scout) -> list[dict]:
             f"断片B（{pair.get('title_b', '')}）: {pair.get('text_b', '')}"
         )
         response = scout(prompt)
-        parsed = _extract_json_object(response) or {}
+        parsed = parse_model_output(response, schema=dict).value or {}
         note = str(parsed.get("note") or response.strip())
         annotated.append({**pair, "note": note})
     return annotated

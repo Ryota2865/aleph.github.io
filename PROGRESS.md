@@ -1,5 +1,25 @@
 # PROGRESS
 
+## 2026-07-19 — Phase 2正式独立再監査PASS
+
+### 完了したこと
+
+- Claude Codeの独立担当がPhase 2を正式監査。初回はduplicate-key objectの
+  内部をschema一致候補として救済できるP2を1件検出し、**FAIL**と判定した。
+- 再現入力をREDに追加し、`fail_closed=True`でduplicate keyを検出したら
+  候補救済前に拒否する修繕を実施。`fail_closed=False`の既存契約は保持した。
+- P2-1のread-only再監査は**VERDICT: PASS**。初回監査は
+  `reports/PHASE2_DEEP_INTERPRETATION_AUDIT_20260719.md`、再監査は
+  `reports/PHASE2_P2_1_REAUDIT_20260719.md`に保存した。
+- focused testは4 passed、非local全体は**284 passed, 1 deselected**、
+  `git diff --check`は違反なし。PLANの意味や受入条件に変更はない。
+- これにより`designs/next-designer-execution-plan.md` Phase 2の正式監査ゲートを完了した。
+
+### 次の一手
+
+- 次のmodern work初回運用時にstrict replay経路を監視する。
+- 探索callerのmulti-JSON拒否による歩留まりは、実API走行で観測してから再評価する。
+
 ## 2026-07-19 — Phase 1 TransitionCommit正式独立再監査PASS
 
 ### 完了したこと
@@ -1635,3 +1655,22 @@ w0008一式・宣言・EXP報告のFable5チャット受け渡しを打診（回
   5. fixation_check初回検査対象のメモ——警句機関の「引用への変換」を固着の解消と
      読むか高度化と読むか。
 - 週間レートリミット93%につき本セッションはここまで。再開句:「PROGRESS.mdを読んで再開」。
+## 2026-07-19: Phase 2 深い解釈module施工（独立監査待ち）
+
+- `/tmp/ALEPH_PHASE2_HANDOFF_20260719.md`から継続し、doctor PASS後にJSON応答・bool変換・
+  checkpoint/decision/trajectory・site/dashboard/CLIのread-only走査を実施。
+- 設計ゲート`designs/phase2-deep-interpretation.md`を作成。三moduleはin-process/local file依存で、
+  外部seamを`parse_model_output`、`WorkReader.snapshot`、`RepositoryReader.snapshot`へ限定。
+  PLAN意味変更、受入条件弱化、公開上限・予算・終端状態変更は不要と判定した。
+- TDDはw0008技術床の文字列`"false"`をTrueにする実在回帰から開始。REDを再現後、
+  `ModelOutput`を実装し、複数JSON・duplicate key・strict bool/enum/number・監査spanを追加。
+  公開、技術床、家風、停止、詩学、志向、構成を含む全callerからprivate extractorを削除。
+- `WorkSnapshot`はmodern strict replay優先、legacy互換＋warning、採用稿/最新稿分離、
+  effective constraints、poetics/atlas、calls費用、canonical arm、provenanceを一読で返す。
+- `RepositorySnapshot`は8作品、budget、実験、PID、formal audit、2026-08-01期限を集約。
+  audit JSON/report→public site→dashboard→CLI `status --json`→README状態生成の順でadapterを移行。
+- 同一fixtureのsite/dashboard/CLIでstate=`PUBLISH`、title=`共有題`、採用本文一致を確認。
+  実作品では公開5作、実験2件。既知legacy不一致、w0005 finalの手修正、w0008古いcolophonを
+  warningとして保持した。
+- 自己検証: `uv run pytest -q -m 'not local' --capture=no` =
+  **283 passed, 1 deselected**。正式判定は別Claude Code担当の独立監査待ち。

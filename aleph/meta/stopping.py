@@ -5,23 +5,9 @@
 """
 from __future__ import annotations
 
-import json
 from typing import Callable
 
-
-def _extract_json_object(text: str) -> dict | None:
-    """応答文字列中の最初のJSONオブジェクトを頑健に取り出す（aleph/explore/niche.py と同方式）."""
-    decoder = json.JSONDecoder()
-    for index, char in enumerate(text):
-        if char != "{":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text[index:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
+from aleph.core.model_output import parse_model_output
 
 
 def decide_stop(
@@ -126,9 +112,13 @@ def completion_declaration(
         f"完成宣言:\n{declaration}"
     )
     response = adversary(adversary_prompt)
-    parsed = _extract_json_object(response) or {}
-    rebutted = bool(parsed.get("rebutted", False))
-    rationale = str(parsed.get("rationale", ""))
+    output = parse_model_output(response, schema={"rebutted": bool, "rationale": str})
+    if output.ok:
+        rebutted = output.value["rebutted"]
+        rationale = output.value["rationale"]
+    else:
+        rebutted = True
+        rationale = "; ".join(output.warnings)
 
     return {
         "completed": not rebutted,

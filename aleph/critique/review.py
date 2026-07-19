@@ -20,7 +20,7 @@ import numpy as np
 from aleph.critique.adversary import adversary_review
 from aleph.critique.reader_model import reader_prompt
 from aleph.critique.style import rationing_instructions
-from aleph.explore.niche import _extract_json_object
+from aleph.core.model_output import parse_model_output
 from aleph.materia.ai_native import perplexity_curve
 
 
@@ -100,7 +100,7 @@ def _technical_review(scout: Callable[[str], str], draft_text: str) -> dict:
         f"草稿:\n{draft_text}"
     )
     response = scout(prompt)
-    parsed = _extract_json_object(response) or {}
+    parsed = parse_model_output(response, schema=dict).value or {}
     issues = parsed.get("issues", [])
     if not isinstance(issues, list):
         issues = []
@@ -124,7 +124,7 @@ def _criteria_review(jury: list[Callable[[str], str]], criteria: str, draft_text
             f"基準:\n{criteria}\n\n草稿:\n{draft_text}"
         )
         response = juror(prompt)
-        parsed = _extract_json_object(response) or {}
+        parsed = parse_model_output(response, schema=dict).value or {}
         critique = str(parsed.get("critique", response))
         critiques.append(critique)
         raw = parsed.get("score", None)
@@ -186,7 +186,7 @@ def _reader_review(reader: Callable[[str], str], draft_text: str, audience: str)
     """読者審級: reader_prompt で組み立てたプロンプトを reader に渡す."""
     prompt = reader_prompt(draft_text, audience)
     response = reader(prompt)
-    parsed = _extract_json_object(response)
+    parsed = parse_model_output(response, schema=dict).value
     if parsed is None:
         return {"raw": response}
     return parsed
@@ -213,7 +213,7 @@ def _instruction_lines(text: str) -> list[str]:
     normalized = text.strip()
     if not normalized:
         return []
-    parsed = _extract_json_object(normalized)
+    parsed = parse_model_output(normalized, schema=dict).value
     if isinstance(parsed, dict):
         items: list[str] = []
         for key in ("issues", "items", "instructions", "points"):

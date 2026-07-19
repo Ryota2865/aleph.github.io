@@ -6,37 +6,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-
-def _extract_json_object(text: str) -> dict | None:
-    """応答中の最初のJSONオブジェクトを頑健に取り出す（他モジュールと同方式・依存回避）."""
-    import json
-
-    decoder = json.JSONDecoder()
-    for index, char in enumerate(text):
-        if char != "{":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text[index:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
+from aleph.core.model_output import parse_model_output
 
 
 def _coerce_publish(value) -> bool | None:
     """publish 値を頑健に真偽へ。文字列 "false"/"no"/"0" を True にしない（監査 finding 2）."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        v = value.strip().lower()
-        if v in {"true", "yes", "1", "公開", "する", "はい"}:
-            return True
-        if v in {"false", "no", "0", "非公開", "しない", "いいえ", ""}:
-            return False
-    return None
+    return value if type(value) is bool else None
 
 
 def _best_draft_excerpt(work, limit: int = 6000) -> str:
@@ -82,11 +57,9 @@ def _ask_publish_intent(author, audience: str, work_excerpt: str = "") -> tuple[
         lines += ["", "作品（抜粋）:", work_excerpt]
     lines.append('JSON {"publish": true|false, "reason": "..."} で返してください。')
     response = str(author("\n".join(lines)))
-    parsed = _extract_json_object(response) or {}
-    if "publish" in parsed:
-        coerced = _coerce_publish(parsed.get("publish"))
-        if coerced is not None:
-            return coerced, str(parsed.get("reason", "")).strip()
+    output = parse_model_output(response, schema={"publish": bool, "reason": str})
+    if output.ok:
+        return output.value["publish"], output.value["reason"].strip()
     # フォールバック（JSON欠落/判別不能）: 否定を優先し、明確な肯定のみ True。
     if "非公開" in response or "公開しない" in response or "公開すべきでない" in response:
         return False, response.strip()[:200]

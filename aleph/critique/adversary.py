@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 from typing import Callable
 
-from aleph.explore.niche import _extract_json_object
+from aleph.core.model_output import parse_model_output
 
 
 def adversary_review(
@@ -40,7 +40,7 @@ def adversary_review(
         f"草稿冒頭: {draft_text[:1000]}"
     )
     response = scout(prompt)
-    parsed = _extract_json_object(response) or {}
+    parsed = parse_model_output(response, schema=dict).value or {}
     derivative = parsed.get("exists") is True
     rationale = str(parsed.get("rationale", response))
     evidence: list[dict] = []

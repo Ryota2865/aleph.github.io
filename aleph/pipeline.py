@@ -620,7 +620,7 @@ class RealDeps:
     def choose_title(self, work, text: str) -> str:
         """作品本文から著者に題を1つ選ばせる。失敗時は空文字（呼び出し側でフォールバック）."""
         from aleph.core.llm import Message
-        from aleph.intent.choose import _extract_json_object
+        from aleph.core.model_output import parse_model_output
 
         excerpt = text if len(text) <= 16000 else text[:12000] + "\n……\n" + text[-4000:]
         prompt = (
@@ -632,7 +632,7 @@ class RealDeps:
             resp = self.router.call(
                 "author_primary", [Message("user", prompt)], work_id=self._work_id, max_tokens=2048,
             )
-            parsed = _extract_json_object(resp.text) or {}
+            parsed = parse_model_output(resp.text, schema=dict).value or {}
             title = str(parsed.get("title") or "").strip()
             if title:
                 work.append_decision({

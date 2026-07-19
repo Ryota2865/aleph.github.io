@@ -9,7 +9,7 @@ from typing import Callable
 
 import httpx
 
-from aleph.explore.niche import _extract_json_object
+from aleph.core.model_output import parse_model_output
 
 
 _SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
@@ -92,7 +92,7 @@ def web_check(
         f"候補: {niche.get('description', '')}\n"
         f"検索結果: {json.dumps(bibliography, ensure_ascii=False)}"
     )
-    parsed = _extract_json_object(response) or {}
+    parsed = parse_model_output(response, schema=dict).value or {}
     exists = parsed.get("exists") is True
     rationale = str(parsed.get("rationale", response))
     prior_examples = [to_material_card(hit) for hit in hits] if exists else []

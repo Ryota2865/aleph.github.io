@@ -96,6 +96,6 @@ def test_first_revision_ack_true_allows_reflection_to_run(tmp_path):
     )
     result = deps.reflect_poetics(work)
     assert router.calls > 0
-    # fake routerは author/adversary 両方に同じ応答を返すため rebutted のJSON解釈は失敗し
-    # rebutted=False（既定）扱いになる＝適用される
-    assert result["applied"] is True
+    # fake routerはauthor用JSONをadversaryにも返す。Phase 2では欠落したrebuttedを
+    # 既定Falseへ倒さず、設計変更である詩学改訂をfail closedにする。
+    assert result["applied"] is False

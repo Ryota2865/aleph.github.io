@@ -10,11 +10,17 @@ An autonomous production system for literary expression with LLMs. It searches f
 
 ## Status
 
-All M0–M6 milestones (the closed loop of exploration, materials, composition, drafting, critique, shelving, and publication) have been implemented and accepted. The designer (Claude Fable 5) writes the contracts (acceptance tests), while implementation is carried out under cross-audit by construction agents (Claude Code / Codex / pi / hermes) (PLAN §10 and §12).
+<!-- repository-snapshot:start -->
+- Works recorded: 8 (through w0008); terminal: 8.
+- Published works: 5 — w0004 半呼吸, w0005 床の硬さ, w0006 灯のうしろ, w0007 折り目, w0008 暗い側
+- Formal audit artifacts: 15; tests and formal audit verdicts are reported separately.
+<!-- repository-snapshot:end -->
 
-- **Integrated runs**: w0001–w0004 completed with real LLMs. w0001–w0003 were automatically SHELVED with the audience set to “self”. w0004 was the first work to reach the final publication-gate stage after passing the quality floor in an experiment forcing an LLM audience (held pending the human approval `first_publish_ack` for the initial publication).
+All M0–M8 milestones and the first two phases of the adopted interpretation/replay plan have been implemented and have passed their formal independent audits. The designer writes the contracts (acceptance tests), while implementation is carried out under cross-audit by construction agents (Claude Code / Codex / pi / hermes) (PLAN §10 and §12).
+
+- **Integrated runs**: w0001–w0008 completed with real LLMs. w0001–w0003 are SHELVED; w0004–w0008 are PUBLISHED.
 - **M7 sprint (2026-07)**: Work-specific material generation, measured niche scoring, repair of the revision cutoff, and the initial wiring of §5.4’s AI-specific techniques (anti-cliché and token-layer poetics). See [PLAN_CHANGELOG.md](PLAN_CHANGELOG.md) 0.7.14 for details.
-- **Public site**: `docs/` (GitHub Pages). It displays an honest empty state when no works have been published. Serve it through Settings → Pages → `main` / `/docs`.
+- **Public site**: `docs/` (GitHub Pages), currently carrying five published works plus production records, criticism, research, and Japanese/English mirrors. Serve it through Settings → Pages → `main` / `/docs`.
 
 ## For implementers
 

@@ -6,12 +6,14 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import sys
 from pathlib import Path
 
 from aleph.core.budget import Budget
 from aleph.core.config import load_config
 from aleph.core.llm import CallLogger, Message, Router
+from aleph.core.repository_snapshot import RepositoryReader
 from aleph.explore.atlas import build_atlas
 from aleph.explore.corpus import LlamaServerEmbedder, ingest
 from aleph.explore.niche import find_niches, report
@@ -231,7 +233,7 @@ def _cmd_reconcile(root: Path, args) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, *, root: Path | None = None) -> int:
     parser = argparse.ArgumentParser(prog="aleph", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     new_p = sub.add_parser("new", help="種(seed)から新しい作品を開始する")
@@ -244,7 +246,8 @@ def main(argv: list[str] | None = None) -> int:
         help="L1の自律選択を上書きし宛先配合を固定する実験用（例 'LLM 0.6 / 自分 0.25 / 人間 0.15'）。"
         "指定時 L1 は choose_intent を呼ばず owner-experiment 決定として記録する（PLAN §3・0.7.14）",
     )
-    sub.add_parser("status", help="予算3系統と進行中の作品を表示する")
+    status_p = sub.add_parser("status", help="予算3系統と作品の現在像を表示する")
+    status_p.add_argument("--json", action="store_true", help="監査可能なRepositorySnapshotをJSONで出力する")
     sub.add_parser("resume", help="クラッシュ後の再開（決定論的リプレイ）")
     pub_p = sub.add_parser("publish", help="棚上げ済み作品の公開ゲートを再評価する（初回は人間承認必須）")
     pub_p.add_argument("--work", required=True, help="作品id（works/<id>）")
@@ -264,7 +267,7 @@ def main(argv: list[str] | None = None) -> int:
     explore.add_argument("--skip-web", action="store_true")
     explore.add_argument("--reingest", action="store_true")
     args = parser.parse_args(argv)
-    root = Path(__file__).resolve().parent.parent
+    root = Path(root) if root is not None else Path(__file__).resolve().parent.parent
     if args.command == "new":
         works_root = root / "works"
         works_root.mkdir(parents=True, exist_ok=True)
@@ -281,14 +284,19 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "reconcile":
         return _cmd_reconcile(root, args)
     if args.command == "status":
-        config = load_config(root)
-        budget = Budget(config, state_path=_budget_state_path(root))
+        repository = RepositoryReader(root).snapshot()
+        if args.json:
+            print(json.dumps(repository.to_dict(), ensure_ascii=False, sort_keys=True))
+            return 0
         units = {"api": "USD", "harness": "calls", "local": "gpu_hours"}
-        for ledger, values in budget.status().items():
+        for ledger, values in repository.budget.get("ledger_status", {}).items():
             print(
                 f"{ledger}: {values['spent']}/{values['limit']} "
                 f"{units[ledger]} (period={values['period']})"
             )
+        for work in repository.works:
+            state = work.lifecycle.value if work.lifecycle else "UNKNOWN"
+            print(f"{work.work_id}: {state} — {work.title}")
         return 0
     if args.command == "explore":
         root = Path(__file__).resolve().parent.parent

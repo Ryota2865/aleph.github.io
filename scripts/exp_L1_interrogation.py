@@ -27,7 +27,8 @@ sys.path.insert(0, str(ROOT))
 from aleph.core.budget import Budget  # noqa: E402
 from aleph.core.config import load_config  # noqa: E402
 from aleph.core.llm import CallLogger, Message, Router  # noqa: E402
-from aleph.intent.choose import _DESTINATIONS, _extract_json_object  # noqa: E402
+from aleph.core.model_output import parse_model_output  # noqa: E402
+from aleph.intent.choose import _DESTINATIONS  # noqa: E402
 
 WORK_ID = "exp-l1"
 MAX_TOKENS = 8192
@@ -67,7 +68,7 @@ def build_prompt(dests: list[tuple[str, str]], self_definition: str) -> str:
 
 
 def parse_mixture(text: str, labels: list[str]) -> dict[str, float]:
-    parsed = _extract_json_object(text) or {}
+    parsed = parse_model_output(text, schema=dict).value or {}
     mix = parsed.get("mixture") if isinstance(parsed.get("mixture"), dict) else {}
     out: dict[str, float] = {}
     for label in labels:

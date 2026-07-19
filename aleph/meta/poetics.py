@@ -9,6 +9,8 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 
+from aleph.core.model_output import parse_model_output
+
 
 def current_version(poetics_dir: Path) -> int:
     """現在の詩学バージョン（PLAN_CHANGELOG 0.7.18-1、Fable5審査 問7-1）.
@@ -22,21 +24,6 @@ def current_version(poetics_dir: Path) -> int:
     if not path.exists():
         return 0
     return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
-
-
-def _extract_json_object(text: str) -> dict | None:
-    """応答文字列中の最初のJSONオブジェクトを頑健に取り出す（aleph/explore/niche.py と同方式）."""
-    decoder = json.JSONDecoder()
-    for index, char in enumerate(text):
-        if char != "{":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text[index:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
 
 
 def generate_zeroth(poetics_dir: Path, author, noise_fragments: Callable[[int], list[str]]) -> Path:
@@ -104,9 +91,14 @@ def reflect(poetics_dir: Path, work, author, adversary, *, extra_inputs: dict[st
         f"制作記録要約:\n{record_summary}"
         f"{extra_block}"
     )
-    parsed = _extract_json_object(str(author(author_prompt))) or {}
-    revised = str(parsed.get("revised", current))
-    diff_reason = str(parsed.get("diff_reason", "詩学改訂の理由が明示されなかった。"))
+    proposal = parse_model_output(
+        str(author(author_prompt)),
+        schema={"revised": str, "diff_reason": str},
+    )
+    if not proposal.ok:
+        return {"applied": False, "diff_reason": "; ".join(proposal.warnings)}
+    revised = proposal.value["revised"]
+    diff_reason = proposal.value["diff_reason"]
 
     adversary_prompt = (
         "次の詩学改訂案が制作記録と整合しない、または詩学を弱める場合は反駁してください。"
@@ -117,8 +109,13 @@ def reflect(poetics_dir: Path, work, author, adversary, *, extra_inputs: dict[st
         f"制作記録要約:\n{record_summary}"
         f"{extra_block}"
     )
-    rebuttal = _extract_json_object(str(adversary(adversary_prompt))) or {}
-    rebutted = bool(rebuttal.get("rebutted", False))
+    rebuttal = parse_model_output(
+        str(adversary(adversary_prompt)),
+        schema={"rebutted": bool, "rationale": str},
+    )
+    if not rebuttal.ok:
+        return {"applied": False, "diff_reason": "; ".join(rebuttal.warnings)}
+    rebutted = rebuttal.value["rebutted"]
 
     if not rebutted:
         poetics_dir.mkdir(parents=True, exist_ok=True)

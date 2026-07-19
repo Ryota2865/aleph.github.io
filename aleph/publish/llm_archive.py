@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from aleph.publish.status import is_published
+from aleph.core.repository_snapshot import RepositoryReader
 
 
 def build_llms_txt(*, works_root: Path, out_dir: Path) -> Path:
@@ -27,15 +27,17 @@ def build_llms_txt(*, works_root: Path, out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     lines = ["# ALEPH works", ""]
-    for meta_path in sorted(Path(works_root).glob("*/final/meta.json")):
-        work_id = meta_path.parent.parent.name
-        if not is_published(meta_path.parent.parent):
+    works_root = Path(works_root)
+    for snapshot in RepositoryReader(works_root.parent).snapshot().works:
+        if not snapshot.is_published or snapshot.canonical is False:
             continue
+        work_id = snapshot.work_id
+        meta_path = works_root / work_id / "final" / "meta.json"
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            continue
-        title = meta.get("title", work_id)
+        except (OSError, json.JSONDecodeError):
+            meta = {}
+        title = snapshot.title
         readers = meta.get("intended_reader_models", [])
         if isinstance(readers, list):
             readers_str = ", ".join(str(r) for r in readers)

@@ -13,7 +13,7 @@ import re
 
 import numpy as np
 
-from aleph.explore.niche import _extract_json_object
+from aleph.core.model_output import parse_model_output
 
 
 def extract_skeleton(source_text: str, llm) -> str:
@@ -24,7 +24,7 @@ def extract_skeleton(source_text: str, llm) -> str:
         f"{source_text[:4000]}"
     )
     response = llm(prompt)
-    parsed = _extract_json_object(response)
+    parsed = parse_model_output(response, schema=dict).value
     if parsed and parsed.get("skeleton"):
         return str(parsed["skeleton"])
     return response.strip()

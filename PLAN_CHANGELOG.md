@@ -1,5 +1,53 @@
 # PLAN 変更履歴
 
+## 0.7.20-10 (2026-07-19) — Phase 2正式独立再監査PASS
+
+施工者と異なるClaude Code担当がPhase 2を独立監査し、初回は`ModelOutput`の
+duplicate-key処理にP2を1件検出して**FAIL**と判定した。正式記録は
+`reports/PHASE2_DEEP_INTERPRETATION_AUDIT_20260719.md`。
+
+1. 外側objectのduplicate key検出後にscannerが内部のschema一致objectを救済し、
+   `ok=True`にできる経路を独立故障注入で再現した。
+2. 同じ入力を回帰テストにし、`fail_closed=True`でscan中にduplicate keyを
+   1件でも検出したら候補救済前に拒否する局所的な修繕を行った。
+   `fail_closed=False`の探索用契約は変更していない。
+3. 同じClaude Code監査担当がP2の解消だけをread-only再監査し、
+   **VERDICT: PASS**と判定した。記録は`reports/PHASE2_P2_1_REAUDIT_20260719.md`。
+4. focusedは4 passed、非local全体は**284 passed, 1 deselected**、`git diff --check`も通過した。
+5. 探索callerのmulti-JSON歩留まりと次のmodern work初回運用監視は非阻害の残余リスクとして残す。
+
+本項はPLANの意味、受入条件、終端状態、予算規則、公開上限を変更せず、
+採用済みPhase 2の正式監査ゲート完了を記録する。
+
+## 0.7.20-9 (2026-07-19) — Phase 2深い解釈module施工（独立監査待ち）
+
+全面採用済み`designs/next-designer-execution-plan.md` Phase 2にもとづき、Codexが
+read-only走査と設計ゲートを経て施工した。契約詳細は
+`designs/phase2-deep-interpretation.md`。PLANの意味、公開上限、予算、終端状態、
+既存`works/`は変更していない。
+
+1. **ModelOutput**: `aleph/core/model_output.py`へ単一JSON抽出、duplicate/multiple JSON拒否、
+   bool・enum・数値・動的mapの厳密型検査、生応答・採用fragment・span・warningの関係を集約。
+   w0008技術床の`bool("false")`回帰を最初のREDにし、公開、家風分類、停止、詩学、志向、
+   構成ほか全callerを中心interfaceへ移行した。private JSON extractorは削除した。
+2. **WorkSnapshot**: `aleph/core/work_snapshot.py`へlifecycle/publication/audience、採用稿と最新稿、
+   constraints、poetics/atlas、cost、canonical arm、warning、provenanceを集約。modern event列は
+   strict replayを一次像とし、stale checkpointはwarning、破損modern列はfail closedにする。
+   legacy履歴は書き換えず互換投影と不一致warningを返す。publication statusの旧readerは
+   このmoduleへのadapterへ置換した。
+3. **RepositorySnapshot**: `aleph/core/repository_snapshot.py`へWorkSnapshot群、budget、experiment、
+   active job、formal audit、期限付き決定を集約。2026-08-01の公開上限999再審査を値の自動変更
+   なしで可視化する。監査JSON/report、public site、dashboard、CLI `status --json`、README状態
+   生成adapterを実装した。
+4. **受入**: 同一fixtureをsite、dashboard、CLIへ渡し、状態・題・採用稿が一致するinterface
+   テストを追加。実作品8件をread-onlyでsnapshot化し、公開5作、実験2件、legacy不連続、
+   w0005の手修正final、古いcolophon等をwarningとして隠さないことを確認した。
+5. **検証**: 初回独立監査時の非local全体は**283 passed, 1 deselected**。
+   既存サイトの生成物一致も維持する。
+   正式なPhase 2完了判定は施工者と異なるClaude Code担当の監査へ留保する。
+
+本項は採用済み設計の施工記録であり、受入条件やPLANの意味を変更しない。
+
 ## 0.7.20-8 (2026-07-19) — Phase 1 TransitionCommit正式独立再監査PASS
 
 施工者と異なるClaude Code担当が、追加修繕commit

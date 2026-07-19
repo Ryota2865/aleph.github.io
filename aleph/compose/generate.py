@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import Callable
 
+from aleph.core.model_output import parse_model_output
 from aleph.critique.review import sanitize_critique
 
 Author = Callable[[str], str]
@@ -18,39 +19,6 @@ Critic = Callable[[str], str]
 
 _PROPOSAL_REQUIRED_FIELDS = ("form", "parts", "material_placement", "style_policy", "length_estimate")
 _MAX_PROPOSAL_ATTEMPTS = 3  # 初回 + 再要求2回（M3_spec.md）
-
-
-# ---------------------------------------------------------------- JSON頑健パース
-# aleph.explore.niche._extract_json_object と同じ方式（先頭からdictを走査して
-# raw_decodeを試す）で、配列版を自作する。他ワーカー担当のexploreモジュールには
-# 依存しない（編集許可ファイルの独立性を保つ）。
-
-def _extract_json_object(text: str) -> dict | None:
-    decoder = json.JSONDecoder()
-    for index, char in enumerate(text):
-        if char != "{":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text[index:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
-
-
-def _extract_json_array(text: str) -> list | None:
-    decoder = json.JSONDecoder()
-    for index, char in enumerate(text):
-        if char != "[":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text[index:])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, list):
-            return value
-    return None
 
 
 # ---------------------------------------------------------------- 基準の導出（§6.1）
@@ -153,7 +121,7 @@ def generate_proposals(
     for attempt in range(_MAX_PROPOSAL_ATTEMPTS):
         prompt = _proposal_prompt(criteria, audience, materials_summary, n, attempt)
         response = author(prompt)
-        parsed = _extract_json_array(response) or []
+        parsed = parse_model_output(response, schema=list).value or []
         valid = [
             item
             for item in parsed
@@ -234,7 +202,7 @@ def evolve(
         scored = []
         for candidate in candidates:
             response = critic(_critic_prompt(candidate, criteria))
-            parsed = _extract_json_object(response) or {}
+            parsed = parse_model_output(response, schema=dict).value or {}
             try:
                 score = float(parsed.get("score", 0.0))
             except (TypeError, ValueError):
@@ -251,7 +219,7 @@ def evolve(
             best_candidate, criteria, audience, sanitize_critique(best_critique)
         )
         response = author(crossover_prompt)
-        new_candidate = _extract_json_object(response)
+        new_candidate = parse_model_output(response, schema=dict).value
 
         next_generation = list(candidates)
         if new_candidate:

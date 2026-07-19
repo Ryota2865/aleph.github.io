@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Callable
 
 from aleph.core.llm import Message
-from aleph.explore.niche import _extract_json_object
+from aleph.core.model_output import parse_model_output
 
 
 def _mean_logprob(resp) -> float:
@@ -49,8 +49,8 @@ def anti_cliche(prompt: str, llm, scout, *, n_candidates: int = 3) -> dict:
             '結果は JSON {"coherent": true/false, "rationale": "..."} だけで返してください。\n'
             f"書き出し: {prompt}\n続き: {text}"
         )
-        parsed = _extract_json_object(verdict) or {}
-        if bool(parsed.get("coherent", False)):
+        output = parse_model_output(verdict, schema={"coherent": bool, "rationale": str})
+        if output.ok and output.value["coherent"]:
             chosen = (text, lp)
             break
     if chosen is None:
@@ -122,10 +122,13 @@ def grade_ai_nativeness(card: dict, scout) -> dict:
         f"技法: {card.get('method')}\n内容: {card.get('content')}"
     )
     response = scout(prompt)
-    parsed = _extract_json_object(response) or {}
-    ai_nativeness = {
-        "human_feasible": bool(parsed.get("human_feasible", True)),
-        "grade": str(parsed.get("grade", "B")),
-        "rationale": str(parsed.get("rationale", response.strip())),
+    output = parse_model_output(
+        response,
+        schema={"human_feasible": bool, "grade": frozenset({"S", "A", "B"}), "rationale": str},
+    )
+    ai_nativeness = output.value if output.ok else {
+        "human_feasible": True,
+        "grade": "B",
+        "rationale": "; ".join(output.warnings),
     }
     return {**card, "ai_nativeness": ai_nativeness}

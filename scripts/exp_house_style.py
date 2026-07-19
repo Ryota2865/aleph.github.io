@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT))
 from aleph.core.budget import Budget  # noqa: E402
 from aleph.core.config import load_config  # noqa: E402
 from aleph.core.llm import CallLogger, Message, Router  # noqa: E402
-from aleph.explore.niche import _extract_json_object  # noqa: E402
+from aleph.core.model_output import parse_model_output
 
 WORK_ID = "exp-house"
 N_PER_CELL = 5
@@ -82,10 +82,14 @@ def build_prompt(*, poetics: bool, map_context: bool) -> str:
 
 def classify(scout_call, proposal: dict) -> dict | None:
     text = json.dumps(proposal, ensure_ascii=False)
-    parsed = _extract_json_object(scout_call(CLASSIFY_PROMPT + text)) or {}
     keys = ("era_taisho_showa", "backstage_world", "aphoristic_voice")
-    if not all(isinstance(parsed.get(k), bool) for k in keys):
+    output = parse_model_output(
+        scout_call(CLASSIFY_PROMPT + text),
+        schema={key: bool for key in keys},
+    )
+    if not output.ok:
         return None
+    parsed = output.value
     return {k: parsed[k] for k in keys} | {"confidence": parsed.get("confidence")}
 
 
@@ -113,7 +117,7 @@ def main() -> int:
             try:
                 resp = author(prompt)
                 author_model = resp.model
-                proposal = _extract_json_object(resp.text) or {}
+                proposal = parse_model_output(resp.text, schema=dict).value or {}
                 row["proposal"] = proposal or None
                 row["markers"] = classify(scout, proposal) if proposal else None
             except Exception as exc:  # noqa: BLE001

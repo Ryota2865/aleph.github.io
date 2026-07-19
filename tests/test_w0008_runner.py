@@ -365,6 +365,17 @@ def test_blind_selection_supports_two_arm_fallback(tmp_path):
     assert set(result["label_mapping"].values()) == {"A", "B"}
 
 
+def test_tech_floor_rejects_string_false_instead_of_passing_it(tmp_path):
+    main = make_main(tmp_path)
+    setup_arm(main, "aozora")
+    roles = fake_roles(scout=lambda _prompt: '{"pass":"false","issues":[]}')
+
+    result = runner.stage_tech_floor(tmp_path, make_deps(tmp_path, main_roles=roles))
+
+    assert result["aozora"]["pass"] is False
+    assert any("bool" in issue for issue in result["aozora"]["issues"])
+
+
 def test_blind_prompt_does_not_mask_draft_body(tmp_path):
     """原稿本文は伏字加工しない（本文改変は選択観測を歪める）。伏字は技術床指摘のみ。"""
     mapping = {"x": "A", "y": "B"}

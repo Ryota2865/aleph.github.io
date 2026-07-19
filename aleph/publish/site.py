@@ -11,24 +11,23 @@ import html
 import json
 from pathlib import Path
 
-from aleph.publish.status import is_published
+from aleph.core.repository_snapshot import RepositoryReader
 
 
 def _iter_published(works_root: Path):
     """works_root 直下の final/meta.json + final/text.md を持つ作品を列挙する."""
-    for meta_path in sorted(Path(works_root).glob("*/final/meta.json")):
-        text_path = meta_path.parent / "text.md"
-        if not text_path.exists():
+    works_root = Path(works_root)
+    for snapshot in RepositoryReader(works_root.parent).snapshot().works:
+        if not snapshot.is_published or snapshot.canonical is False or snapshot.best_draft is None:
             continue
-        work_id = meta_path.parent.parent.name
-        if not is_published(meta_path.parent.parent):
-            continue
+        work_id = snapshot.work_id
+        meta_path = works_root / work_id / "final" / "meta.json"
         try:
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            continue
-        text = text_path.read_text(encoding="utf-8")
-        yield work_id, meta, text
+        except (OSError, json.JSONDecodeError):
+            meta = {}
+        meta["title"] = snapshot.title
+        yield work_id, meta, snapshot.best_draft.text
 
 
 def _credit_names(credits) -> list[str]:
