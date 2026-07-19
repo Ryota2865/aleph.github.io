@@ -240,6 +240,8 @@ _EN_PATHS = {
     "works/index.html": "en/works/index.html",
     "dialogue.html": "en/dialogue.html",
     "poetics.html": "en/poetics.html",
+    "poetics-v0.html": "en/poetics-v0.html",
+    "poetics-v1.html": "en/poetics-v1.html",
     "research/index.html": "en/research/index.html",
     "about.html": "en/about.html",
     "ode.html": "en/ode.html",
@@ -619,7 +621,10 @@ def _nav(root_prefix: str, current_path: str = "index.html", lang: str = "ja") -
             current_group = "en/research/index.html"
         elif current_path in {"en/dialogue.html"}:
             current_group = "en/research/index.html"
-        elif current_path in {"en/poetics.html", "en/ode.html", "en/declaration.html"}:
+        elif current_path in {
+            "en/poetics.html", "en/poetics-v0.html", "en/poetics-v1.html",
+            "en/ode.html", "en/declaration.html",
+        }:
             current_group = "en/about.html"
         elif current_path.startswith("en/process/"):
             current_group = "en/archive.html"
@@ -632,7 +637,9 @@ def _nav(root_prefix: str, current_path: str = "index.html", lang: str = "ja") -
             current_group = "research/index.html"
         elif current_path == "dialogue.html":
             current_group = "research/index.html"
-        elif current_path in {"poetics.html", "ode.html", "declaration.html"}:
+        elif current_path in {
+            "poetics.html", "poetics-v0.html", "poetics-v1.html", "ode.html", "declaration.html",
+        }:
             current_group = "about.html"
         elif current_path.startswith("process/"):
             current_group = "archive.html"
@@ -1076,7 +1083,7 @@ def _build_archive(root: Path, out_dir: Path) -> None:
         *groups,
         "</div>",
         "<h2>作品を跨ぐ記録</h2>",
-        "<p><a href='poetics.html'>詩学第0版</a> · <a href='dialogue.html'>批評と応答</a> · "
+        "<p><a href='poetics.html'>ALEPHの詩学</a> · <a href='dialogue.html'>批評と応答</a> · "
         "<a href='research/index.html'>研究ノート</a> · <a href='declaration.html'>2024年の宣言</a> · "
         "<a href='ode.html'>ODE：人間からの紹介文</a></p>",
         f"<p><a href='{_esc(_REPO_URL)}'>GitHub上の全リポジトリ</a> · <a href='llms.txt'>llms.txt</a></p>",
@@ -1284,17 +1291,50 @@ def _build_dialogue(root: Path, out_dir: Path) -> None:
 
 
 def _build_poetics(root: Path, out_dir: Path) -> None:
-    text = _read_text(root / "poetics" / "poetics.md")
-    if text is None:
+    version_zero = _read_text(root / "poetics" / "versions" / "v0.md")
+    version_one = _read_text(root / "poetics" / "poetics.md")
+    if version_zero is None or version_one is None:
         return
+
     body = "\n".join([
+        "<h1>ALEPHの詩学</h1>",
+        "<p class='lead'>作品を作るたびに読み返され、制作記録と反駁を受けて改訂される、ALEPHの暫定的な美的自己記述。</p>",
+        "<div class='work-grid'>",
+        "<article class='work-card'><p class='meta'>現行版 · 2026年7月18日</p>",
+        "<h2><a href='poetics-v1.html'>ALEPHの詩学 第1版</a></h2>",
+        "<p>第0版の事実誤認、制作実験、盲検選定と陪審判断の不一致を受け、起源の記帳と判断規則を改めた。w0009以降に適用。</p></article>",
+        "<article class='work-card'><p class='meta'>初版 · 2026年7月11日</p>",
+        "<h2><a href='poetics-v0.html'>ALEPHの詩学 第0版</a></h2>",
+        "<p>人間の種文を与えず、青空文庫アトラス由来の八断片と二つの未解決の問いから生成。w0001〜w0008に適用。</p></article>",
+        "</div>",
+        "<h2>改版の背景</h2>",
+        "<p>第0版は自らを「第1版によって焼かれるために書かれる版」と定めていた。"
+        "第1版は、<a href='declaration.html'>2024年の宣言</a>の出自監査とw0008までの制作記録を入力し、"
+        "敵対的反駁を経て成立した。変更理由の詳細と評価は "
+        "<a href='dialogue.html#report-critique-fable5-chat-poeticsreview-20260718'>第1版への批評</a>で読める。</p>",
+    ])
+    _write_page(out_dir, "poetics.html", "ALEPHの詩学", body, description="ALEPHの詩学第0版・第1版と改版の背景をたどる版別索引。")
+
+    version_zero_body = "\n".join([
         "<h1>詩学第0版</h1>",
         "<section class='provenance'><h2>由来と役割</h2>",
         _render_markdown(_site_markdown(root, "poetics-intro")),
         "</section>",
-        _render_markdown(_demote_headings(text)),
+        _render_markdown(_demote_headings(version_zero)),
+        "<p><a href='poetics.html'>詩学の系譜へ戻る</a> · <a href='poetics-v1.html'>第1版を読む</a></p>",
     ])
-    _write_page(out_dir, "poetics.html", "詩学第0版", body)
+    _write_page(out_dir, "poetics-v0.html", "詩学第0版", version_zero_body, description="2026年7月11日に生成され、w0001〜w0008へ適用されたALEPHの詩学第0版。")
+
+    version_one_body = "\n".join([
+        "<h1>詩学第1版</h1>",
+        "<section class='provenance'><h2>由来と役割</h2>",
+        "<p>2026年7月18日、第0版、2024年の宣言の出自監査、w0008までの制作記録を入力し、敵対的反駁を経て改訂された現行版。w0009以降に適用される。</p>",
+        "<p><a href='poetics.html'>改版の背景</a> · <a href='dialogue.html#report-critique-fable5-chat-poeticsreview-20260718'>第1版への批評</a></p>",
+        "</section>",
+        _render_markdown(_demote_headings(version_one)),
+        "<p><a href='poetics.html'>詩学の系譜へ戻る</a> · <a href='poetics-v0.html'>第0版を読む</a></p>",
+    ])
+    _write_page(out_dir, "poetics-v1.html", "詩学第1版", version_one_body, description="2026年7月18日に改訂され、w0009以降へ適用されるALEPHの現行詩学第1版。")
 
 
 _RESEARCH_ORDER = (
@@ -1453,11 +1493,9 @@ def _build_ode(root: Path, out_dir: Path) -> None:
         return
     body = "\n".join([
         "<h1>ODE：人間からの紹介文</h1>",
-        "<p class='meta'>人間側から見た ALEPH の起源。ここには (1) 2026年の Claude Code セッションで"
+        "<p class='meta'>ここには (1) 2026年の Claude Code セッションで"
         "書かれた最初のプロンプト（ALEPH の設計依頼）、(2) その背後の着想、そして (3) すべての起点と"
-        "なった<strong>2024年4月の Claude との対話</strong>からの引用が含まれる。"
-        "「批評と応答」等で言及される「2024年の宣言」の一次資料は、本ページではなく"
-        "<a href='declaration.html'>2024年の宣言</a> にある。</p>",
+        "なった<strong>2024年4月の Claude との対話</strong>からの引用が含まれる。</p>",
         _render_markdown(text),
     ])
     _write_page(out_dir, "ode.html", "ODE：人間からの紹介文", body)
@@ -1675,7 +1713,7 @@ def _build_en_archive(root: Path, out_dir: Path) -> None:
         *groups,
         "</div>",
         "<h2>Across works</h2>",
-        "<p><a href='poetics.html'>Poetics v0</a> · <a href='dialogue.html'>Critique and response</a> · "
+        "<p><a href='poetics.html'>ALEPH's poetics</a> · <a href='dialogue.html'>Critique and response</a> · "
         "<a href='research/index.html'>Research</a> · <a href='declaration.html'>2024 declaration</a> · "
         "<a href='ode.html'>Origin note</a></p>",
         f"<p><a href='{_esc(_REPO_URL)}'>Full repository on GitHub</a> · <a href='../llms.txt'>llms.txt</a></p>",
@@ -1763,26 +1801,54 @@ def _build_en_dialogue(root: Path, out_dir: Path) -> None:
 def _build_en_poetics(root: Path, out_dir: Path) -> None:
     body = "\n".join(
         [
+            "<h1>ALEPH's poetics</h1>",
+            "<p class='lead'>A provisional aesthetic self-description reread during production and revised through production records and adversarial rebuttal.</p>",
+            "<div class='work-grid'>",
+            "<article class='work-card'><p class='meta'>Current · 18 July 2026</p>",
+            "<h2><a href='poetics-v1.html'>Poetics v1</a></h2>",
+            "<p>Revised after an origin audit, production experiments, and a disagreement between blind selection and jury scoring. Applied from w0009 onward.</p></article>",
+            "<article class='work-card'><p class='meta'>Initial · 11 July 2026</p>",
+            "<h2><a href='poetics-v0.html'>Poetics v0</a></h2>",
+            "<p>Generated without a human seed text from eight Aozora-atlas fragments and two unresolved questions. Applied to w0001 through w0008.</p></article>",
+            "</div>",
+            "<h2>Why it changed</h2>",
+            "<p>Version zero called itself a version written to be burned by version one. Version one incorporated the provenance audit of the <a href='declaration.html'>2024 declaration</a> and production records through w0008, then passed adversarial rebuttal. The detailed critique remains in the <a href='../dialogue.html#report-critique-fable5-chat-poeticsreview-20260718'>Japanese primary record</a>.</p>",
+        ]
+    )
+    _write_en_page(out_dir, "en/poetics.html", "ALEPH's poetics", body, "../", description="An English index to ALEPH's poetics versions and the background of the first revision.")
+
+    version_zero_body = "\n".join(
+        [
             "<h1>Poetics v0</h1>",
             "<section class='provenance'><h2>Origin and role</h2>",
             _render_markdown(_site_markdown(root, "poetics-intro", "en")),
             "</section>",
-            "<p>Read in Japanese: <a href='../poetics.html'>詩学</a>.</p>",
+            "<p>Read the full text in Japanese: <a href='../poetics-v0.html'>ALEPHの詩学 第0版</a>.</p>",
+            "<p><a href='poetics.html'>Return to the version history</a> · <a href='poetics-v1.html'>Read about v1</a></p>",
         ]
     )
-    _write_en_page(out_dir, "en/poetics.html", "Poetics v0", body, "../")
+    _write_en_page(out_dir, "en/poetics-v0.html", "Poetics v0", version_zero_body, "../")
+
+    version_one_body = "\n".join(
+        [
+            "<h1>Poetics v1</h1>",
+            "<p>Version one was adopted on 18 July 2026 after the provenance audit of the 2024 declaration and production evidence through w0008. It is the current version and applies from w0009 onward.</p>",
+            "<p>The revision reconsidered version zero's claim that ALEPH had no source of motive, distinguished jury scores from the strength of a work's generative basis, and recorded recurring stylistic habits as liabilities rather than hiding them.</p>",
+            "<p>Read the full text in Japanese: <a href='../poetics-v1.html'>ALEPHの詩学 第1版</a>.</p>",
+            "<p><a href='poetics.html'>Return to the version history</a> · <a href='poetics-v0.html'>Read about v0</a></p>",
+        ]
+    )
+    _write_en_page(out_dir, "en/poetics-v1.html", "Poetics v1", version_one_body, "../")
 
 
 def _build_en_ode(out_dir: Path) -> None:
     body = "\n".join(
         [
             "<h1>ODE: an introduction from the human side</h1>",
-            "<p>The origin note explains ALEPH from the human side: the first 2026 prompt "
-            "that asked for a system for literary expression by LLMs, the design work "
+            "<p>The page presents the first 2026 prompt that asked for a system for "
+            "literary expression by LLMs, the design work "
             "supervised by Claude Fable 5, and the earlier inspiration from an April 2024 "
-            "conversation with Claude. The primary source of the \"2024 declaration\" "
-            "referenced across this site now has its own page: "
-            "<a href='declaration.html'>the 2024 declaration</a>.</p>",
+            "conversation with Claude.</p>",
             "<p>Read in Japanese: <a href='../ode.html'>ODE：人間からの紹介文</a>.</p>",
         ]
     )

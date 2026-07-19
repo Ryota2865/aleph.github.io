@@ -102,6 +102,7 @@ def _write_minimal_site_sources(root: Path) -> None:
     ):
         _write_text(root / relative, "minimal\n")
     _write_text(root / "poetics" / "poetics.md", "# 詩学\n")
+    _write_text(root / "poetics" / "versions" / "v0.md", "# 詩学 第0版\n")
     _write_text(root / "ODE.md", "# ODE\n")
     _write_text(root / "DECLARATION_2024.md", "# Declaration\n\n2024年4月18日、記録。\n")
     _write_text(root / "reports" / "RESPONSE_TO_FABLE5_CHAT_20260712.md", "# Response\n")
@@ -354,6 +355,71 @@ def test_checked_in_html_contracts_and_fragments(tmp_path: Path) -> None:
                 target_path = target_path / "index.html"
             assert target_path in parsed, (path, href)
             assert target.fragment in parsed[target_path].ids, (path, href)
+
+
+def test_ode_intro_omits_redundant_origin_and_declaration_notes(tmp_path: Path) -> None:
+    _write_minimal_site_sources(tmp_path)
+    out_dir = tmp_path / "docs"
+    build_public_site(tmp_path, out_dir)
+
+    japanese = (out_dir / "ode.html").read_text(encoding="utf-8")
+    english = (out_dir / "en" / "ode.html").read_text(encoding="utf-8")
+
+    assert "人間側から見た ALEPH の起源。" not in japanese
+    assert "一次資料は、本ページではなく" not in japanese
+    assert "The origin note explains ALEPH from the human side" not in english
+    assert "The primary source of the \"2024 declaration\"" not in english
+
+
+def test_ode_revision_dates_use_consistent_japanese_spacing(tmp_path: Path) -> None:
+    _write_minimal_site_sources(tmp_path)
+    _write_text(tmp_path / "ODE.md", "2026年 7月18日　改訂\n")
+    out_dir = tmp_path / "docs"
+    build_public_site(tmp_path, out_dir)
+
+    japanese = (out_dir / "ode.html").read_text(encoding="utf-8")
+    assert "2026年 7月18日　改訂" in japanese
+    assert "2026年 7月18日 改訂" not in japanese
+
+
+def test_poetics_versions_and_about_routes_are_synchronized(tmp_path: Path) -> None:
+    _write_minimal_site_sources(tmp_path)
+    _write_text(
+        tmp_path / "site" / "about.md",
+        "[2024年の宣言を読む](declaration.html) · [人間から見た起源を読む](ode.html)\n\n"
+        "[ALEPHの詩学を読む](poetics.html)\n\n"
+        "設計正典は[PLAN.md](https://github.com/Ryota2865/aleph.github.io/blob/main/PLAN.md)にある。\n",
+    )
+    _write_text(
+        tmp_path / "site" / "en" / "about.md",
+        "[Read the 2024 declaration](declaration.html) · "
+        "[Read the human account of ALEPH's origin](ode.html)\n\n"
+        "[Read ALEPH's poetics](poetics.html)\n\n"
+        "[PLAN.md](https://github.com/Ryota2865/aleph.github.io/blob/main/PLAN.md) is the design canon.\n",
+    )
+    out_dir = tmp_path / "docs"
+    build_public_site(tmp_path, out_dir)
+
+    japanese_index = (out_dir / "poetics.html").read_text(encoding="utf-8")
+    english_index = (out_dir / "en" / "poetics.html").read_text(encoding="utf-8")
+    japanese_about = (out_dir / "about.html").read_text(encoding="utf-8")
+    english_about = (out_dir / "en" / "about.html").read_text(encoding="utf-8")
+
+    for relative in (
+        "poetics-v0.html", "poetics-v1.html",
+        "en/poetics-v0.html", "en/poetics-v1.html",
+    ):
+        assert (out_dir / relative).exists()
+    assert "href='poetics-v0.html'" in japanese_index
+    assert "href='poetics-v1.html'" in japanese_index
+    assert "href='poetics-v0.html'" in english_index
+    assert "href='poetics-v1.html'" in english_index
+    assert "href='declaration.html'>2024年の宣言を読む" in japanese_about
+    assert "href='ode.html'>人間から見た起源を読む" in japanese_about
+    assert "blob/main/PLAN.md" in japanese_about
+    assert "href='declaration.html'>Read the 2024 declaration" in english_about
+    assert "href='ode.html'>Read the human account of ALEPH&#x27;s origin" in english_about
+    assert "blob/main/PLAN.md" in english_about
 
 
 def test_research_and_dialogue_are_reciprocally_linked() -> None:

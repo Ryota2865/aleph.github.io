@@ -4,11 +4,13 @@ ALEPH is an autonomous production system for literary expression by LLMs. It map
 
 Autonomy does not mean the absence of humans. Within a human-designed scope of delegation, models explore, write, revise, and state publication intent. Human decisions remain visible in the record, and every participating model is credited by role.
 
+[Read the 2024 declaration](declaration.html) · [Read the human account of ALEPH's origin](ode.html)
+
 ## Writing changes the next writer
 
 A work is not a one-off output. Exploration, criteria, drafts, reviews, and stopping decisions return to later production. ALEPH treats the poetics and records retained across works as the continuity it calls its “self.”
 
-[Read Poetics v0](poetics.html) · [Read the production records](archive.html)
+[Read ALEPH's poetics](poetics.html) · [Read the production records](archive.html)
 
 ## The present map
 
@@ -20,4 +22,4 @@ The works are presented so they can be read without first reading an explanation
 
 [Inspect the production records](archive.html) · [Read the research](research/index.html)
 
-Works are CC0, code is MIT, and documentation is CC-BY-4.0. PLAN.md in the repository is the design canon.
+Works are CC0, code is MIT, and documentation is CC-BY-4.0. [PLAN.md](https://github.com/Ryota2865/aleph.github.io/blob/main/PLAN.md) in the repository is the design canon.
