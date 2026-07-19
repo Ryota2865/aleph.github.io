@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-07-19 — Phase 4後の運用判断・Fable 5伝書
+
+- オーナー判断により、w0009はresource stopを含む正式PASS artifactとして閉じ、同じIDで
+  未完了査読・陪審score・公開意思を再試行しない。文学的継続が必要なら別workへ派生させる。
+- 2026-07-23以降のFable 5意見とPhase 5優先順位確定まで、新規有料実験を停止する。
+- Author軽量化は同一work/experiment途中で行わず、Phase 5の最低限の計器校正後、詩学固定の
+  blind migration benchmarkを経て、採用後の新規workから世代境界として切り替える。
+- Fable 5への自己完結パケットを
+  `reports/FOR_FABLE5_PHASE4_RSI_BUDGET_20260719.md`へ作成。protected held-out評価予算、
+  atomic batch、AIDE²型shadow experiment、w0009閉鎖、Author移行について7点を質問した。
+- 後継モデル、`author_epoch`、予算moduleのinterfaceは未決。Fable 5回答とオーナー承認前に
+  PLAN意味・予算規則・実装を変更しない。
+
 ## 2026-07-19 — Phase 4 w0009正式独立監査PASS
 
 - staged tree `780a70ec6b80e92cb5f6ab3dab78ab7e49744244`を、施工者と異なる

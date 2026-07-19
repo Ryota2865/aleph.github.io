@@ -1,5 +1,24 @@
 # PLAN 変更履歴
 
+## 0.7.20-15 (2026-07-19) — w0009閉鎖・Fable 5待機・Author移行時期
+
+Phase 4総括後、オーナーは次の運用判断を承認した。
+
+1. **w0009は再実行しない。** 第五査読、陪審二次score、公開意思callを同じwork IDで
+   再生成・追試せず、resource stopを含む正式監査PASS済み実験として閉じる。作品
+   「第一信」をさらに育てる場合は、w0009を不変の親とする別work ID・別予算の派生制作とし、
+   Phase 4の結果へ遡及算入しない。
+2. **新規有料実験を一時停止する。** Fable 5復帰予定の2026-07-23以降に意見を受け、
+   Phase 5の計器校正・RSI評価seam・予算保護の優先順位を決めるまで新規有料実験を開始しない。
+3. **Author交代は世代境界で行う。** 同一work/experimentの途中、詩学改訂、classifier・陪審
+   変更と同時には切り替えない。原則としてPhase 5の最低限の計器校正後、詩学と生成条件を
+   固定したblind migration benchmarkを行い、候補採用後の新規workから切り替える。
+
+後継Authorの機種、比較刺激数、評価役職、`author_epoch`導入は未決である。一律phase hard capも
+採用していない。Player探索枠、借用不能なheld-out評価reserve、owner-only外部批評枠、atomic
+batch事前照会はFable 5への提案であり、回答とオーナー承認前に実装しない。審査依頼は
+`reports/FOR_FABLE5_PHASE4_RSI_BUDGET_20260719.md`に記録した。
+
 ## 0.7.20-14 (2026-07-19) — Phase 4 w0009正式独立監査PASS
 
 Codex施工のPhase 4候補をstaged tree
