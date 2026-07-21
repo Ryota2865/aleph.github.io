@@ -83,6 +83,11 @@ class RepositoryReader:
     def snapshot(self) -> RepositorySnapshot:
         warnings: list[str] = []
         works = self._works(warnings)
+        epochs = sorted({work.author_epoch for work in works if work.author_epoch})
+        if len(epochs) > 1:
+            warnings.append(
+                "cross-author-epoch aggregation is non-comparable: " + ", ".join(epochs)
+            )
         budget, publish_cap = self._budget(works, warnings)
         deadlines = self._deadlines(publish_cap)
         for deadline in deadlines:

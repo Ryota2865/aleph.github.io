@@ -1,7 +1,7 @@
 # ALEPH 計器台帳
 
 日付: 2026-07-21
-状態: Phase 5設計。実装前独立設計監査PASS（2026-07-21）。実装と新規実走は未着手。
+状態: Phase 5設計。実装前独立設計監査PASS。Phase 5A registry実装済み（2026-07-21）。
 正典: `PLAN.md`、`PLAN_CHANGELOG.md` 0.7.20-16、
 `designs/next-designer-execution-plan.md` Phase 5。
 

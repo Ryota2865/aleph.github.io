@@ -12,6 +12,8 @@ from sklearn.cluster import HDBSCAN
 from sklearn.decomposition import PCA
 from sklearn.neighbors import NearestNeighbors
 
+from aleph.explore.atlas_identity import AtlasIdentity
+
 
 STYLE_FEATURES: list[str] = [
     "mean_sentence_len",
@@ -75,6 +77,7 @@ class Atlas:
     style: np.ndarray
     chunks: list[dict]
     meta: dict
+    identity: AtlasIdentity | None = None
 
     @property
     def n_clusters(self) -> int:
@@ -129,6 +132,10 @@ class Atlas:
     @classmethod
     def load(cls, directory: str | Path) -> "Atlas":
         directory = Path(directory)
+        identity_path = directory / "identity.json"
+        identity = AtlasIdentity.load(directory) if identity_path.exists() else None
+        if identity is not None:
+            identity.verify(directory)
         return cls(
             index_dir=directory,
             labels=np.load(directory / "labels.npy"),
@@ -136,6 +143,7 @@ class Atlas:
             style=np.load(directory / "style.npy"),
             chunks=_load_chunks(directory),
             meta=json.loads((directory / "atlas_meta.json").read_text(encoding="utf-8")),
+            identity=identity,
         )
 
 

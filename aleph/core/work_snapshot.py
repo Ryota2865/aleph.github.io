@@ -11,6 +11,7 @@ from typing import Any
 
 from aleph.core.artifacts import Work
 from aleph.core.loop import Checkpoint, State
+from aleph.core.termination import TERMINATION_CATEGORIES, classify_termination
 from aleph.core.transition_commit import (
     ReplayError,
     SCHEMA_VERSION,
@@ -37,6 +38,15 @@ class DraftSnapshot:
 
 
 @dataclass(frozen=True)
+class TerminationSnapshot:
+    stop_path: str | None
+    category: str | None
+    reason: str
+    source_refs: tuple[str, ...]
+    inferred: bool
+
+
+@dataclass(frozen=True)
 class WorkSnapshot:
     work_dir: str
     work_id: str
@@ -51,6 +61,8 @@ class WorkSnapshot:
     effective_constraints: tuple[str, ...]
     poetics_version: int | None
     atlas_identity: dict[str, Any] | None
+    termination: TerminationSnapshot | None
+    author_epoch: str | None
     costs: dict[str, float]
     canonical: bool | None
     canonical_arm: str | None
@@ -157,7 +169,8 @@ class WorkReader:
         title = self._title(warnings)
         best, latest = self._drafts(rows, publication, warnings)
         constraints = self._constraints(warnings)
-        poetics_version, atlas_identity = self._colophon(rows, warnings)
+        poetics_version, atlas_identity, author_epoch = self._colophon(rows, warnings)
+        termination = self._termination(rows, lifecycle, modern, warnings)
         costs = self._costs(warnings)
         canonical, canonical_arm = self._canonical(payload, warnings)
 
@@ -168,6 +181,8 @@ class WorkReader:
                 "drafts": ("decisions.jsonl", "reviews/trajectory.jsonl", "drafts/", "final/text.md"),
                 "constraints": ("seed.json#experiment.criteria_constraints",),
                 "poetics_atlas": ("colophon.json", "decisions.jsonl"),
+                "termination": ("decisions.jsonl#L0", "decisions.jsonl#L7"),
+                "author_epoch": ("colophon.json#author_epoch",),
                 "costs": ("calls.jsonl",),
             }
         )
@@ -185,6 +200,8 @@ class WorkReader:
             effective_constraints=constraints,
             poetics_version=poetics_version,
             atlas_identity=atlas_identity,
+            termination=termination,
+            author_epoch=author_epoch,
             costs=costs,
             canonical=canonical,
             canonical_arm=canonical_arm,
@@ -357,12 +374,12 @@ class WorkReader:
 
     def _colophon(
         self, rows: list[dict[str, Any]], warnings: list[str]
-    ) -> tuple[int | None, dict[str, Any] | None]:
+    ) -> tuple[int | None, dict[str, Any] | None, str | None]:
         colophon_path = self.work_dir / "colophon.json"
         colophon = _read_json(colophon_path, warnings, "colophon.json")
         if not isinstance(colophon, dict):
             warnings.append("colophon is missing")
-            return self._poetics_from_decisions(rows), None
+            return self._poetics_from_decisions(rows), None, None
         poetics = colophon.get("poetics_version")
         if type(poetics) is not int:
             poetics = self._poetics_from_decisions(rows)
@@ -371,13 +388,88 @@ class WorkReader:
             "corpus_id": colophon.get("corpus_id"),
             "atlas_version": colophon.get("atlas_version"),
         }
+        raw_epoch = colophon.get("author_epoch")
+        author_epoch = raw_epoch.strip() if isinstance(raw_epoch, str) and raw_epoch.strip() else None
+        if raw_epoch is not None and author_epoch is None:
+            warnings.append("colophon has invalid author_epoch")
         decisions_path = self.work_dir / "decisions.jsonl"
         try:
             if colophon_path.stat().st_mtime < decisions_path.stat().st_mtime:
                 warnings.append("colophon is older than decisions.jsonl")
         except OSError:
             pass
-        return poetics, atlas
+        return poetics, atlas, author_epoch
+
+    @staticmethod
+    def _termination(
+        rows: list[dict[str, Any]],
+        lifecycle: State | None,
+        modern: bool,
+        warnings: list[str],
+    ) -> TerminationSnapshot | None:
+        if lifecycle not in {State.SHELVE, State.DISCARD}:
+            return None
+        transition: tuple[int, dict[str, Any]] | None = None
+        for position, row in enumerate(rows, start=1):
+            if row.get("layer") != "L0":
+                continue
+            decision = str(row.get("decision", ""))
+            state_after = row.get("state_after")
+            if state_after in {"FINISH", "SHELVE", "DISCARD"} or decision.endswith(
+                ("->FINISH", "->SHELVE", "->DISCARD")
+            ):
+                transition = (position, row)
+        if transition is None:
+            warnings.append("terminal work has no termination transition")
+            return None
+        position, row = transition
+        payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+        stop_path = payload.get("stop_path")
+        stop_ref: int | None = position if isinstance(stop_path, str) else None
+        if not isinstance(stop_path, str):
+            for earlier_position, earlier in reversed(list(enumerate(rows[:position], start=1))):
+                earlier_payload = (
+                    earlier.get("payload") if isinstance(earlier.get("payload"), dict) else {}
+                )
+                candidate = earlier_payload.get("stop_path")
+                if earlier.get("layer") == "L0" and isinstance(candidate, str):
+                    stop_path = candidate
+                    stop_ref = earlier_position
+                    break
+        if not isinstance(stop_path, str):
+            stop_path = None
+        reason = str(row.get("reason", ""))
+        inferred = classify_termination(stop_path, reason)
+
+        category_rows = [
+            (index, item)
+            for index, item in enumerate(rows, start=1)
+            if item.get("layer") == "L7"
+            and str(item.get("decision", "")).startswith("failure_category:")
+        ]
+        category: str | None = None
+        refs = [f"decisions.jsonl:{position}"]
+        if stop_ref is not None and stop_ref != position:
+            refs.append(f"decisions.jsonl:{stop_ref}")
+        is_inferred = True
+        if category_rows:
+            category_position, category_row = category_rows[-1]
+            explicit = str(category_row["decision"]).split(":", 1)[1]
+            refs.append(f"decisions.jsonl:{category_position}")
+            if explicit not in TERMINATION_CATEGORIES:
+                warnings.append(f"unknown termination category: {explicit}")
+            else:
+                category = explicit
+                is_inferred = False
+                if modern and explicit != inferred:
+                    warnings.append(
+                        f"termination mismatch: stop signal maps to {inferred}, L7 records {explicit}"
+                    )
+        elif modern:
+            warnings.append("modern terminal work has no L7 failure_category")
+        if category is None and not modern:
+            category = inferred
+        return TerminationSnapshot(stop_path, category, reason, tuple(refs), is_inferred)
 
     @staticmethod
     def _poetics_from_decisions(rows: list[dict[str, Any]]) -> int | None:

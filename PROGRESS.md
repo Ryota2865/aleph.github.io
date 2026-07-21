@@ -1,5 +1,21 @@
 # PROGRESS
 
+## 2026-07-21 — Phase 5A 記録・比較基盤を施工
+
+- 設計commit `efd927b`を起点に、Phase 5Aのtracer bulletを実装した。新規provider call、
+  Atlas再構築、既存work/artifact書換えは行っていない。
+- `InstrumentRegistry/InstrumentRecord`と9計器の`config/instruments.yaml`を追加。
+  provenance、欠測と0.0、comparability key、registry hashを検証し、`provisional`値を
+  自動判断へ渡すと拒否する。
+- `AtlasIdentity`を追加。canonical payloadはbuild specと生成artifact hashを持ち、
+  timestamp・絶対path・path traversalを拒否する。full identityがあるAtlasはload時に
+  artifact hashを検証し、legacy Atlasは未同定のまま読み取る。
+- `WorkSnapshot`へ`termination`と`author_epoch`を追加。終了分類語彙をpipelineと共有し、
+  w0009を`stop_path=budget` / `resource_stop`として非遡及で投影する。cross-author-epochの
+  repository集計にはwarningを出す。
+- focused **21 passed, 37 deselected**、全non-local **337 passed, 1 deselected**、
+  `git diff --check`違反なし。Phase 5Bの予算予約とatomic projectionは未施工。
+
 ## 2026-07-21 — Phase 5実装前独立設計監査PASS
 
 - Claude Code（Opus 4.8、施工者Codexと別セッション）が設計文書4点と参照実装・

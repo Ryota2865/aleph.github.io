@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from aleph.core.loop import Checkpoint, State
+from aleph.core.termination import classify_termination as _classify_termination
 from aleph.core.transition_commit import commit as commit_transition
 from aleph.core.transition_commit import recover as recover_transition
 
@@ -321,22 +322,6 @@ def run_work(work, deps, *, decided_by: str) -> State:
         _ensure_terminal_effects(work, deps, decided_by)
 
     return state
-
-
-def _classify_termination(stop_path: str | None, reason: str) -> str:
-    """SHELVE/DISCARDの理由をsol提案の4分類へ落とす（PLAN_CHANGELOG 0.7.18 問2）.
-
-    aesthetic_failureのみ否定的地図（annotate_failure）へ渡す。resource_stop・
-    publication_choiceは探索座標を罰しない（sol提案の趣旨）。safety_or_rightsは
-    現状これを自動生成する経路が存在しない（将来の手動介入用に予約）。
-    """
-    if stop_path in ("budget", "guard_limit"):
-        return "resource_stop"
-    if "上限" in reason or "人間承認待ち" in reason:
-        return "resource_stop"
-    if "著者が非公開を選択した" in reason:
-        return "publication_choice"
-    return "aesthetic_failure"
 
 
 def _record_termination_failure(work, deps, ctx: dict, reason: str, decided_by: str) -> None:
