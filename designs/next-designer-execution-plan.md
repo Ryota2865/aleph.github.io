@@ -285,7 +285,10 @@ PASSであり実装後正式監査を代替しない。
 `reports/PHASE5_READ_ONLY_INVENTORY_20260721.md`、`designs/instruments.md`、
 `designs/phase5-instruments-atlas-budget.md`を監査対象とした。Phase 5Aのregistry、
 Atlas identity、termination/author epoch、5Bの耐久予約・非対称pool・atomic jury基盤は
-実装済み。通常runのclosing配線、5C、Atlas再構築、新規有料実験には進んでいない。
+実装済み。candidate `569cf57`はClaude Codeの独立監査でP0–P2なし、
+**VERDICT: PASS**。監査記録は
+`reports/PHASE5A_5B_CORE_IMPLEMENTATION_AUDIT_20260721.md`。通常runのclosing配線、5C、
+Atlas再構築、新規有料実験には進んでいない。
 
 ### 5.1 計器台帳
 

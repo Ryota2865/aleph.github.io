@@ -1,5 +1,23 @@
 # PLAN 変更履歴
 
+## 0.7.20-17 (2026-07-21) — Phase 5A/5B core独立監査PASS
+
+Codex施工のPhase 5A/5B coreをcommit
+`569cf57d2f95a160168ca82c5c9336d04160670b`として固定し、施工者と異なるClaude Code担当が
+read-onlyで独立監査した。正式記録は
+`reports/PHASE5A_5B_CORE_IMPLEMENTATION_AUDIT_20260721.md`。
+
+監査者はdoctor failures=0、focused **72 passed, 1 skipped**、全非local
+**349 passed, 1 deselected**を独立再現し、Budget 16件、Atlas/atomic projection/termination
+18件、Instrument 8件の独立故障注入をすべてPASSとした。P0/P1/P2はなく、
+**VERDICT: PASS**。非予約legacy chargeのunreconciled過少報告、build spec不安定field名の
+部分防御、falsy比較identity、Markdown台帳との自動drift検出欠如、closing e2e未配線を
+P3残余riskとして保持する。
+
+本項は監査証拠と機械的closureだけを追加し、監査済みcode、tests、契約、予算規則を
+変更しない。PASS対象はPhase 5A/5B coreに限る。通常runのclosing自動admission、Phase 5C、
+Atlas再構築、新規有料実走は未完了であり、Phase 5全体の完了を意味しない。
+
 ## 0.7.20-16 (2026-07-21) — Phase 4後の評価予算・RSI seam・Author移行原則を承認
 
 オーナーは、`reports/FOR_FABLE5_PHASE4_RSI_BUDGET_20260719.md`の4提案と、

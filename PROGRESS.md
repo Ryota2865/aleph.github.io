@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-07-21 — Phase 5A/5B core正式独立監査PASS
+
+- candidate `569cf57d2f95a160168ca82c5c9336d04160670b`をClaude Codeの別担当が
+  read-onlyで監査し、**P0–P2なし、VERDICT: PASS**と判定した。監査記録は
+  `reports/PHASE5A_5B_CORE_IMPLEMENTATION_AUDIT_20260721.md`。
+- doctor failures=0、focused **72 passed, 1 skipped**、全non-local
+  **349 passed, 1 deselected**、独立故障注入42件PASSを監査者が再現した。
+- P3残余riskは、非予約legacy chargeのunreconciled過少報告、Atlas build specの
+  不安定field別名、falsy比較identity、台帳/registry driftの手動依存、closing e2e未配線。
+  いずれも今回candidateの保証を阻害しない。
+- PASS範囲は5A/5B coreだけである。通常runのclosing自動admission、Phase 5C、
+  Atlas再構築、新規有料実走は引き続き未完了。
+
 ## 2026-07-21 — Phase 5B 予算予約・atomic jury基盤を施工
 
 - 既存`Budget`を深くし、`BatchSpec`、耐久`reserve_batch/settle_batch`、state file lock、
