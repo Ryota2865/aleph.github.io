@@ -1,5 +1,46 @@
 # PLAN 変更履歴
 
+## 0.7.20-16 (2026-07-21) — Phase 4後の評価予算・RSI seam・Author移行原則を承認
+
+オーナーは、`reports/FOR_FABLE5_PHASE4_RSI_BUDGET_20260719.md`の4提案と、
+Fable 5の条件付き回答
+`reports/FABLE5_RESPONSE_PHASE4_RSI_BUDGET_20260721.md`を承認した。本項はPhase 5以降の
+設計拘束を固定するが、実装・実走・有料callの開始ではない。
+
+1. **w0009の欠損を二層に分ける。** budget stopによる評価・閉幕欠損は予算保護の
+   管轄、`INCOMPLETE_PARSE`はPhase 5計器台帳とretry事前登録の管轄とする。
+   予算分離をparse安定性の解決とみなさない。
+2. **予算外部性を三軸で保護する。** player探索、held-out評価、owner-only外部批評の
+   費用と起動権を分離する。予算分離は外部性の必要条件であり十分条件ではない。
+   呼出し文面・packet構成の改変権が内側にないこと、資金が最適化変数でないこと、
+   系が自分で呼べないowner-only経路が残ることを別個の不変条件とする。
+3. **protected reserveは非対称借用と予約semanticsを持つ。** player→held-out評価の
+   一方向補充だけを許し、評価予算をplayerへ戻さない。batch admissionはyes/no照会ではなく
+   scope残額へのcommitmentを作り、完了時に精算する。batch境界はmanifestに事前登録する。
+4. **入力を薄めず頻度を下げる。** held-out批評・陪審・再校はatomic batchとし、全件を
+   完了できなければ開始しない。題名・公開判断・終端記録の「閉幕batch」をrun開始時に
+   protected reserveとして取り置く。予約下の早期の正常擱筆と、途中切断のbudget stopを
+   report語彙で区別する。
+5. **shadow RSIの評価seamを固定する。** outer loopはcritic正典、private packet、sealed
+   held-out set、予算保護定義、atomic batch定義、admission interfaceを改変できない。
+   Phase 5で登録・校正した計器を用い、1実験1操作、非最適化核への転移、保護床、
+   parse失敗率、完走率、費用、陪審不一致、Goodhart署名で判定する。陪審合意の増大を
+   単純な改善と読まない。実走前に事前登録し、施工者と異なる担当が独立監査する。
+6. **SHELVEの理由を混同しない。** `stop_path=budget`のresource stopは美的失敗ではない。
+   `WorkSnapshot`、集計、公開site、fixation校正、negative mapはこの二軸を読み分ける。
+7. **Author移行はPhase 5校正後の世代境界で比較する。** 最低線は意味核3種×新旧Author×
+   各1走（L4–L5）とし、少なくとも1核でL6の批評→改稿応答を測る。詩学・atlas identity・
+   materials・L4/L5設定・腕あたり予算を固定し、Author名を評価側から隠す。
+   保護床の後退なしと費用削減床を走行前に登録する。候補Authorと費用削減床`X%`は未決とする。
+8. **`author_epoch`を軽量に導入する。** 新moduleや状態機械概念にせず、採用後の新workの
+   colophon/provenanceの1属性とする。`RepositorySnapshot`と計器台帳はcross-epoch集計を
+   warningとし、詩学reflection入力にepoch labelを含める。旧作は書き換えない。
+
+優先順は、入力完全性、閉幕batch、owner-only経路、事前登録と独立監査、予算保護定義の
+不可変性を絶対保護とする。削る場合は、批評頻度、実験の腕・核数、canonical磨きの
+周回数、装飾的な報告整形の順とする。Phase 5設計と実装はこの拘束を受入条件と
+失敗注入に落とし、実装・実走前の独立設計監査を通す。
+
 ## 0.7.20-15 (2026-07-19) — w0009閉鎖・Fable 5待機・Author移行時期
 
 Phase 4総括後、オーナーは次の運用判断を承認した。

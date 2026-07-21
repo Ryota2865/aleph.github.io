@@ -1417,7 +1417,7 @@ _RESEARCH_META = {
         "result": "controlが高率伝播せず事前登録規則4。時代ピン主担体仮説はこの一走では支持されず、単一作の因果一般化はしない。",
         "change": "直ちにDSLや新規条件へ拡張せず、裏方classifier校正と複数意味核での再現性をPhase 5候補として保留した。",
         "limit": "各腕一原稿で単位は非独立。陪審scoreはparse不完備、provider明細との外部照合は未実施。",
-        "dialogue": "CRITIQUE_FABLE5_CHAT_w0008_20260718.md",
+        "dialogue": "CRITIQUE_FABLE5_CHAT_w0008review_20260718.md",
     },
 }
 
