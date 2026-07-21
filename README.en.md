@@ -13,7 +13,7 @@ An autonomous production system for literary expression with LLMs. It searches f
 <!-- repository-snapshot:start -->
 - Works recorded: 9 (through w0009); terminal: 9.
 - Published works: 5 — w0004 半呼吸, w0005 床の硬さ, w0006 灯のうしろ, w0007 折り目, w0008 暗い側
-- Formal audit artifacts: 17; tests and formal audit verdicts are reported separately.
+- Formal audit artifacts: 18; tests and formal audit verdicts are reported separately.
 <!-- repository-snapshot:end -->
 
 All M0–M8 milestones and the first four phases of the adopted interpretation/replay plan have been implemented and have passed their formal independent audits. The designer writes the contracts (acceptance tests), while implementation is carried out under cross-audit by construction agents (Claude Code / Codex / pi / hermes) (PLAN §10 and §12).

@@ -1,5 +1,39 @@
 # PROGRESS
 
+## 2026-07-21 — Phase 5実装前独立設計監査PASS
+
+- Claude Code（Opus 4.8、施工者Codexと別セッション）が設計文書4点と参照実装・
+  w0008/w0009実走artifactをread-onlyで独立検証し、**P0–P2なし、VERDICT: PASS**と判定した。
+  監査記録は`reports/PHASE5_PREIMPLEMENTATION_DESIGN_AUDIT_20260721.md`。
+- 非阻害P3 6件を設計へ反映した。事前admissionと事後settlement/recoveryの分離、
+  `charge_id`冪等性、closing予約による終了分類境界、code固定の借用matrix、
+  bit同一artifactだけが共有するAtlas identity、stop signalから四分類への写像である。
+- 依頼書のcandidate欄が空でcommit/staged treeは固定されていなかった。このため判定は
+  **実装前設計ゲートPASS**として扱い、実装後にcandidateを固定して行う正式milestone監査を
+  代替しない。
+- Phase 5実装へ進める設計条件は整ったが、実装、Atlas再構築、provider call、
+  新規有料実験にはまだ着手していない。
+
+## 2026-07-21 — Phase 5 read-only調査・設計候補完了
+
+- provider call、有料実験、既存artifact書き換えなしで、計器、Atlas、予算、
+  `WorkSnapshot`、w0008/w0009実走証拠をread-only調査した。証拠は
+  `reports/PHASE5_READ_ONLY_INVENTORY_20260721.md`。
+- 主要観測: 現Atlasは完全identityを再構成できず、既存colophonの
+  `atlas_version` はnull。novelty系は異なる意味の値を同系名で持つ。fixationは
+  詩学語彙だけを見て作品横断の修辞反復を検出できない。w0009は6 jury
+  call完了後の1 parse失敗で二次score投影全体を失った。現`Budget`には
+  commitment/poolがなく、`WorkSnapshot`はresource stopと美的SHELVEを返さない。
+- `designs/instruments.md`に9計器の初期台帳を作成。値の主張、入出力、
+  比較identity、校正日、反例、盲点、次条件を固定した。
+- `designs/phase5-instruments-atlas-budget.md`にPhase 5設計ゲートを作成。
+  新規の深いmoduleは`InstrumentRecord`と`AtlasIdentity`に限り、予算は既存
+  `Budget`、終端理由と`author_epoch`は既存`WorkSnapshot`を深くする。
+- 予算保護はplayer/held-out/closing、player→held-outだけの非対称補充、
+  耐久予約、atomic projection、閉幕batchを契約化。parse retryは別の事前登録計器とした。
+- 実装前独立設計監査は後続節のとおり**PASS**。候補Author、費用削減床`X%`、
+  semantic parse retry回数、closing予約額は未決であり、新規有料実験は引き続き停止する。
+
 ## 2026-07-21 — Fable 5助言のオーナー承認
 
 - オーナー依頼により、Fable 5（Claude Code）がアドバイザーとして
