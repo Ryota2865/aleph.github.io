@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import random
+import statistics
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +31,9 @@ class BlindSelection:
     event_id: str
 
 
+_JURY_SLOT_STATUSES = {"valid", "parse_invalid", "call_failed"}
+
+
 def _canonical(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
@@ -52,6 +57,27 @@ def _normalize_budget_envelope(raw: Any, *, cap: float) -> dict[str, float] | No
         normalized[phase] = float(value)
     if abs(sum(normalized.values()) - cap) > 1e-9:
         raise ExperimentError("budget_envelope allocations must sum to budget_cap_usd")
+    return normalized
+
+
+def _normalize_protected_pools(raw: Any, *, cap: float) -> dict[str, float] | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping) or set(raw) != {"player", "held_out", "closing"}:
+        raise ExperimentError("protected_pools must define player, held_out, and closing exactly")
+    normalized: dict[str, float] = {}
+    for pool in ("player", "held_out", "closing"):
+        value = raw[pool]
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(float(value))
+            or float(value) < 0
+        ):
+            raise ExperimentError("protected pool allocations must be finite non-negative numbers")
+        normalized[pool] = float(value)
+    if abs(sum(normalized.values()) - cap) > 1e-9:
+        raise ExperimentError("protected pool allocations must sum to budget_cap_usd")
     return normalized
 
 
@@ -85,6 +111,7 @@ class ExperimentRun:
         if type(cap) not in (int, float) or float(cap) <= 0:
             raise ExperimentError("experiment manifest requires a positive budget_cap_usd")
         envelope = _normalize_budget_envelope(raw.get("budget_envelope"), cap=float(cap))
+        protected_pools = _normalize_protected_pools(raw.get("protected_pools"), cap=float(cap))
         normalized = {
             "experiment_id": str(raw["id"]),
             "manifest_version": int(raw.get("version", 1)),
@@ -94,6 +121,7 @@ class ExperimentRun:
             "observations": raw["observations"],
             "budget_cap_usd": float(cap),
             **({"budget_envelope": envelope} if envelope is not None else {}),
+            **({"protected_pools": protected_pools} if protected_pools is not None else {}),
             "arms": list(ablation.get("arms", raw.get("arms", []))),
             "blind": raw.get("blind", {}),
             "constraints": raw.get("constraints", []),
@@ -146,6 +174,15 @@ class ExperimentRun:
             ledger="api",
             limit=float(self.manifest["budget_cap_usd"]),
         )
+        pools = self.manifest.get("protected_pools")
+        if pools is not None:
+            budget.register_pool_limits(
+                f"experiment:{self.experiment_id}",
+                ledger="api",
+                player=float(pools["player"]),
+                held_out=float(pools["held_out"]),
+                closing=float(pools["closing"]),
+            )
 
     def _append(self, event_type: str, **payload: Any) -> dict[str, Any]:
         rows = self.events()
@@ -271,6 +308,176 @@ class ExperimentRun:
                 raise ExperimentError(f"jury row {position} has invalid scores")
             normalized.append({"arm": arm, "scores": scores})
         return self._append("jury_reveal", decided_by=decided_by, rows=normalized)
+
+    def register_jury_batch(
+        self,
+        *,
+        batch_id: str,
+        expected_slots: Sequence[str],
+        packet_hash: str,
+        reservation_id: str,
+        semantic_retries: int,
+        decided_by: str,
+    ) -> dict[str, Any]:
+        """Pre-register the atomic jury boundary before any provider call."""
+        slots = tuple(str(slot).strip() for slot in expected_slots)
+        if (
+            not batch_id.strip()
+            or not slots
+            or any(not slot for slot in slots)
+            or len(set(slots)) != len(slots)
+            or not packet_hash.strip()
+            or not reservation_id.strip()
+            or semantic_retries < 0
+        ):
+            raise ExperimentError("jury batch registration is incomplete or invalid")
+        payload = {
+            "batch_id": batch_id,
+            "expected_slots": list(slots),
+            "packet_hash": packet_hash,
+            "reservation_id": reservation_id,
+            "semantic_retries": semantic_retries,
+            "atomic_projection": True,
+            "decided_by": decided_by,
+        }
+        existing = [
+            event
+            for event in self.events()
+            if event["type"] == "jury_batch_registered" and event.get("batch_id") == batch_id
+        ]
+        if existing:
+            comparable = {key: existing[-1].get(key) for key in payload}
+            if comparable == payload:
+                return existing[-1]
+            raise ExperimentError(f"jury batch manifest is immutable: {batch_id}")
+        return self._append("jury_batch_registered", **payload)
+
+    def record_jury_slot(
+        self,
+        *,
+        batch_id: str,
+        slot_id: str,
+        attempt: int,
+        status: str,
+        call_id: str,
+        charge_id: str,
+        raw_response_hash: str,
+        parsed: Mapping[str, Any] | None,
+        decided_by: str,
+    ) -> dict[str, Any]:
+        """Append one call/charge/parse result immediately; never regenerate prior evidence."""
+        events = self.events()
+        registrations = [
+            event
+            for event in events
+            if event["type"] == "jury_batch_registered" and event.get("batch_id") == batch_id
+        ]
+        if not registrations:
+            raise ExperimentError(f"jury batch is not registered: {batch_id}")
+        registration = registrations[-1]
+        if slot_id not in registration["expected_slots"]:
+            raise ExperimentError(f"jury slot is not preregistered: {slot_id}")
+        if status not in _JURY_SLOT_STATUSES or attempt < 1:
+            raise ExperimentError("jury slot status or attempt is invalid")
+        if attempt > int(registration["semantic_retries"]) + 1:
+            raise ExperimentError("jury slot exceeds preregistered semantic retries")
+        if not call_id or not charge_id or not raw_response_hash:
+            raise ExperimentError("jury slot must preserve call, charge, and raw response evidence")
+        normalized: dict[str, Any] | None = None
+        if status == "valid":
+            if not isinstance(parsed, Mapping):
+                raise ExperimentError("valid jury slot requires a parsed object")
+            score = parsed.get("score")
+            if (
+                isinstance(score, bool)
+                or not isinstance(score, (int, float))
+                or not math.isfinite(float(score))
+            ):
+                raise ExperimentError("valid jury slot requires a finite numeric score")
+            normalized = dict(parsed)
+            normalized["score"] = float(score)
+        elif parsed is not None:
+            raise ExperimentError("invalid jury slot must not carry a parsed projection")
+        payload = {
+            "batch_id": batch_id,
+            "slot_id": slot_id,
+            "attempt": attempt,
+            "status": status,
+            "call_id": call_id,
+            "charge_id": charge_id,
+            "raw_response_hash": raw_response_hash,
+            "parsed": normalized,
+            "decided_by": decided_by,
+        }
+        existing = [
+            event
+            for event in events
+            if event["type"] == "jury_slot_recorded"
+            and event.get("batch_id") == batch_id
+            and event.get("slot_id") == slot_id
+            and event.get("attempt") == attempt
+        ]
+        if existing:
+            comparable = {key: existing[-1].get(key) for key in payload}
+            if comparable == payload:
+                return existing[-1]
+            raise ExperimentError("jury slot attempt already has different evidence")
+        if any(
+            event["type"] == "jury_batch_projection" and event.get("batch_id") == batch_id
+            for event in events
+        ):
+            raise ExperimentError("jury batch is already projected")
+        return self._append("jury_slot_recorded", **payload)
+
+    def project_jury_batch(self, batch_id: str, *, decided_by: str) -> dict[str, Any]:
+        """Project numeric aggregates only after every preregistered slot is valid."""
+        events = self.events()
+        prior = [
+            event
+            for event in events
+            if event["type"] == "jury_batch_projection" and event.get("batch_id") == batch_id
+        ]
+        if prior:
+            return prior[-1]
+        registrations = [
+            event
+            for event in events
+            if event["type"] == "jury_batch_registered" and event.get("batch_id") == batch_id
+        ]
+        if not registrations:
+            raise ExperimentError(f"jury batch is not registered: {batch_id}")
+        expected = tuple(registrations[-1]["expected_slots"])
+        latest: dict[str, dict[str, Any]] = {}
+        for event in events:
+            if event["type"] == "jury_slot_recorded" and event.get("batch_id") == batch_id:
+                current = latest.get(str(event["slot_id"]))
+                if current is None or int(event["attempt"]) > int(current["attempt"]):
+                    latest[str(event["slot_id"])] = event
+        missing = [slot for slot in expected if slot not in latest]
+        invalid = [slot for slot in expected if slot in latest and latest[slot]["status"] != "valid"]
+        common = {
+            "batch_id": batch_id,
+            "expected_slots": list(expected),
+            "valid_slots": [slot for slot in expected if slot in latest and latest[slot]["status"] == "valid"],
+            "invalid_slots": invalid,
+            "missing_slots": missing,
+            "decided_by": decided_by,
+        }
+        if missing or invalid:
+            call_failed = any(
+                slot in latest and latest[slot]["status"] == "call_failed" for slot in expected
+            )
+            status = "INCOMPLETE_CALL" if missing or call_failed else "INCOMPLETE_PARSE"
+            return self._append("jury_batch_projection", status=status, **common)
+        scores = [float(latest[slot]["parsed"]["score"]) for slot in expected]
+        return self._append(
+            "jury_batch_projection",
+            status="COMPLETE",
+            scores=scores,
+            mean_score=statistics.fmean(scores),
+            disagreement_stddev=statistics.pstdev(scores),
+            **common,
+        )
 
     def promote(
         self,

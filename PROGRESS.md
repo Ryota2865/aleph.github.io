@@ -1,5 +1,23 @@
 # PROGRESS
 
+## 2026-07-21 — Phase 5B 予算予約・atomic jury基盤を施工
+
+- 既存`Budget`を深くし、`BatchSpec`、耐久`reserve_batch/settle_batch`、state file lock、
+  active commitmentを追加した。同一command/manifestは同じ予約を返し、異なるmanifestとの
+  衝突、二重settle、同一`charge_id`二重計上を拒否する。
+- poolは`player|held_out|closing`をcode固定し、player→held-outだけを許可した。
+  manifestは三poolの金額だけを宣言でき、借用matrixを上書きできない。
+- 事前admissionと事後settlement/recoveryを分離した。実行済みcallの実額が予約を超えても
+  chargeを保存して`unreconciled`とし、その後のadmissionを停止する。
+- `Router/CallContext`へreservation identityを通し、call logとcharge eventを同じ予約へ結んだ。
+  `ExperimentRun`は任意の`protected_pools` manifestをBudgetへ登録できる。
+- 陪審batchは事前登録後、slotごとにcall/charge/raw-response hash/parse結果をappendする。
+  expected slotがすべてvalidになるまでscore列、mean、stddevを投影せず、欠損を
+  `INCOMPLETE_CALL|INCOMPLETE_PARSE`として保存する。
+- focused **97 passed, 1 skipped**、全non-local **349 passed, 1 deselected**。
+  通常run開始時のclosing reservation自動admissionと終了配線は次のtracer bulletであり、
+  Atlas再構築・provider call・既存artifact書換えは行っていない。
+
 ## 2026-07-21 — Phase 5A 記録・比較基盤を施工
 
 - 設計commit `efd927b`を起点に、Phase 5Aのtracer bulletを実装した。新規provider call、

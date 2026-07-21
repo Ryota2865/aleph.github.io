@@ -91,6 +91,7 @@ class CallContext:
     phase: str
     arm: str
     charged_to: str
+    reservation_id: str | None = None
 
 
 def sha256_text(text: str) -> str:
@@ -238,7 +239,15 @@ class Router:
         if context is not None:
             supplied = {
                 key
-                for key in ("command_id", "work_id", "experiment_id", "phase", "arm", "charged_to")
+                for key in (
+                    "command_id",
+                    "work_id",
+                    "experiment_id",
+                    "phase",
+                    "arm",
+                    "charged_to",
+                    "reservation_id",
+                )
                 if key in overrides
             }
             if supplied:
@@ -252,6 +261,9 @@ class Router:
         phase = context.phase if context else overrides.pop("phase", None)
         arm = context.arm if context else overrides.pop("arm", None)
         charged_to = context.charged_to if context else overrides.pop("charged_to", None)
+        reservation_id = (
+            context.reservation_id if context else overrides.pop("reservation_id", None)
+        )
         if experiment_id is not None:
             missing = [
                 name
@@ -286,6 +298,8 @@ class Router:
             self._precheck_amount(ledger, provider_name, messages, kwargs, decl),
             work_id=work_id,
             charged_to=charged_to,
+            reservation_id=reservation_id,
+            role=role,
         )
 
         using_fake = getattr(self, "_provider_for_test", None) is not None
@@ -327,6 +341,7 @@ class Router:
             "phase": phase,
             "arm": arm,
             "charged_to": charged_to,
+            "reservation_id": reservation_id,
         }
         prompt_text = "\n".join(f"{m.role}:{m.content}" for m in messages)
         response_hash = resp.response_hash or sha256_text(resp.text)
@@ -349,7 +364,7 @@ class Router:
             charge = self.budget.charge(
                 ledger,
                 self._charge_amount(ledger, resp),
-                meta=provenance,
+                meta={**provenance, "role": role},
                 work_id=work_id,
             )
         except Exception:

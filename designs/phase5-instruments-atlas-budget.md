@@ -2,8 +2,8 @@
 
 日付: 2026-07-21
 設計者: Codex（sol）
-状態: **実装前独立設計監査PASS。Phase 5A実装済み（2026-07-21）。5B/5C、Atlas再構築、
-新規有料実走は未着手。**
+状態: **実装前独立設計監査PASS。Phase 5Aおよび5B core実装済み（2026-07-21）。
+通常runのclosing配線、5C、Atlas再構築、新規有料実走は未着手。**
 調査証拠: `reports/PHASE5_READ_ONLY_INVENTORY_20260721.md`
 計器定義: `designs/instruments.md`
 
