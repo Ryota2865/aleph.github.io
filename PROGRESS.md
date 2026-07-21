@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-07-21 — Phase 5B 通常run予算manifest境界を施工
+
+- 次のtracer bulletとして、通常runのseed JSONから読む`RunBudgetPlan`の厳格な境界を
+  `Budget` moduleへ追加した。version、三pool、batch、phase/role routing、closing L7、
+  pool別commitmentを検証し、scope/work/ledger/借用指定の外部注入をfail closedにする。
+- `run:<work_id>`、API ledger、atomic projection、protected definition versionはcode側で導出する。
+  phase routingも`BatchSpec.canonical()`へ含め、同じcommand idでroutingだけを差し替えても
+  同一予約identityにならない。
+- ローカルQwen（Hermes）へparser初稿と境界testを委任し、Codexがseed JSON mapping interface、
+  routing identity、test重複を独立修正した。focused **31 passed**、全non-local
+  **371 passed, 1 deselected**、provider callと既存artifact書換えなし。
+- これは通常run配線の入力境界であり、run開始時の一括admission、`RealDeps/Router`への
+  reservation routing、closing settlementと終了分類e2eは引き続き未実装である。
+
 ## 2026-07-21 — Phase 5A/5B core正式独立監査PASS
 
 - candidate `569cf57d2f95a160168ca82c5c9336d04160670b`をClaude Codeの別担当が

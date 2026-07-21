@@ -11,8 +11,10 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
+import re
 import time
 import uuid
 from contextlib import contextmanager
@@ -63,6 +65,10 @@ class ReservationConflict(ValueError):
     """An idempotency key was reused for a different reservation operation."""
 
 
+class BatchLookupError(ValueError):
+    """No batch (or multiple batches) matched the requested phase+role pair."""
+
+
 @dataclass(frozen=True)
 class BatchSpec:
     batch_id: str
@@ -73,6 +79,7 @@ class BatchSpec:
     max_amount: float
     work_id: str | None = None
     expected_slots: tuple[str, ...] = ()
+    phases: tuple[str, ...] = ()
     input_manifest_hash: str = ""
     semantic_retries: int = 0
     atomic_projection: bool = True
@@ -88,6 +95,7 @@ class BatchSpec:
             "max_amount": float(self.max_amount),
             "work_id": self.work_id,
             "expected_slots": list(self.expected_slots),
+            "phases": list(self.phases),
             "input_manifest_hash": self.input_manifest_hash,
             "semantic_retries": self.semantic_retries,
             "atomic_projection": self.atomic_projection,
@@ -651,9 +659,262 @@ class Budget:
 
 
 def _canonical_hash(payload: Mapping[str, Any]) -> str:
-    import hashlib
-
     encoded = json.dumps(
         payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Phase 5 — RunBudgetPlan: strict manifest parsing
+# ---------------------------------------------------------------------------
+
+_VALID_PHASES = frozenset({"L1", "L2", "L3", "L4-L5", "L6", "L7"})
+_MANIFEST_TOP_KEYS = frozenset({"version", "cap_amount", "pools", "batches"})
+_BATCH_KEYS = frozenset(
+    {
+        "batch_id",
+        "pool",
+        "role",
+        "max_amount",
+        "phases",
+        "expected_slots",
+        "input_manifest_hash",
+        "semantic_retries",
+    }
+)
+
+
+@dataclass(frozen=True)
+class RunBudgetPlan:
+    """Parsed and validated protected-budget manifest for a single run."""
+
+    charged_to: str
+    cap_amount: float
+    pool_limits: tuple[tuple[str, float], ...]
+    batches: tuple[BatchSpec, ...]
+
+    def batch_for(self, phase: str, role: str) -> BatchSpec:
+        """Return the unique BatchSpec for *phase* + *role*, or raise."""
+        matches = [b for b in self.batches if phase in b.phases and b.role == role]
+        if not matches:
+            raise BatchLookupError(
+                f"no batch covers phase={phase!r} role={role!r}"
+            )
+        if len(matches) > 1:
+            raise BatchLookupError(
+                f"ambiguous: {len(matches)} batches cover phase={phase!r} role={role!r}"
+            )
+        return matches[0]
+
+    @classmethod
+    def from_manifest(
+        cls, raw_manifest: Mapping[str, Any], *, work_id: str
+    ) -> "RunBudgetPlan":
+        """Validate an already-decoded seed JSON budget manifest (version 1)."""
+        if not isinstance(raw_manifest, Mapping):
+            raise ValueError("manifest must be a mapping at top level")
+        if not isinstance(work_id, str) or not work_id.strip():
+            raise ValueError("work_id must be a non-empty string")
+        data = dict(raw_manifest)
+
+        if any(not isinstance(key, str) for key in data):
+            raise ValueError("manifest keys must be strings")
+
+        # --- top-level key check ---
+        unknown_top = set(data.keys()) - _MANIFEST_TOP_KEYS
+        if unknown_top:
+            raise ValueError(f"unknown manifest keys: {sorted(unknown_top)}")
+        missing_top = _MANIFEST_TOP_KEYS - set(data.keys())
+        if missing_top:
+            raise ValueError(f"missing manifest keys: {sorted(missing_top)}")
+
+        # --- version ---
+        version = data["version"]
+        if not isinstance(version, int) or isinstance(version, bool) or version != 1:
+            raise ValueError(f"manifest version must be integer 1, got {version!r}")
+
+        # --- cap_amount ---
+        cap_amount = data["cap_amount"]
+        if isinstance(cap_amount, bool) or not isinstance(cap_amount, (int, float)):
+            raise ValueError(f"cap_amount must be a number, got {type(cap_amount).__name__}")
+        cap_amount = float(cap_amount)
+        if not math.isfinite(cap_amount) or cap_amount <= 0:
+            raise ValueError(f"cap_amount must be finite and >0, got {cap_amount}")
+
+        # --- pools ---
+        pools_raw = data["pools"]
+        if not isinstance(pools_raw, Mapping):
+            raise ValueError("pools must be a mapping")
+        if any(not isinstance(key, str) for key in pools_raw):
+            raise ValueError("pool keys must be strings")
+        pool_keys = set(pools_raw.keys())
+        if pool_keys != set(POOLS):
+            extra = pool_keys - set(POOLS)
+            missing = set(POOLS) - pool_keys
+            raise ValueError(
+                f"pools must contain exactly {{player, held_out, closing}}; "
+                f"extra={extra}, missing={missing}"
+            )
+        pool_values: dict[str, float] = {}
+        for p in POOLS:
+            v = pools_raw[p]
+            if isinstance(v, bool) or not isinstance(v, (int, float)):
+                raise ValueError(f"pool {p} value must be a number, got {type(v).__name__}")
+            fv = float(v)
+            if not math.isfinite(fv) or fv < 0:
+                raise ValueError(f"pool {p} must be finite and non-negative, got {fv}")
+            pool_values[p] = fv
+        if abs(sum(pool_values.values()) - cap_amount) > 1e-9:
+            raise ValueError(
+                f"pool values sum ({sum(pool_values.values())}) must equal "
+                f"cap_amount ({cap_amount}) within 1e-9"
+            )
+
+        # --- batches ---
+        batches_raw = data["batches"]
+        if not isinstance(batches_raw, list) or len(batches_raw) == 0:
+            raise ValueError("batches must be a non-empty list")
+
+        seen_batch_ids: set[str] = set()
+        phase_role_map: dict[tuple[str, str], str] = {}
+        pool_batch_sums: dict[str, float] = {p: 0.0 for p in POOLS}
+        has_closing_l7 = False
+        batch_specs: list[BatchSpec] = []
+
+        for idx, item in enumerate(batches_raw):
+            prefix = f"batches[{idx}]"
+
+            if not isinstance(item, Mapping):
+                raise ValueError(f"{prefix}: must be a mapping")
+            if any(not isinstance(key, str) for key in item):
+                raise ValueError(f"{prefix}: keys must be strings")
+            unknown_batch = set(item.keys()) - _BATCH_KEYS
+            if unknown_batch:
+                raise ValueError(f"{prefix}: unknown keys: {sorted(unknown_batch)}")
+            missing_batch = _BATCH_KEYS - set(item.keys())
+            if missing_batch:
+                raise ValueError(f"{prefix}: missing keys: {sorted(missing_batch)}")
+
+            # batch_id
+            batch_id = item["batch_id"]
+            if not isinstance(batch_id, str) or not batch_id.strip():
+                raise ValueError(f"{prefix}: batch_id must be a non-empty string")
+            if batch_id in seen_batch_ids:
+                raise ValueError(f"{prefix}: duplicate batch_id {batch_id!r}")
+            seen_batch_ids.add(batch_id)
+
+            # pool
+            pool = item["pool"]
+            if not isinstance(pool, str) or pool not in POOLS:
+                raise ValueError(f"{prefix}: pool must be one of {POOLS}, got {pool!r}")
+
+            # role
+            role = item["role"]
+            if not isinstance(role, str) or not role.strip():
+                raise ValueError(f"{prefix}: role must be a non-empty string")
+
+            # max_amount
+            max_amount = item["max_amount"]
+            if isinstance(max_amount, bool) or not isinstance(max_amount, (int, float)):
+                raise ValueError(
+                    f"{prefix}: max_amount must be a number, got {type(max_amount).__name__}"
+                )
+            max_amount = float(max_amount)
+            if not math.isfinite(max_amount) or max_amount <= 0:
+                raise ValueError(f"{prefix}: max_amount must be finite and >0, got {max_amount}")
+
+            # phases
+            phases = item["phases"]
+            if not isinstance(phases, list) or len(phases) == 0:
+                raise ValueError(f"{prefix}: phases must be a non-empty list")
+            if len(phases) != len(set(phases)):
+                raise ValueError(f"{prefix}: phases must be unique")
+            for ph in phases:
+                if not isinstance(ph, str) or ph not in _VALID_PHASES:
+                    raise ValueError(
+                        f"{prefix}: phase {ph!r} not in allowed {_VALID_PHASES}"
+                    )
+
+            # expected_slots
+            expected_slots = item["expected_slots"]
+            if not isinstance(expected_slots, list) or len(expected_slots) == 0:
+                raise ValueError(f"{prefix}: expected_slots must be a non-empty list")
+            if len(expected_slots) != len(set(expected_slots)):
+                raise ValueError(f"{prefix}: expected_slots must be unique")
+            for slot in expected_slots:
+                if not isinstance(slot, str) or not slot:
+                    raise ValueError(f"{prefix}: each expected_slot must be a non-empty string")
+
+            # input_manifest_hash
+            imh = item["input_manifest_hash"]
+            if not isinstance(imh, str) or not re.fullmatch(r"[0-9a-f]{64}", imh):
+                raise ValueError(
+                    f"{prefix}: input_manifest_hash must be exactly 64 lowercase hex chars"
+                )
+
+            # semantic_retries
+            sr = item["semantic_retries"]
+            if isinstance(sr, bool) or not isinstance(sr, int):
+                raise ValueError(
+                    f"{prefix}: semantic_retries must be an integer >=0, "
+                    f"got {type(sr).__name__}"
+                )
+            if sr < 0:
+                raise ValueError(f"{prefix}: semantic_retries must be >=0, got {sr}")
+
+            # Pool overflow check
+            pool_batch_sums[pool] += max_amount
+
+            # Phase+role uniqueness
+            for ph in phases:
+                key = (ph, role)
+                if key in phase_role_map:
+                    raise ValueError(
+                        f"{prefix}: phase={ph!r} + role={role!r} already covered by "
+                        f"batch {phase_role_map[key]!r}"
+                    )
+                phase_role_map[key] = batch_id
+
+            # Closing L7 check
+            if pool == "closing" and "L7" in phases:
+                has_closing_l7 = True
+
+            charged_to = f"run:{work_id}"
+            spec = BatchSpec(
+                batch_id=batch_id,
+                ledger="api",
+                charged_to=charged_to,
+                pool=pool,
+                role=role,
+                max_amount=max_amount,
+                work_id=work_id,
+                expected_slots=tuple(expected_slots),
+                phases=tuple(phases),
+                input_manifest_hash=imh,
+                semantic_retries=sr,
+                atomic_projection=True,
+                protected_definition_version="phase5-v1",
+            )
+            batch_specs.append(spec)
+
+        # Pool overflow final check
+        for pool in POOLS:
+            if pool_batch_sums[pool] > pool_values[pool] + 1e-9:
+                raise ValueError(
+                    f"batch max_amounts for pool {pool} sum to "
+                    f"{pool_batch_sums[pool]}, exceeding pool limit {pool_values[pool]}"
+                )
+
+        # Closing L7 requirement
+        if not has_closing_l7:
+            raise ValueError(
+                "manifest must include at least one closing-pool batch covering phase L7"
+            )
+
+        return cls(
+            charged_to=charged_to,
+            cap_amount=cap_amount,
+            pool_limits=tuple((p, pool_values[p]) for p in POOLS),
+            batches=tuple(batch_specs),
+        )
