@@ -1,5 +1,20 @@
 # PROGRESS
 
+## 2026-07-23 — Phase 5B後半 通常run closing正式再監査PASS
+
+- 修繕candidate `db8567c78a90459f1cd99ac49bf80074624265bd`をClaude Code
+  （Opus 4.8）の独立担当がread-only再監査し、**P0–P2なし、VERDICT: PASS**と判定した。
+  原文は`reports/PHASE5B_NORMAL_RUN_CLOSING_REAUDIT_20260723.md`。
+- 監査者はdoctor failures=0、focused **47 passed, 34 deselected**、全non-local
+  **379 passed, 1 deselected**、README snapshot **2 passed**を独立再現した。
+  `/tmp`だけを使った独立故障注入19件＋許容誤差境界1件も全PASS。
+- 初回FAILの監査完了性P1、settlement recovery/admission結合のP2余地、許容誤差不一致は
+  解消した。残余P3は非dict seedのfail-closed厳格化、既存failure_category appendの
+  crash重複余地、admission時の全reservation deepcopy性能で、いずれも非阻害。
+- 通常runの一括admission、API phase/role routing、closing settlement、
+  `complete_short|resource_interrupted|publication_choice`境界をPhase 5B後半の範囲で閉じる。
+  Phase 5C、Atlas再構築、新規有料実走、Phase 5全体は未完了のまま。
+
 ## 2026-07-23 — Phase 5B後半 初回正式監査FAILを保存・回復seamを修繕
 
 - candidate `42a085d956289d4fef864aee10be022e2df14083`をClaude Code（Opus 4.8）が

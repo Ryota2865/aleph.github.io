@@ -288,7 +288,9 @@ Atlas identity、termination/author epoch、5Bの耐久予約・非対称pool・
 実装済み。candidate `569cf57`はClaude Codeの独立監査でP0–P2なし、
 **VERDICT: PASS**。監査記録は
 `reports/PHASE5A_5B_CORE_IMPLEMENTATION_AUDIT_20260721.md`。通常runのclosing配線は
-2026-07-23に施工し、focused 46件・全non-local 378件がPASS（正式監査待ち）。
+2026-07-23に施工し、初回正式監査FAILを保存後、回復seamを修繕したcandidate
+`db8567c`がClaude Codeの正式再監査でP0–P2なし、**VERDICT: PASS**。
+監査記録は`reports/PHASE5B_NORMAL_RUN_CLOSING_REAUDIT_20260723.md`。
 5C、Atlas再構築、新規有料実験には進んでいない。
 
 ### 5.1 計器台帳

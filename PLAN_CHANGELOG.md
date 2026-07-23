@@ -1,5 +1,25 @@
 # PLAN 変更履歴
 
+## 0.7.20-18 (2026-07-23) — Phase 5B後半 通常run closing正式再監査PASS
+
+Codex施工の通常run一括admission、API phase/role reservation routing、closing settlement、
+終了境界をcandidate `42a085d956289d4fef864aee10be022e2df14083`として固定した。
+Claude Code初回監査はコード上P0–P2なしだったが、監査環境のBash拒否により必須動的検証を
+再現できず**VERDICT: FAIL**。原文を
+`reports/PHASE5B_NORMAL_RUN_CLOSING_AUDIT_20260723_FAIL.md`へ保存した。
+
+初回P3のsettlement recovery/admission結合を故障注入で確認し、既存reservationの
+identity検証付きread-only再水和へ修繕した。許容誤差も統一し、修繕candidate
+`db8567c78a90459f1cd99ac49bf80074624265bd`をClaude Code（Opus 4.8）の独立担当が
+read-only再監査した。doctor failures=0、focused **47 passed, 34 deselected**、
+全non-local **379 passed, 1 deselected**、README snapshot 2件、独立故障注入19件＋
+許容誤差境界1件を再現し、**P0–P2なし、VERDICT: PASS**。
+正式記録は`reports/PHASE5B_NORMAL_RUN_CLOSING_REAUDIT_20260723.md`。
+
+残余P3は非dict seedのfail-closed厳格化、既存failure_category appendのcrash重複余地、
+admission時の全reservation deepcopy性能。本項はPhase 5B後半だけを閉じ、Phase 5C、
+Atlas再構築、新規有料実走、Phase 5全体の完了を意味しない。
+
 ## 0.7.20-17 (2026-07-21) — Phase 5A/5B core独立監査PASS
 
 Codex施工のPhase 5A/5B coreをcommit
