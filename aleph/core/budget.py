@@ -27,6 +27,7 @@ import fcntl
 
 LEDGERS = ("api", "harness", "local")
 POOLS = ("player", "held_out", "closing")
+_AMOUNT_EPSILON = 1e-9
 
 # 各台帳の上限をどのbudgets.yamlキーから読むか、およびリセット周期。
 _LEDGER_LIMIT_KEY = {
@@ -229,7 +230,7 @@ class Budget:
         scope = self._scope_limits.get(charged_to)
         if scope is None or scope[0] != ledger:
             raise ValueError(f"scope {charged_to} must first be registered for {ledger}")
-        if sum(normalized.values()) > scope[1] + 1e-12:
+        if sum(normalized.values()) > scope[1] + _AMOUNT_EPSILON:
             raise ValueError("pool limits exceed the registered scope limit")
         existing = self._pool_limits.get(charged_to)
         if existing is not None and existing != normalized:
@@ -474,6 +475,27 @@ class Budget:
                     self._reservation_commands,
                 ) = snapshot
                 raise
+
+    def load_run_plan_reservations(
+        self, plan: "RunBudgetPlan"
+    ) -> dict[str, BatchReservation]:
+        """Rehydrate an admitted run without invoking admission or reconciliation gates."""
+        if not isinstance(plan, RunBudgetPlan):
+            raise TypeError("plan must be RunBudgetPlan")
+        reservations: dict[str, BatchReservation] = {}
+        for spec in plan.batches:
+            command_id = f"{plan.charged_to}:reserve:{spec.batch_id}"
+            reservation_id = self._reservation_commands.get(command_id)
+            if reservation_id is None:
+                raise ValueError(f"run batch was not admitted: {spec.batch_id}")
+            reservation = self._reservations.get(reservation_id)
+            expected_hash = _canonical_hash(spec.canonical())
+            if reservation is None or reservation.get("manifest_hash") != expected_hash:
+                raise ReservationConflict(
+                    f"admitted run batch identity mismatch: {spec.batch_id}"
+                )
+            reservations[spec.batch_id] = self._public_reservation(reservation)
+        return reservations
 
     @staticmethod
     def _public_reservation(reservation: Mapping[str, Any]) -> BatchReservation:
@@ -856,7 +878,7 @@ class RunBudgetPlan:
             if not math.isfinite(fv) or fv < 0:
                 raise ValueError(f"pool {p} must be finite and non-negative, got {fv}")
             pool_values[p] = fv
-        if abs(sum(pool_values.values()) - cap_amount) > 1e-9:
+        if abs(sum(pool_values.values()) - cap_amount) > _AMOUNT_EPSILON:
             raise ValueError(
                 f"pool values sum ({sum(pool_values.values())}) must equal "
                 f"cap_amount ({cap_amount}) within 1e-9"

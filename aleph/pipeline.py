@@ -737,7 +737,12 @@ class RealDeps:
         if self._run_budget_plan is None:
             return None
         if not self._run_reservations:
-            self.begin_run_budget()
+            # Terminal recovery must not pass through admission: a completed overage may have
+            # made the budget unreconciled, but the already-admitted reservations still need
+            # deterministic settlement/classification.
+            self._run_reservations = self.router.budget.load_run_plan_reservations(
+                self._run_budget_plan
+            )
         category = self.run_completion_category(stop_path)
         for batch_id, reservation in self._run_reservations.items():
             status = self.router.budget.reservation_status(reservation.id)

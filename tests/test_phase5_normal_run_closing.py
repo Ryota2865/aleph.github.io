@@ -6,7 +6,13 @@ from pathlib import Path
 import pytest
 
 from aleph.core.artifacts import Work
-from aleph.core.budget import BatchLookupError, Budget, BudgetExceeded, RunBudgetPlan
+from aleph.core.budget import (
+    BatchLookupError,
+    Budget,
+    BudgetExceeded,
+    BudgetUnreconciled,
+    RunBudgetPlan,
+)
 from aleph.core.config import load_config
 from aleph.core.llm import CallLogger, LLMResponse, Message, Router, Usage
 from aleph.core.loop import State
@@ -132,6 +138,44 @@ def test_protected_run_defers_unmanifested_l8_reflection_without_call(tmp_path):
 
     assert result["applied"] is False
     assert "L8" in result["diff_reason"]
+
+
+def test_terminal_recovery_rehydrates_without_readmission_when_budget_is_unreconciled(
+    tmp_path,
+):
+    work, budget, _, deps = _real_deps(tmp_path)
+    reservations = deps.begin_run_budget()
+    closing = reservations["closing-author"]
+    event = budget.charge(
+        "api",
+        float(closing.spec["max_amount"]) + 0.1,
+        meta={
+            "reservation_id": closing.id,
+            "charged_to": "run:w-run",
+            "role": "author_primary",
+            "charge_id": "completed-overage",
+        },
+        work_id=work.work_id,
+    )
+    assert event["billing_status"] == "unreconciled"
+
+    config = load_config(ROOT)
+    restarted_budget = Budget(config, state_path=tmp_path / "budget.json")
+    restarted_router = Router(config, CallLogger(work.calls), restarted_budget)
+    restarted = RealDeps(
+        work,
+        restarted_router,
+        config=config,
+        index_dir=tmp_path / "atlas",
+        search_fn=lambda *args, **kwargs: [],
+        poetics_dir=tmp_path / "poetics",
+    )
+
+    assert restarted.finish_run_budget(
+        stop_path="budget", terminal_state=State.SHELVE
+    ) == "resource_interrupted"
+    with pytest.raises(BudgetUnreconciled):
+        restarted_budget.admit_run_plan(restarted._run_budget_plan)
 
 
 class _ClosingDeps:

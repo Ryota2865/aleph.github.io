@@ -1,5 +1,21 @@
 # PROGRESS
 
+## 2026-07-23 — Phase 5B後半 初回正式監査FAILを保存・回復seamを修繕
+
+- candidate `42a085d956289d4fef864aee10be022e2df14083`をClaude Code（Opus 4.8）が
+  read-only監査した。静的にはP0–P2のcode欠陥なしだったが、Claude Code内部のBash権限拒否で
+  doctor、pytest、独立故障注入を一切再現できず、監査完了性P1として**VERDICT: FAIL**。
+  原文は`reports/PHASE5B_NORMAL_RUN_CLOSING_AUDIT_20260723_FAIL.md`へ保存した。
+- 監査者のP3推論を故障注入で再現し、completed overageでbudgetが`unreconciled`になった後、
+  終端commitとcompletion markerの間でcrashすると、fresh processのsettlement recoveryが
+  再admissionのreconciliation gateに阻害されるseamを修繕した。既存reservationをidentity検証
+  付きread-onlyで再水和し、admissionとsettlement/recoveryを分離した。
+- manifest parseとpool登録の金額許容誤差も`1e-9`へ統一。focused
+  **47 passed, 34 deselected**、全non-local **379 passed, 1 deselected**、
+  `git diff --check`違反なし。
+- FAIL artifact追加に伴うRepositorySnapshot由来README日英markerを20件へ機械更新した。
+  次は修繕candidateを固定し、Bash実行を許可したClaude Code担当へfocused再監査を依頼する。
+
 ## 2026-07-23 — Phase 5B 通常run closing配線を施工（正式監査待ち）
 
 - `run_budget` manifestを通常run開始前に読み、scope/pool登録と全batch reservationを
