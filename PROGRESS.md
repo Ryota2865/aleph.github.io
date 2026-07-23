@@ -1,5 +1,40 @@
 # PROGRESS
 
+## 2026-07-23 — Phase 5C step 11–12 計器配線・施工者受入監査green
+
+- 新規workの`measurements.jsonl`へregistry検証済みrecordを冪等appendする
+  `InstrumentRecorder`を追加し、novelty/disagreement/parse reliability/segment別mean
+  logprobをreview seam、completion/costをprotected run終端seamへ配線した。
+- invalid jurorはdisagreementから除外しつつparse reliabilityへ残す。provider statementが
+  無いcostは0 USDにせず`missing/unreconciled`とする。通常run/publishの既定Atlasをstep 10の
+  full identity Atlasへ切り替え、legacy explore/works/reviewsは変更していない。
+- 実データでfull identity verify、95,690行、non-noise 4 cluster、9計器、fixation 8 record、
+  w0009=`resource_stop`をread-only確認。実w0007はtermination欠測のため遡及分類せず、
+  w0007型quality-floor fixtureで`aesthetic_failure`境界を確認した。
+- Phase 5 focused **82 passed**、全non-local **388 passed, 1 deselected**、
+  `git diff --check`違反なし。17受入条件の対応表と故障注入結果は
+  `reports/PHASE5C_ACCEPTANCE_VERIFICATION_20260723.md`。
+- これは施工者検証であり正式verdictではない。candidateを固定し、Claude Code別担当の
+  read-only正式監査でPASSを得るまでPhase 6へ進まない。
+
+## 2026-07-23 — Phase 5C step 10 Atlas再構築・full identity初回発行
+
+- オーナー決定により、corpus拡張とUMAP本番昇格を分離し、現行青空文庫16,950作品・
+  95,690チャンクと現行PCA64/HDBSCAN構成で新Atlasをlocal再構築した。既存
+  `state/atlas`はread-onlyのまま、`state/atlases/phase5c-pca64-hdbscan40-aozora-v1`
+  へ857MBの新artifactを生成した。
+- PCA seedを42としてbuild interfaceへ明示し、source/output同一、既存destination、
+  build spec/実引数不一致をfail closedにした。staging完了後だけfinal directoryへrenameし、
+  `identity.json`を最後のcommit markerとして発行する。
+- full identityは
+  `8ab3e51a4d8c64bdbb456b2dc7dbea9bdf4fe71f60888eda997203c4c59827ca`。
+  corpus/license/chunker/embedder f16 artifact/全build params/code/全出力hashを固定した。
+- 実データverifyと`Atlas.load()`はPASS。`atlas_meta.json`の1 byte破損を`/tmp`で注入すると
+  `AtlasIdentityError`で拒否した。focused **20 passed, 14 deselected**、全non-local
+  **385 passed, 1 deselected**、`git diff --check`違反なし。
+- provider call、corpus取得、再embedding、新作生成、既存Atlas/work/audit書換えなし。
+  証拠は`reports/PHASE5C_ATLAS_REBUILD_20260723.md`。次はstep 11の実計器配線である。
+
 ## 2026-07-23 — Phase 5C step 9 fixation sealed fixture/baselineを施工
 
 - 既存のw0004/w0005/w0007/w0008本文、owner経由Fable批評、w0008/w0009分類・実験報告だけを

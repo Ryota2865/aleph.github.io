@@ -5,7 +5,7 @@ metric.  Individual domains own cosine, classifier, logprob, and other work.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
 import json
@@ -230,3 +230,54 @@ class InstrumentRegistry:
         ):
             return RecordComparison(False, None, ("values are not scalar numeric measurements",))
         return RecordComparison(True, right.value - left.value)
+
+
+class InstrumentRecorder:
+    """Validate and append runtime records to one work's immutable JSONL stream."""
+
+    def __init__(self, registry: InstrumentRegistry, path: Path) -> None:
+        self.registry = registry
+        self.path = Path(path)
+
+    def record(self, **kwargs: Any) -> InstrumentRecord:
+        record = self.registry.record(**kwargs)
+        self.append(record)
+        return record
+
+    def append(self, record: InstrumentRecord) -> None:
+        definition = self.registry.definition(record.instrument_id)
+        if (
+            record.registry_hash != self.registry.registry_hash
+            or record.instrument_version != definition.version
+            or record.status != definition.status
+            or record.unit != definition.unit
+            or record.direction != definition.direction
+        ):
+            raise InstrumentError("record does not belong to this registry definition")
+        payload = asdict(record)
+        encoded = _canonical_json(payload)
+        existing_by_id: dict[str, str] = {}
+        if self.path.exists():
+            for line in self.path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    item = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise InstrumentError(
+                        f"measurements stream contains invalid JSON: {exc}"
+                    ) from exc
+                measurement_id = item.get("measurement_id")
+                if not isinstance(measurement_id, str) or not measurement_id:
+                    raise InstrumentError("measurements stream record has no measurement_id")
+                existing_by_id[measurement_id] = _canonical_json(item)
+        prior = existing_by_id.get(record.measurement_id)
+        if prior is not None:
+            if prior != encoded:
+                raise InstrumentError(
+                    f"measurement id collision: {record.measurement_id}"
+                )
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("a", encoding="utf-8") as target:
+            target.write(encoded + "\n")

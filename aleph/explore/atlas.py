@@ -153,6 +153,7 @@ def build_atlas(
     knn_k: int = 16,
     pca_dims: int = 64,
     min_cluster_size: int = 40,
+    pca_random_state: int = 42,
 ) -> Atlas:
     """プレーン索引をPCAで縮約し、HDBSCANとkNN密度を保存する."""
     index_dir = Path(index_dir)
@@ -167,7 +168,10 @@ def build_atlas(
         raise ValueError("knn_k and pca_dims must be positive; min_cluster_size must be at least 2")
 
     reduced_dims = min(pca_dims, dim, n_samples)
-    reduced = PCA(n_components=reduced_dims).fit_transform(np.asarray(embeddings))
+    reduced = PCA(
+        n_components=reduced_dims,
+        random_state=pca_random_state,
+    ).fit_transform(np.asarray(embeddings))
     if n_samples < min_cluster_size:
         labels = np.full(n_samples, -1, dtype=np.int64)
     else:
@@ -205,6 +209,7 @@ def build_atlas(
         "pca_dims": reduced_dims,
         "knn_k": min(knn_k, max(0, n_samples - 1)),
         "min_cluster_size": min_cluster_size,
+        "pca_random_state": pca_random_state,
         "clusters": clusters,
     }
 

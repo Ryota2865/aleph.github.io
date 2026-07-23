@@ -11,14 +11,16 @@ from __future__ import annotations
 import json
 import re
 import sys
+from hashlib import sha256
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Mapping
 
 import numpy as np
 
 from aleph.critique.adversary import adversary_review
 from aleph.core.evaluation import EvaluationPacket, EvaluationPacketError
+from aleph.core.instruments import InstrumentRecorder, MeasurementContext
 from aleph.critique.reader_model import reader_prompt
 from aleph.critique.style import rationing_instructions
 from aleph.core.model_output import parse_model_output
@@ -142,8 +144,14 @@ def _criteria_review(jury: list[Callable[[str], str]], criteria: str, draft_text
         scores.append(score)
     mean_score = float(np.mean(scores)) if scores else 0.0
     disagreement = float(np.std(scores)) if scores else 0.0  # 母標準偏差(ddof=0)
-    return {"mean_score": mean_score, "disagreement": disagreement,
-            "critiques": critiques, "invalid_jurors": invalid}
+    return {
+        "mean_score": mean_score,
+        "disagreement": disagreement,
+        "critiques": critiques,
+        "invalid_jurors": invalid,
+        "valid_jurors": len(scores),
+        "expected_jurors": len(jury),
+    }
 
 
 def novelty_review(draft_text: str, embedder: Callable[[list[str]], np.ndarray], index_dir: str | Path) -> dict:
@@ -345,6 +353,152 @@ def _write_report_markdown(work, version: int, report: dict) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def _hash_json(value: Any) -> str:
+    return sha256(
+        json.dumps(
+            value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _hash_file(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _review_instrument_records(
+    work,
+    version: int,
+    report: Mapping[str, Any],
+    recorder: InstrumentRecorder,
+    metadata: Mapping[str, str],
+) -> None:
+    """Project already-computed review values; this function performs no model calls."""
+    draft_path = work.draft_path(version)
+    report_path = work.review_path(version)
+    draft_ref = f"works/{work.work_id}/drafts/v{version}.md"
+    report_ref = f"works/{work.work_id}/reviews/v{version}.md"
+    input_refs = (
+        {"ref": draft_ref, "hash": _hash_file(draft_path)},
+        {"ref": report_ref, "hash": _hash_file(report_path)},
+    )
+    measured_at = str(metadata["measured_at"])
+    packet_hash = str(report.get("evaluation_packet_hash") or "legacy-no-packet")
+    jury_prompt_hash = _hash_json(
+        {"template": "criteria-review-json-score-v1", "criteria_contract": packet_hash}
+    )
+    cr = report["criteria_review"]
+    expected = int(cr["expected_jurors"])
+    valid = int(cr["valid_jurors"])
+    batch_manifest = _hash_json(
+        {
+            "jury_roster": metadata["jury_roster"],
+            "packet": packet_hash,
+            "expected_slots": expected,
+        }
+    )
+
+    recorder.record(
+        instrument_id="novelty.atlas_cosine",
+        subject_ref=draft_ref,
+        value=dict(report["novelty"]),
+        context=MeasurementContext(
+            input_refs=input_refs,
+            model_ref=str(metadata["embedder"]),
+            prompt_ref="none:deterministic",
+            prompt_hash=_hash_json({"algorithm": "nearest-cosine-v1"}),
+            identities={
+                "atlas_identity": str(metadata["atlas_identity"]),
+                "embedder": str(metadata["embedder"]),
+                "segmentation": str(metadata["novelty_segmentation"]),
+            },
+            confidence={"coverage": "three-segment-or-full", "calibration": "provisional"},
+        ),
+        evidence_refs=(report_ref, str(metadata["atlas_identity_ref"])),
+        measured_at=measured_at,
+    )
+    recorder.record(
+        instrument_id="jury.disagreement_stddev",
+        subject_ref=draft_ref,
+        value=float(cr["disagreement"]),
+        context=MeasurementContext(
+            input_refs=input_refs,
+            model_ref=str(metadata["jury_model_ref"]),
+            prompt_ref="aleph.critique.review:_criteria_review:v1",
+            prompt_hash=jury_prompt_hash,
+            identities={
+                "score_scale": "0..10-inclusive-v1",
+                "jury_roster": str(metadata["jury_roster"]),
+                "packet": packet_hash,
+                "validity_rules": "finite-float-0..10-exclude-invalid-v1",
+            },
+            confidence={
+                "valid_slots": valid,
+                "expected_slots": expected,
+                "invalid_slots": int(cr["invalid_jurors"]),
+                "calibration": "provisional",
+            },
+        ),
+        evidence_refs=(report_ref,),
+        measured_at=measured_at,
+    )
+    recorder.record(
+        instrument_id="parse.reliability",
+        subject_ref=draft_ref,
+        value=(valid / expected) if expected else None,
+        measurement_status="observed" if expected else "invalid",
+        context=MeasurementContext(
+            input_refs=input_refs,
+            model_ref=str(metadata["jury_model_ref"]),
+            prompt_ref="aleph.critique.review:_criteria_review:v1",
+            prompt_hash=jury_prompt_hash,
+            identities={
+                "model": str(metadata["jury_model_ref"]),
+                "prompt": jury_prompt_hash,
+                "schema": "jury-score-critique-v1",
+                "parser": "aleph.core.model_output:parse_model_output",
+                "retry_policy": "none",
+                "batch_manifest": batch_manifest,
+            },
+            confidence={
+                "valid_slots": valid,
+                "expected_slots": expected,
+                "invalid_slots": int(cr["invalid_jurors"]),
+                "failure_taxonomy": {"invalid": int(cr["invalid_jurors"])},
+                "calibration": "provisional",
+            },
+        ),
+        evidence_refs=(report_ref,),
+        measured_at=measured_at,
+    )
+    for segment in report.get("perplexity", {}).get("segments", []):
+        label = str(segment["label"])
+        recorder.record(
+            instrument_id="reader.mean_logprob",
+            subject_ref=f"{draft_ref}#segment={label}",
+            value=float(segment["mean_logprob"]),
+            context=MeasurementContext(
+                input_refs=input_refs,
+                model_ref=str(metadata["reader_model"]),
+                prompt_ref="aleph.critique.review:_perplexity_review:v1",
+                prompt_hash=_hash_json({"template": "llm-reader-segment-v1"}),
+                identities={
+                    "model": str(metadata["reader_model"]),
+                    "tokenizer": str(metadata["reader_tokenizer"]),
+                    "context": str(metadata["reader_context"]),
+                    "segment": label,
+                    "prompt": "llm-reader-segment-v1",
+                },
+                confidence={"coverage": "segment", "calibration": "provisional"},
+            ),
+            evidence_refs=(report_ref,),
+            measured_at=measured_at,
+        )
+
+
 def run_review(
     work,
     draft_text: str,
@@ -360,6 +514,8 @@ def run_review(
     search_fn: Callable[..., list[dict]],
     reader_llm=None,
     packet: EvaluationPacket | None = None,
+    instrument_recorder: InstrumentRecorder | None = None,
+    instrument_metadata: Mapping[str, str] | None = None,
 ) -> dict:
     """5審級（技術/基準/新奇性/読者/敵対的）を実行し、reviews/v{version}.md に報告を書く（PLAN §7.1）."""
     if packet is not None:
@@ -397,6 +553,12 @@ def run_review(
     if reader_llm is not None and _llm_is_primary_audience(audience):
         report["perplexity"] = _perplexity_review(draft_text, reader_llm)
     _write_report_markdown(work, version, report)
+    if instrument_recorder is not None:
+        if instrument_metadata is None:
+            raise ValueError("instrument_metadata is required with instrument_recorder")
+        _review_instrument_records(
+            work, version, report, instrument_recorder, instrument_metadata
+        )
     return report
 
 
@@ -415,6 +577,8 @@ def critique_revise_loop(
     max_iters: int = 2,
     reader_llm=None,
     packet_factory: Callable[[int], EvaluationPacket] | None = None,
+    instrument_recorder: InstrumentRecorder | None = None,
+    instrument_metadata_factory: Callable[[], Mapping[str, str]] | None = None,
 ) -> int:
     """v=1から REVISEループを max_iters 回まわす（PLAN §7.2・§10 M4）.
 
@@ -444,6 +608,12 @@ def critique_revise_loop(
             search_fn=search_fn,
             reader_llm=reader_llm,
             packet=packet,
+            instrument_recorder=instrument_recorder,
+            instrument_metadata=(
+                instrument_metadata_factory()
+                if instrument_metadata_factory is not None
+                else None
+            ),
         )
         cr = report["criteria_review"]
         record = {

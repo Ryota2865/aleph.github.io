@@ -16,6 +16,7 @@ import os
 import sys
 import uuid
 from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
 
 from aleph.core.loop import Checkpoint, State
@@ -26,6 +27,22 @@ from aleph.core.transition_commit import recover as recover_transition
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _canonical_hash(value) -> str:
+    return sha256(
+        json.dumps(
+            value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _file_hash(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def _llm_is_primary_audience(audience: str) -> bool:
@@ -387,13 +404,29 @@ def _finish_run_budget(work, deps, ctx: dict, state: State, decided_by: str) -> 
         ]
     except (OSError, json.JSONDecodeError):
         rows = []
-    if any(str(row.get("decision", "")).startswith("run_completion:") for row in rows):
+    existing = next(
+        (
+            row
+            for row in rows
+            if str(row.get("decision", "")).startswith("run_completion:")
+        ),
+        None,
+    )
+    if existing is not None:
+        record_instruments = getattr(deps, "record_run_instruments", None)
+        if record_instruments is not None:
+            record_instruments(
+                work,
+                category=str(existing["decision"]).split(":", 1)[1],
+                stop_path=ctx.get("stop_path"),
+                measured_at=str(existing["ts"]),
+            )
         return
     category = finish(stop_path=ctx.get("stop_path"), terminal_state=state)
     if not category:
         return
     marker = f"run_completion:{category}"
-    work.append_decision({
+    event = {
         "ts": _now_iso(),
         "layer": "L7",
         "decision": marker,
@@ -401,7 +434,16 @@ def _finish_run_budget(work, deps, ctx: dict, state: State, decided_by: str) -> 
             "protected run budgetのclosing/settlement境界から導出した終了分類"
         ),
         "decided_by": decided_by,
-    })
+    }
+    work.append_decision(event)
+    record_instruments = getattr(deps, "record_run_instruments", None)
+    if record_instruments is not None:
+        record_instruments(
+            work,
+            category=category,
+            stop_path=ctx.get("stop_path"),
+            measured_at=event["ts"],
+        )
 
 
 def _reflect_poetics_if_available(work, deps, decided_by: str) -> None:
@@ -581,6 +623,173 @@ class RealDeps:
         # credits / intended_reader_models は publish時の meta.json に反映
         self.credits: dict = {}
         self.intended_reader_models: list[str] = []
+        self._instrument_recorder = None
+        self._atlas_identity = None
+        identity_path = self.index_dir / "identity.json"
+        if identity_path.is_file():
+            from aleph.core.instruments import InstrumentRecorder, InstrumentRegistry
+            from aleph.explore.atlas_identity import AtlasIdentity
+
+            identity = AtlasIdentity.load(self.index_dir)
+            identity.verify(self.index_dir)
+            repository_root = Path(__file__).resolve().parent.parent
+            registry = InstrumentRegistry.load(repository_root / "config" / "instruments.yaml")
+            self._instrument_recorder = InstrumentRecorder(registry, work.measurements)
+            self._atlas_identity = identity
+
+    def _review_instrument_metadata(self) -> dict[str, str]:
+        if self._atlas_identity is None:
+            raise RuntimeError("full Atlas identity is required for review instrumentation")
+        build_spec = self._atlas_identity.payload["build_spec"]
+        roles = self.config.models.get("roles", {})
+        jury = roles.get("critic_jury", [])
+        reader = roles.get("reader_model", {})
+        reader_model = str(
+            reader.get("model") or reader.get("provider") or "unknown-reader"
+        )
+        try:
+            identity_ref = str((self.index_dir / "identity.json").relative_to(Path.cwd()))
+        except ValueError:
+            identity_ref = f"atlas:{self._atlas_identity.hash}/identity.json"
+        return {
+            "measured_at": _now_iso(),
+            "atlas_identity": self._atlas_identity.hash,
+            "atlas_identity_ref": identity_ref,
+            "embedder": f"atlas-embedder:{_canonical_hash(build_spec['embedder'])}",
+            "novelty_segmentation": "draft-full-or-three-5000-char-segments-v1",
+            "jury_roster": _canonical_hash(jury),
+            "jury_model_ref": f"jury-roster:{_canonical_hash(jury)}",
+            "reader_model": reader_model,
+            "reader_tokenizer": f"provider-default:{reader_model}:unverified",
+            "reader_context": (
+                f"max_tokens={reader.get('max_tokens', 'provider-default')};"
+                "review-segments=18000/6000-v1"
+            ),
+        }
+
+    def record_run_instruments(
+        self,
+        work,
+        *,
+        category: str,
+        stop_path: str | None,
+        measured_at: str,
+    ) -> None:
+        """Project terminal/cost evidence without making or retrying any provider call."""
+        if self._instrument_recorder is None:
+            return
+        from aleph.core.instruments import MeasurementContext
+
+        seed = json.loads(work.seed.read_text(encoding="utf-8"))
+        run_manifest = seed.get("run_budget")
+        if not isinstance(run_manifest, dict):
+            return
+        calls = [
+            json.loads(line)
+            for line in work.calls.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        decisions = [
+            json.loads(line)
+            for line in work.decisions.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        completion_event = next(
+            (
+                row
+                for row in decisions
+                if row.get("ts") == measured_at
+                and row.get("decision") == f"run_completion:{category}"
+            ),
+            {"ts": measured_at, "decision": f"run_completion:{category}"},
+        )
+        refs_list = [
+            {"ref": f"works/{work.work_id}/seed.json", "hash": _file_hash(work.seed)},
+            {
+                "ref": (
+                    f"works/{work.work_id}/decisions.jsonl"
+                    f"#run_completion={measured_at}"
+                ),
+                "hash": _canonical_hash(completion_event),
+            },
+            {"ref": f"works/{work.work_id}/calls.jsonl", "hash": _file_hash(work.calls)},
+        ]
+        budget = getattr(getattr(self, "router", None), "budget", None)
+        budget_path = getattr(budget, "state_path", None)
+        if budget_path is not None and Path(budget_path).is_file():
+            try:
+                budget_ref = str(Path(budget_path).relative_to(Path.cwd()))
+            except ValueError:
+                budget_ref = f"budget-state:{_file_hash(Path(budget_path))}"
+            refs_list.append({"ref": budget_ref, "hash": _file_hash(Path(budget_path))})
+        refs = tuple(refs_list)
+        run_manifest_hash = _canonical_hash(run_manifest)
+        closing = [
+            item
+            for item in run_manifest.get("batches", [])
+            if isinstance(item, dict) and item.get("pool") == "closing"
+        ]
+        completion_value = "complete_normal" if category == "complete" else category
+        self._instrument_recorder.record(
+            instrument_id="run.completion",
+            subject_ref=f"works/{work.work_id}",
+            value=completion_value,
+            context=MeasurementContext(
+                input_refs=refs,
+                model_ref="deterministic:aleph.pipeline.run_completion_category",
+                prompt_ref="none:deterministic",
+                prompt_hash=_canonical_hash({"implementation": "run-completion-v1"}),
+                identities={
+                    "run_manifest": run_manifest_hash,
+                    "closing_batch": _canonical_hash(closing),
+                    "stop_rules": "protected-closing-stop-rules-v1",
+                },
+                confidence={
+                    "coverage": "terminal-transition-and-protected-reservations",
+                    "stop_path": stop_path or "natural",
+                    "calibration": "provisional",
+                },
+            ),
+            evidence_refs=(
+                f"works/{work.work_id}/decisions.jsonl",
+                f"works/{work.work_id}/seed.json",
+            ),
+            measured_at=measured_at,
+        )
+        models = sorted(
+            {
+                str(call.get("model"))
+                for call in calls
+                if call.get("model") is not None
+            }
+        )
+        self._instrument_recorder.record(
+            instrument_id="cost.reconciled_usd",
+            subject_ref=f"works/{work.work_id}",
+            value=None,
+            measurement_status="missing",
+            context=MeasurementContext(
+                input_refs=refs,
+                model_ref="deterministic:three-way-cost-reconciliation-v1",
+                prompt_ref="none:deterministic",
+                prompt_hash=_canonical_hash({"implementation": "cost-reconciliation-v1"}),
+                identities={
+                    "cost_envelope": run_manifest_hash,
+                    "provider_pricing_date": "missing-provider-statement",
+                    "model": _canonical_hash(models),
+                    "reconciliation_rules": "call-charge-provider-three-way-v1",
+                },
+                confidence={
+                    "coverage": "call-records-only",
+                    "reconciliation_status": "unreconciled",
+                    "unreconciled_breakdown": ["provider statement missing"],
+                    "calibration": "provisional",
+                },
+                warnings=("provider statement absent; no reconciled amount claimed",),
+            ),
+            evidence_refs=(f"works/{work.work_id}/calls.jsonl",),
+            measured_at=measured_at,
+        )
 
     # -- 終端後フック（PLAN_CHANGELOG 0.7.18: 作成済み・未接続だった機能の実配線） -----
     def annotate_failure(self, work, niche_desc: str, reason: str) -> None:
@@ -1118,6 +1327,12 @@ class RealDeps:
             max_iters=2,
             packet_factory=lambda version: EvaluationPacket.for_draft(
                 WorkReader(work.dir).snapshot(), version
+            ),
+            instrument_recorder=self._instrument_recorder,
+            instrument_metadata_factory=(
+                self._review_instrument_metadata
+                if self._instrument_recorder is not None
+                else None
             ),
         )
         # 高不一致版を E-border 刺激として予約（失敗しても制作を止めない）

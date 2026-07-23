@@ -240,7 +240,11 @@ def main(argv: list[str] | None = None, *, root: Path | None = None) -> int:
     new_p.add_argument("--hint", default="", help="種となる着想のテキスト")
     run_p = sub.add_parser("run", help="閉ループを実行する（チェックポイントから継続）")
     run_p.add_argument("--work", required=True, help="作品id（works/<id>）")
-    run_p.add_argument("--index", default="state/atlas", help="探索・素材索引のディレクトリ")
+    run_p.add_argument(
+        "--index",
+        default="state/atlases/phase5c-pca64-hdbscan40-aozora-v1",
+        help="探索・素材索引のディレクトリ",
+    )
     run_p.add_argument(
         "--force-audience", default=None,
         help="L1の自律選択を上書きし宛先配合を固定する実験用（例 'LLM 0.6 / 自分 0.25 / 人間 0.15'）。"
@@ -251,7 +255,11 @@ def main(argv: list[str] | None = None, *, root: Path | None = None) -> int:
     sub.add_parser("resume", help="クラッシュ後の再開（決定論的リプレイ）")
     pub_p = sub.add_parser("publish", help="棚上げ済み作品の公開ゲートを再評価する（初回は人間承認必須）")
     pub_p.add_argument("--work", required=True, help="作品id（works/<id>）")
-    pub_p.add_argument("--index", default="state/atlas", help="索引ディレクトリ（公開ゲートは未使用だが依存配線に必要）")
+    pub_p.add_argument(
+        "--index",
+        default="state/atlases/phase5c-pca64-hdbscan40-aozora-v1",
+        help="索引ディレクトリ（公開ゲートは未使用だが依存配線に必要）",
+    )
     reconcile_p = sub.add_parser(
         "reconcile",
         help="確認済みlegacy checkpointを明示的にmodern replay基線へ昇格する",

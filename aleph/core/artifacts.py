@@ -26,6 +26,7 @@ WORK_LAYOUT = (
     "reviews/",
     "decisions.jsonl",
     "calls.jsonl",
+    "measurements.jsonl",
     "final/",
 )
 
@@ -86,6 +87,10 @@ class Work:
         return self.dir / "calls.jsonl"
 
     @property
+    def measurements(self) -> Path:
+        return self.dir / "measurements.jsonl"
+
+    @property
     def final(self) -> Path:
         return self.dir / "final"
 
@@ -107,7 +112,7 @@ class Work:
             d.mkdir(parents=True, exist_ok=True)
         seed_text = scrub_secrets(json.dumps(seed, ensure_ascii=False, indent=2), self._secrets)
         self.seed.write_text(seed_text, encoding="utf-8")
-        for f in (self.decisions, self.calls):
+        for f in (self.decisions, self.calls, self.measurements):
             f.touch(exist_ok=True)
 
     def append_decision(self, record: dict) -> None:
