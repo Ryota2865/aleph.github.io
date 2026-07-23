@@ -231,14 +231,24 @@ def run_work(work, deps, *, decided_by: str) -> State:
     compose_and_draft が L4+L5 を担うため COMPOSE→DRAFT と段階的に遷移する。
     再開時は完了済み状態の処理を再実行しない（中間値は checkpoint.payload で復元）。
     """
+    begin_run_budget = getattr(deps, "begin_run_budget", None)
+    if begin_run_budget is not None and not work.checkpoint.exists():
+        # A new work must pass admission before recover() materializes its initial checkpoint.
+        begin_run_budget()
     cp = recover_transition(work)
     state = cp.state
     step = cp.step
     ctx: dict = dict(cp.payload)
 
     if state in (State.PUBLISH, State.SHELVE, State.DISCARD):
+        _finish_run_budget(work, deps, ctx, state, decided_by)
         _ensure_terminal_effects(work, deps, decided_by)
         return state
+
+    if begin_run_budget is not None:
+        # Admission is deliberately before the first lifecycle mutation. A rejected plan
+        # therefore leaves the work at its prior checkpoint (or wholly unstarted).
+        begin_run_budget()
 
     def go(nxt: State, reason: str, payload: dict | None = None) -> None:
         nonlocal step, state
@@ -308,7 +318,16 @@ def run_work(work, deps, *, decided_by: str) -> State:
     # --- FINISH → PUBLISH | SHELVE | DISCARD（完成≠公開, PLAN §7.3d）
     if state == State.FINISH:
         audience = ctx.get("audience")
-        pub = deps.decide_publication(work, audience)
+        closing_available = getattr(deps, "closing_available", None)
+        closing_lost = closing_available is not None and not closing_available()
+        if closing_lost:
+            ctx["stop_path"] = "closing_lost"
+            pub = {
+                "decision": "SHELVE",
+                "reason": "開始後にclosing commitmentを喪失し、閉幕不能になった",
+            }
+        else:
+            pub = deps.decide_publication(work, audience)
         decision = str(pub.get("decision", "SHELVE")).upper()
         reason = pub.get("reason", "")
         if decision == "PUBLISH":
@@ -319,6 +338,7 @@ def run_work(work, deps, *, decided_by: str) -> State:
         else:
             _record_termination_failure(work, deps, ctx, reason, decided_by)
             go(State.SHELVE, f"棚上げ: {reason}")
+        _finish_run_budget(work, deps, ctx, state, decided_by)
         _ensure_terminal_effects(work, deps, decided_by)
 
     return state
@@ -329,7 +349,13 @@ def _record_termination_failure(work, deps, ctx: dict, reason: str, decided_by: 
     aesthetic_failureのみ否定的地図（deps.annotate_failure）へ渡す
     （PLAN_CHANGELOG 0.7.18 問2。annotate_failure未対応のdepsでは記録のみ行い、地図は更新しない）。
     """
-    category = _classify_termination(ctx.get("stop_path"), reason)
+    stop_path = ctx.get("stop_path")
+    completion_category = getattr(deps, "run_completion_category", lambda value: None)(stop_path)
+    # A protected closing batch turns player exhaustion into a short completion. The eventual
+    # SHELVE reason (for example an author's non-publication choice) then owns the termination
+    # classification instead of being overwritten by the earlier player stop signal.
+    classification_path = None if completion_category == "complete_short" else stop_path
+    category = _classify_termination(classification_path, reason)
     work.append_decision({
         "ts": _now_iso(),
         "layer": "L7",
@@ -347,6 +373,35 @@ def _record_termination_failure(work, deps, ctx: dict, reason: str, decided_by: 
         annotate_failure(work, niche_desc, reason)
     except Exception as exc:  # 否定的地図の更新失敗で作品終端そのものは止めない
         print(f"annotate_failure failed for {work.work_id}: {exc}", file=sys.stderr)
+
+
+def _finish_run_budget(work, deps, ctx: dict, state: State, decided_by: str) -> None:
+    finish = getattr(deps, "finish_run_budget", None)
+    if finish is None:
+        return
+    try:
+        rows = [
+            json.loads(line)
+            for line in work.decisions.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    except (OSError, json.JSONDecodeError):
+        rows = []
+    if any(str(row.get("decision", "")).startswith("run_completion:") for row in rows):
+        return
+    category = finish(stop_path=ctx.get("stop_path"), terminal_state=state)
+    if not category:
+        return
+    marker = f"run_completion:{category}"
+    work.append_decision({
+        "ts": _now_iso(),
+        "layer": "L7",
+        "decision": marker,
+        "reason": (
+            "protected run budgetのclosing/settlement境界から導出した終了分類"
+        ),
+        "decided_by": decided_by,
+    })
 
 
 def _reflect_poetics_if_available(work, deps, decided_by: str) -> None:
@@ -488,10 +543,31 @@ class RealDeps:
         self._experiment_phase: str | None = None
         self._experiment_id: str | None = None
         self._experiment_arm = "main"
+        self._run_budget_plan = None
+        self._run_reservations: dict[str, object] = {}
+        seed_path = getattr(work, "seed", None)
         try:
-            seed = json.loads(work.seed.read_text(encoding="utf-8"))
+            seed = (
+                json.loads(seed_path.read_text(encoding="utf-8"))
+                if seed_path is not None
+                else {}
+            )
+        except (OSError, json.JSONDecodeError):
+            seed = {}
+        if not isinstance(seed, dict):
+            raise ValueError("normal-run seed must be a JSON object")
+        run_budget = seed.get("run_budget")
+        if run_budget is not None:
+            from aleph.core.budget import RunBudgetPlan
+
+            self._run_budget_plan = RunBudgetPlan.from_manifest(
+                run_budget, work_id=self._work_id
+            )
+        try:
             experiment = seed.get("experiment") if isinstance(seed, dict) else None
             if isinstance(experiment, dict) and experiment.get("id"):
+                if self._run_budget_plan is not None:
+                    raise ValueError("run_budget and experiment budget routing cannot be combined")
                 self._experiment_id = str(experiment["id"])
                 self._experiment_arm = str(seed.get("arm") or "main")
                 ablation = seed.get("material_ablation", {})
@@ -500,7 +576,7 @@ class RealDeps:
                     router.budget.register_scope_limit(
                         f"experiment:{self._experiment_id}", ledger="api", limit=float(cap)
                     )
-        except (AttributeError, OSError, json.JSONDecodeError):
+        except AttributeError:
             pass
         # credits / intended_reader_models は publish時の meta.json に反映
         self.credits: dict = {}
@@ -542,6 +618,15 @@ class RealDeps:
         いずれの場合も見送った理由をdictで返し、pipeline側がdecisions.jsonlへ記録する。
         """
         from aleph.meta.poetics import current_version, reflect
+
+        if getattr(self, "_run_budget_plan", None) is not None:
+            return {
+                "applied": False,
+                "diff_reason": (
+                    "protected normal-run manifestはL1–L7だけを対象とするため、"
+                    "L8詩学改訂はこのrunの外へ延期した。"
+                ),
+            }
 
         policies = (self._policies().get("poetics") or {})
         cadence = max(1, int(policies.get("revision_cadence_works", 1)))
@@ -596,6 +681,88 @@ class RealDeps:
             raise ValueError("experiment phase must be non-empty")
         self._experiment_phase = str(phase)
 
+    def begin_run_budget(self):
+        if self._run_budget_plan is None:
+            return {}
+        self._run_reservations = self.router.budget.admit_run_plan(self._run_budget_plan)
+        return dict(self._run_reservations)
+
+    def _closing_reservations(self):
+        return [
+            reservation
+            for batch_id, reservation in self._run_reservations.items()
+            if next(
+                spec.pool
+                for spec in self._run_budget_plan.batches
+                if spec.batch_id == batch_id
+            ) == "closing"
+        ]
+
+    def closing_available(self) -> bool:
+        if self._run_budget_plan is None:
+            return True
+        if not self._run_reservations:
+            return False
+        closing = self._closing_reservations()
+        return bool(closing) and all(
+            self.router.budget.reservation_status(reservation.id) == "active"
+            for reservation in closing
+        )
+
+    def run_completion_category(self, stop_path: str | None) -> str | None:
+        if self._run_budget_plan is None:
+            return None
+        closing_complete = bool(self._run_reservations)
+        for batch_id, reservation in self._run_reservations.items():
+            spec = next(
+                item for item in self._run_budget_plan.batches if item.batch_id == batch_id
+            )
+            if spec.pool != "closing":
+                continue
+            status = self.router.budget.reservation_status(reservation.id)
+            expected_settlement = f"{self._run_budget_plan.charged_to}:settle:{batch_id}"
+            normally_settled = (
+                status == "settled"
+                and self.router.budget.reservation_settlement_command(reservation.id)
+                == expected_settlement
+            )
+            closing_complete = closing_complete and (status == "active" or normally_settled)
+        if not closing_complete:
+            return "resource_interrupted"
+        if stop_path in {"budget", "guard_limit", "resource"}:
+            return "complete_short"
+        return "complete"
+
+    def finish_run_budget(self, *, stop_path: str | None, terminal_state) -> str | None:
+        if self._run_budget_plan is None:
+            return None
+        if not self._run_reservations:
+            self.begin_run_budget()
+        category = self.run_completion_category(stop_path)
+        for batch_id, reservation in self._run_reservations.items():
+            status = self.router.budget.reservation_status(reservation.id)
+            if status == "active":
+                self.router.budget.settle_batch(
+                    reservation.id,
+                    command_id=f"{self._run_budget_plan.charged_to}:settle:{batch_id}",
+                )
+        return category
+
+    def _protected_run_remaining(self) -> float | None:
+        if self._run_budget_plan is None:
+            return None
+        remaining = 0.0
+        for batch_id, reservation in self._run_reservations.items():
+            spec = next(
+                item for item in self._run_budget_plan.batches if item.batch_id == batch_id
+            )
+            if spec.pool == "closing":
+                continue
+            value = self.router.budget.reservation_remaining(reservation.id)
+            if value is not None and self.router.budget.reservation_status(reservation.id) == "active":
+                remaining += value
+        return remaining
+
     def _experiment_charge_target(self, role: str, decl: dict | None = None) -> str:
         """Keep the API experiment cap separate from local/harness ledgers."""
         target = f"experiment:{self._experiment_id}"
@@ -612,7 +779,28 @@ class RealDeps:
 
     def _call_overrides(self, role: str, *, decl: dict | None = None) -> dict:
         values = {"work_id": self._work_id}
-        if self._experiment_id is not None:
+        if getattr(self, "_run_budget_plan", None) is not None:
+            declaration = decl or self.router._role_decls(role)[0]
+            provider = str(declaration["provider"])
+            provider_config = self.config.models.get("providers", {}).get(provider, {})
+            ledger = str(provider_config.get("kind") or provider)
+            if ledger != "api":
+                return values
+            spec = self._run_budget_plan.batch_for(self._phase, role)
+            reservation = self._run_reservations.get(spec.batch_id)
+            if reservation is None:
+                raise RuntimeError("protected run budget has not been admitted")
+            values = {
+                "command_id": (
+                    f"{self._run_budget_plan.charged_to}:{self._phase}:{uuid.uuid4()}"
+                ),
+                "work_id": self._work_id,
+                "phase": self._phase,
+                "arm": "normal-run",
+                "charged_to": self._run_budget_plan.charged_to,
+                "reservation_id": reservation.id,
+            }
+        elif self._experiment_id is not None:
             from aleph.core.llm import CallContext
 
             phase = self._experiment_phase or self._phase
@@ -948,9 +1136,11 @@ class RealDeps:
         charged_to = (
             f"experiment:{self._experiment_id}" if self._experiment_id else None
         )
-        remaining = _remaining_api_budget(
-            self.router.budget, work.work_id, charged_to=charged_to
-        )
+        remaining = self._protected_run_remaining()
+        if remaining is None:
+            remaining = _remaining_api_budget(
+                self.router.budget, work.work_id, charged_to=charged_to
+            )
         exhausted = remaining is not None and remaining < min_cycle
         packet = None
         if trajectory:
@@ -975,6 +1165,8 @@ class RealDeps:
         )
 
         def budget_exhausted() -> bool:
+            if self._run_budget_plan is not None:
+                return not self.closing_available()
             budget = getattr(self.router, "budget", None)
             if budget is None:
                 return False

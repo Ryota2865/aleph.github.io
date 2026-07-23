@@ -17,6 +17,7 @@ import math
 import re
 import time
 import uuid
+from copy import deepcopy
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -194,11 +195,16 @@ class Budget:
         if ledger not in LEDGERS or limit <= 0:
             raise ValueError("scope limit requires a known ledger and positive limit")
         with self._transaction():
-            existing = self._scope_limits.get(charged_to)
-            value = (ledger, float(limit))
-            if existing is not None and existing != value:
-                raise ValueError(f"scope limit is immutable: {charged_to}")
-            self._scope_limits[charged_to] = value
+            self._register_scope_limit_locked(charged_to, ledger=ledger, limit=limit)
+
+    def _register_scope_limit_locked(
+        self, charged_to: str, *, ledger: str, limit: float
+    ) -> None:
+        existing = self._scope_limits.get(charged_to)
+        value = (ledger, float(limit))
+        if existing is not None and existing != value:
+            raise ValueError(f"scope limit is immutable: {charged_to}")
+        self._scope_limits[charged_to] = value
 
     def register_pool_limits(
         self,
@@ -214,15 +220,21 @@ class Budget:
         if any(not math.isfinite(value) or value < 0 for value in limits.values()):
             raise ValueError("pool limits must be finite and non-negative")
         with self._transaction():
-            scope = self._scope_limits.get(charged_to)
-            if scope is None or scope[0] != ledger:
-                raise ValueError(f"scope {charged_to} must first be registered for {ledger}")
-            if sum(limits.values()) > scope[1] + 1e-12:
-                raise ValueError("pool limits exceed the registered scope limit")
-            existing = self._pool_limits.get(charged_to)
-            if existing is not None and existing != limits:
-                raise ValueError(f"pool limits are immutable: {charged_to}")
-            self._pool_limits[charged_to] = limits
+            self._register_pool_limits_locked(charged_to, ledger=ledger, limits=limits)
+
+    def _register_pool_limits_locked(
+        self, charged_to: str, *, ledger: str, limits: Mapping[str, float]
+    ) -> None:
+        normalized = {pool: float(limits[pool]) for pool in POOLS}
+        scope = self._scope_limits.get(charged_to)
+        if scope is None or scope[0] != ledger:
+            raise ValueError(f"scope {charged_to} must first be registered for {ledger}")
+        if sum(normalized.values()) > scope[1] + 1e-12:
+            raise ValueError("pool limits exceed the registered scope limit")
+        existing = self._pool_limits.get(charged_to)
+        if existing is not None and existing != normalized:
+            raise ValueError(f"pool limits are immutable: {charged_to}")
+        self._pool_limits[charged_to] = normalized
 
     @staticmethod
     def _validate_amount(amount: float) -> float:
@@ -348,62 +360,120 @@ class Budget:
         canonical = spec.canonical()
         manifest_hash = _canonical_hash(canonical)
         with self._transaction():
-            self._assert_reconciled()
-            existing_id = self._reservation_commands.get(command_id)
-            if existing_id is not None:
-                existing = self._reservations[existing_id]
-                if existing.get("manifest_hash") != manifest_hash:
-                    raise ReservationConflict(f"command_id reused with different manifest: {command_id}")
-                return self._public_reservation(existing)
-            scope = self._scope_limits.get(spec.charged_to)
-            pools = self._pool_limits.get(spec.charged_to)
-            if scope is None or scope[0] != spec.ledger or pools is None:
-                raise ValueError("protected reservation requires registered scope and pool limits")
-            self.precheck(
-                spec.ledger,
-                amount,
-                work_id=spec.work_id,
-                charged_to=spec.charged_to,
+            return self._reserve_batch_locked(
+                spec,
+                command_id=command_id,
+                amount=amount,
+                canonical=canonical,
+                manifest_hash=manifest_hash,
             )
-            own_available = max(
+
+    def _reserve_batch_locked(
+        self,
+        spec: BatchSpec,
+        *,
+        command_id: str,
+        amount: float,
+        canonical: Mapping[str, Any],
+        manifest_hash: str,
+    ) -> BatchReservation:
+        self._assert_reconciled()
+        existing_id = self._reservation_commands.get(command_id)
+        if existing_id is not None:
+            existing = self._reservations[existing_id]
+            if existing.get("manifest_hash") != manifest_hash:
+                raise ReservationConflict(f"command_id reused with different manifest: {command_id}")
+            return self._public_reservation(existing)
+        scope = self._scope_limits.get(spec.charged_to)
+        pools = self._pool_limits.get(spec.charged_to)
+        if scope is None or scope[0] != spec.ledger or pools is None:
+            raise ValueError("protected reservation requires registered scope and pool limits")
+        self.precheck(
+            spec.ledger,
+            amount,
+            work_id=spec.work_id,
+            charged_to=spec.charged_to,
+        )
+        own_available = max(
+            0.0,
+            pools[spec.pool]
+            - self._pool_spent(spec.charged_to, spec.pool)
+            - self._pool_committed(spec.charged_to, spec.pool),
+        )
+        allocations: dict[str, float] = {spec.pool: min(amount, own_available)}
+        shortage = amount - allocations[spec.pool]
+        if shortage > 1e-12 and spec.pool == "held_out":
+            player_available = max(
                 0.0,
-                pools[spec.pool]
-                - self._pool_spent(spec.charged_to, spec.pool)
-                - self._pool_committed(spec.charged_to, spec.pool),
+                pools["player"]
+                - self._pool_spent(spec.charged_to, "player")
+                - self._pool_committed(spec.charged_to, "player"),
             )
-            allocations: dict[str, float] = {spec.pool: min(amount, own_available)}
-            shortage = amount - allocations[spec.pool]
-            if shortage > 1e-12 and spec.pool == "held_out":
-                player_available = max(
-                    0.0,
-                    pools["player"]
-                    - self._pool_spent(spec.charged_to, "player")
-                    - self._pool_committed(spec.charged_to, "player"),
+            borrowed = min(shortage, player_available)
+            allocations["player"] = borrowed
+            shortage -= borrowed
+        if shortage > 1e-12:
+            pool_spent = pools[spec.pool] - own_available
+            raise BudgetExceeded(
+                f"pool:{spec.charged_to}:{spec.pool}", pools[spec.pool], pool_spent, amount
+            )
+        reservation_id = str(uuid.uuid4())
+        reservation = {
+            "id": reservation_id,
+            "command_id": command_id,
+            "manifest_hash": manifest_hash,
+            "spec": dict(canonical),
+            "allocations": allocations,
+            "remaining_allocations": dict(allocations),
+            "charged": 0.0,
+            "status": "active",
+            "period_key": self._period_keys[spec.ledger],
+            "settlement": None,
+        }
+        self._reservations[reservation_id] = reservation
+        self._reservation_commands[command_id] = reservation_id
+        return self._public_reservation(reservation)
+
+    def admit_run_plan(self, plan: "RunBudgetPlan") -> dict[str, BatchReservation]:
+        """Atomically register and reserve every batch in a normal-run plan."""
+        if not isinstance(plan, RunBudgetPlan):
+            raise TypeError("plan must be RunBudgetPlan")
+        snapshot = None
+        with self._transaction():
+            snapshot = (
+                deepcopy(self._scope_limits),
+                deepcopy(self._pool_limits),
+                deepcopy(self._reservations),
+                deepcopy(self._reservation_commands),
+            )
+            try:
+                self._register_scope_limit_locked(
+                    plan.charged_to, ledger="api", limit=plan.cap_amount
                 )
-                borrowed = min(shortage, player_available)
-                allocations["player"] = borrowed
-                shortage -= borrowed
-            if shortage > 1e-12:
-                pool_spent = pools[spec.pool] - own_available
-                raise BudgetExceeded(
-                    f"pool:{spec.charged_to}:{spec.pool}", pools[spec.pool], pool_spent, amount
+                self._register_pool_limits_locked(
+                    plan.charged_to,
+                    ledger="api",
+                    limits=dict(plan.pool_limits),
                 )
-            reservation_id = str(uuid.uuid4())
-            reservation = {
-                "id": reservation_id,
-                "command_id": command_id,
-                "manifest_hash": manifest_hash,
-                "spec": canonical,
-                "allocations": allocations,
-                "remaining_allocations": dict(allocations),
-                "charged": 0.0,
-                "status": "active",
-                "period_key": self._period_keys[spec.ledger],
-                "settlement": None,
-            }
-            self._reservations[reservation_id] = reservation
-            self._reservation_commands[command_id] = reservation_id
-            return self._public_reservation(reservation)
+                admitted: dict[str, BatchReservation] = {}
+                for spec in plan.batches:
+                    canonical = spec.canonical()
+                    admitted[spec.batch_id] = self._reserve_batch_locked(
+                        spec,
+                        command_id=f"{plan.charged_to}:reserve:{spec.batch_id}",
+                        amount=self._validate_amount(spec.max_amount),
+                        canonical=canonical,
+                        manifest_hash=_canonical_hash(canonical),
+                    )
+                return admitted
+            except Exception:
+                (
+                    self._scope_limits,
+                    self._pool_limits,
+                    self._reservations,
+                    self._reservation_commands,
+                ) = snapshot
+                raise
 
     @staticmethod
     def _public_reservation(reservation: Mapping[str, Any]) -> BatchReservation:
@@ -443,6 +513,27 @@ class Budget:
             and event.get("charged_to") == charged_to
         )
         return limit - spent - self._active_commitments(ledger=ledger, charged_to=charged_to)
+
+    def reservation_status(self, reservation_id: str) -> str | None:
+        reservation = self._reservations.get(reservation_id)
+        return str(reservation["status"]) if reservation is not None else None
+
+    def reservation_remaining(self, reservation_id: str) -> float | None:
+        reservation = self._reservations.get(reservation_id)
+        if reservation is None:
+            return None
+        return max(
+            0.0,
+            float(reservation["spec"]["max_amount"]) - float(reservation.get("charged", 0.0)),
+        )
+
+    def reservation_settlement_command(self, reservation_id: str) -> str | None:
+        reservation = self._reservations.get(reservation_id)
+        settlement = reservation.get("settlement") if reservation is not None else None
+        if not isinstance(settlement, Mapping):
+            return None
+        command_id = settlement.get("command_id")
+        return str(command_id) if command_id is not None else None
 
     def charge(
         self,

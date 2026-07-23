@@ -287,8 +287,9 @@ PASSであり実装後正式監査を代替しない。
 Atlas identity、termination/author epoch、5Bの耐久予約・非対称pool・atomic jury基盤は
 実装済み。candidate `569cf57`はClaude Codeの独立監査でP0–P2なし、
 **VERDICT: PASS**。監査記録は
-`reports/PHASE5A_5B_CORE_IMPLEMENTATION_AUDIT_20260721.md`。通常runのclosing配線、5C、
-Atlas再構築、新規有料実験には進んでいない。
+`reports/PHASE5A_5B_CORE_IMPLEMENTATION_AUDIT_20260721.md`。通常runのclosing配線は
+2026-07-23に施工し、focused 46件・全non-local 378件がPASS（正式監査待ち）。
+5C、Atlas再構築、新規有料実験には進んでいない。
 
 ### 5.1 計器台帳
 

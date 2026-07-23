@@ -1,5 +1,20 @@
 # PROGRESS
 
+## 2026-07-23 — Phase 5B 通常run closing配線を施工（正式監査待ち）
+
+- `run_budget` manifestを通常run開始前に読み、scope/pool登録と全batch reservationを
+  1 transactionでadmitする配線を追加した。途中のbatchでadmissionが失敗すると登録と予約を
+  全て巻き戻し、初回checkpointも作らない。
+- `RealDeps`はAPI callだけを現在phase/roleのreservationへfail closedで結び、local/harnessと
+  experiment既存配線を維持する。未登録のAPI routeはprovider前に拒否し、L8詩学reflectionは
+  L1–L7 manifest外として有料callなしで後続へ延期する。
+- 終端時に全active reservationを冪等settleする。player枯渇後もclosingが生存して題・公開判断・
+  終端へ到達したrunを`complete_short`、開始後のclosing喪失を`resource_interrupted`と記録する。
+  short completion後の非公開判断は`publication_choice`として読み、resource stopへ誤分類しない。
+- focused **46 passed, 34 deselected**、全non-local **378 passed, 1 deselected**、
+  `git diff --check`違反なし。provider call、Atlas再構築、既存work書換えなし。
+- 次はcandidate commitを固定し、Phase 5B後半をClaude Codeの別担当がread-only正式監査する。
+
 ## 2026-07-21 — Phase 5B 通常run予算manifest境界を施工
 
 - 次のtracer bulletとして、通常runのseed JSONから読む`RunBudgetPlan`の厳格な境界を
