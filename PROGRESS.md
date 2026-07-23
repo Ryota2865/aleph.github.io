@@ -1,5 +1,20 @@
 # PROGRESS
 
+## 2026-07-23 — Phase 5C step 9 fixation sealed fixture/baselineを施工
+
+- 既存のw0004/w0005/w0007/w0008本文、owner経由Fable批評、w0008/w0009分類・実験報告だけを
+  入力に、5 fixtureの対象/provenance SHA-256と4 label軸を
+  `reports/calibration/phase5/fixation_fixture_manifest.json`へ封印した。
+- fixtureは校正評価専用とし、classifier学習、prompt調整、評価結果によるlabel改変への流用を
+  明示的に禁止した。`fixation.poetics_lexical`の狭い主張とprovisionalな
+  `fixation.house_style`を分離し、w0008旧schemaのquotation変換欠測、w0009の観測`0.0`、
+  legacy `author_epoch`欠落、w0008/w0009比較identity不一致をbaseline recordへ保存した。
+- 同一入力からmanifest/JSONLをbyte同一で再生成するbuilderと受入testを追加した。
+  focused **17 passed, 1 deselected**、全non-local **382 passed, 1 deselected**、
+  `git diff --check`違反なし。provider call、Atlas再構築、新作生成、既存work/audit書換えなし。
+- これはPhase 5C施工順9だけであり、step 10のAtlas再構築、step 11以降、Phase 5正式完了は
+  未着手。house-style model/prompt・人間label合意床と次Atlas corpus拡張はowner判断待ち。
+
 ## 2026-07-23 — Phase 5B後半 通常run closing正式再監査PASS
 
 - 修繕candidate `db8567c78a90459f1cd99ac49bf80074624265bd`をClaude Code
