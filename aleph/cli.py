@@ -238,21 +238,25 @@ def main(argv: list[str] | None = None, *, root: Path | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     new_p = sub.add_parser("new", help="種(seed)から新しい作品を開始する")
     new_p.add_argument("--hint", default="", help="種となる着想のテキスト")
+    def add_run_arguments(command_parser) -> None:
+        command_parser.add_argument("--work", required=True, help="作品id（works/<id>）")
+        command_parser.add_argument(
+            "--index",
+            default="state/atlases/phase5c-pca64-hdbscan40-aozora-v1",
+            help="探索・素材索引のディレクトリ",
+        )
+        command_parser.add_argument(
+            "--force-audience", default=None,
+            help="L1の自律選択を上書きし宛先配合を固定する実験用（例 'LLM 0.6 / 自分 0.25 / 人間 0.15'）。"
+            "指定時 L1 は choose_intent を呼ばず owner-experiment 決定として記録する（PLAN §3・0.7.14）",
+        )
+
     run_p = sub.add_parser("run", help="閉ループを実行する（チェックポイントから継続）")
-    run_p.add_argument("--work", required=True, help="作品id（works/<id>）")
-    run_p.add_argument(
-        "--index",
-        default="state/atlases/phase5c-pca64-hdbscan40-aozora-v1",
-        help="探索・素材索引のディレクトリ",
-    )
-    run_p.add_argument(
-        "--force-audience", default=None,
-        help="L1の自律選択を上書きし宛先配合を固定する実験用（例 'LLM 0.6 / 自分 0.25 / 人間 0.15'）。"
-        "指定時 L1 は choose_intent を呼ばず owner-experiment 決定として記録する（PLAN §3・0.7.14）",
-    )
+    add_run_arguments(run_p)
     status_p = sub.add_parser("status", help="予算3系統と作品の現在像を表示する")
     status_p.add_argument("--json", action="store_true", help="監査可能なRepositorySnapshotをJSONで出力する")
-    sub.add_parser("resume", help="クラッシュ後の再開（決定論的リプレイ）")
+    resume_p = sub.add_parser("resume", help="runの明示alias（チェックポイントから決定論的に再開）")
+    add_run_arguments(resume_p)
     pub_p = sub.add_parser("publish", help="棚上げ済み作品の公開ゲートを再評価する（初回は人間承認必須）")
     pub_p.add_argument("--work", required=True, help="作品id（works/<id>）")
     pub_p.add_argument(
@@ -285,7 +289,7 @@ def main(argv: list[str] | None = None, *, root: Path | None = None) -> int:
         work.create({"hint": args.hint} if args.hint else {})
         print(f"new: created {work_id} at {work.dir}", file=sys.stderr)
         return 0
-    if args.command == "run":
+    if args.command in {"run", "resume"}:
         return _cmd_run(root, args)
     if args.command == "publish":
         return _cmd_publish(root, args)
@@ -305,6 +309,17 @@ def main(argv: list[str] | None = None, *, root: Path | None = None) -> int:
         for work in repository.works:
             state = work.lifecycle.value if work.lifecycle else "UNKNOWN"
             print(f"{work.work_id}: {state} — {work.title}")
+        formal = repository.assurance["formal_audit"]
+        print(
+            f"tests: {repository.assurance['tests']['status']}; "
+            f"latest recorded formal audit: {formal['status']} "
+            f"(currency={formal['currency']}, path={formal['path'] or 'none'})"
+        )
+        for deadline in repository.deadlines:
+            print(
+                f"deadline: {deadline['status']} {deadline['due']} — "
+                f"{deadline['decision']}"
+            )
         return 0
     if args.command == "explore":
         root = Path(__file__).resolve().parent.parent

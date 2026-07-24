@@ -434,6 +434,10 @@ provider証拠がない計器recordは`matched`を主張せず、`unreconciled`�
 
 ### 6.3 現在状態
 
+施工状態（2026-07-24）: RepositorySnapshotのassurance/design state/deadline可視化と
+`resume` aliasを0.7.20-27で施工。初回正式監査FAILの辞書順・散文currency問題を
+0.7.20-28の明示audit ledgerで修繕中。公開上限の値変更は期限時の設計審査まで行わない。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

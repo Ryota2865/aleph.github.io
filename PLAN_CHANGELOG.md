@@ -1,5 +1,54 @@
 # PLAN 変更履歴
 
+## 0.7.20-28 (2026-07-24) — Phase 6 current-state初回監査FAIL・P1/P2修繕
+
+0.7.20-27候補tree `39da78c8a3c942404ac2ef47378ed228381bdca8`を独立Claude Code担当が
+read-only監査し、施工側の9/33/414 tests green、期限境界、resume alias、adapter共有を再現した。
+一方、audit pathの辞書順を「最新」と誤認するP1と、CHANGELOG見出しの`監査.*PASS`語彙だけで
+currencyをCURRENTにするP1を確認し、**VERDICT: FAIL**となった。原文は
+`reports/PHASE6_CURRENT_STATE_AUDIT_20260724_FAIL.md`に保存する。
+
+修繕は推測を廃止し、`config/formal-audits.json`をformal auditの明示ledgerとする。
+ledgerは単調sequence、記録日、対象CHANGELOG、candidate tree、supersedesを持ち、artifact末尾の
+厳密な`VERDICT: PASS|FAIL`と照合する。未登録artifact、壊れたentry、末尾verdict欠落があれば
+最新PASSを推測せず`UNKNOWN`へ倒す。currencyは最新登録entryの対象CHANGELOGと現在の最新
+CHANGELOG番号が一致するときだけCURRENTとし、散文見出しを根拠にしない。
+
+同時にCHANGELOG parserを`0.7`固定から汎用版番号へ改め、区切りのない見出しでもhyphenated版を
+壊さない。assurance provenanceへledgerとCHANGELOGを追加し、verdictはrunbook準拠の最終非空行
+だけを採る。poetics版は正典`current_version()`を使い、欠落・malformedをUNKNOWN＋warningへ
+倒す。CLI/reportにも最新artifact pathを出し、snapshot dictはnested stateをdeep copyする。
+
+README markerの期限状態は日付依存であり、2026-08-01に整合testが意図的に赤くなる。これは
+公開上限999を黙って継続させない設計review gateである。オーナーが4への復帰または新上限を
+決定し、config/CHANGELOG/READMEを同期するまで自動変更しない。
+
+修繕後は同じ監査担当によるfocused read-only再監査PASSを要する。新作、local inference、
+有償API call、provider cost照合は実行しない。修繕候補はfocused **16 passed**、
+全non-local **421 passed, 1 deselected**、compileall、diff checkがgreen。
+
+## 0.7.20-27 (2026-07-24) — Phase 6 current-state tracer bullet施工green・正式監査待ち
+
+`designs/next-designer-execution-plan.md` §6.1/§6.3の現在状態契約を、外部callを行わない
+自己完結tracer bulletとして施工した。
+
+1. `RepositorySnapshot.assurance`はtestsの実行状態と最新記録formal auditを別フィールドにした。
+   test結果の永続証拠はまだ正典化していないため、snapshotは`tests=NOT_RECORDED`と正直に返す。
+   formal auditはartifactの最後の明示`VERDICT`とpathを一箇所から取得できる。
+2. 過去のformal PASSを現在tree全体へのPASSと誤表示しない。最新CHANGELOG見出しが監査PASSで
+   閉じていなければ`currency=NEEDS_AUDIT`、閉じていれば`CURRENT`、判定不能なら`UNKNOWN`とする。
+3. `design_state`はPLAN宣言CHANGELOG版、CHANGELOG最新番号、現行詩学版を集約し、版の不一致を
+   stale warningにする。`publish.max_per_month=999`の2026-08-01期限は`UPCOMING/EXPIRED`で
+   README・CLI・監査JSON/reportへ出し、期限超過時はprivate dashboardの人間gateにも出す。
+   値は自動変更しない。4への復帰または新上限は期限時のオーナー設計審査事項のままとする。
+4. 表示だけだった`aleph resume`へ`run`と同じ引数を与え、同じcheckpoint再開経路のaliasにした。
+5. public siteの正規generatorは`scripts/build_public_site.py`、pipeline向けlegacy contract
+   adapterは`aleph/publish/site.py`という既存module docstringの役割分離を維持した。
+
+focused testはgreen。README derived markerはこの変更を未監査として表示する。Codex施工のため、
+正式完了には`designs/formal-audit-runbook.md`に従う独立Claude Code監査PASSを要する。
+新作、local inference、有償API call、provider cost照合は実行していない。
+
 ## 0.7.20-26 (2026-07-24) — Phase 6 P2 focused再監査PASS
 
 初回FAILを発行した同一Claude Code監査担当が、P2修繕候補tree

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "legacy_unordered": [
+    "audits/M0_audit.md",
+    "audits/M7_audit.md",
+    "audits/M8_audit.md",
+    "reports/CODEX_AUDIT_20260708_081541.md",
+    "reports/CODEX_AUDIT_20260708_094819.md",
+    "reports/CODEX_AUDIT_20260708_105020.md",
+    "reports/CODEX_AUDIT_20260708_105528.md",
+    "reports/CODEX_AUDIT_20260708_110310.md",
+    "reports/CODEX_AUDIT_20260708_111512.md",
+    "reports/CODEX_AUDIT_20260710_072510.md",
+    "reports/PHASE1_TRANSITION_COMMIT_AUDIT_20260718.md",
+    "reports/PHASE1_TRANSITION_COMMIT_REAUDIT_20260719.md",
+    "reports/PHASE2_DEEP_INTERPRETATION_AUDIT_20260719.md",
+    "reports/PHASE2_P2_1_REAUDIT_20260719.md",
+    "reports/PHASE3_EXPERIMENT_EVALUATION_AUDIT_20260719.md",
+    "reports/PHASE4_W0009_L2_ERA_AUDIT_20260719.md",
+    "reports/PHASE5A_5B_CORE_IMPLEMENTATION_AUDIT_20260721.md",
+    "reports/PHASE5B_NORMAL_RUN_CLOSING_AUDIT_20260723_FAIL.md",
+    "reports/PHASE5B_NORMAL_RUN_CLOSING_REAUDIT_20260723.md",
+    "reports/PHASE5C_FORMAL_MILESTONE_AUDIT_20260723.md",
+    "reports/PHASE5C_P2_1_REAUDIT_20260724.md",
+    "reports/PHASE5_PREIMPLEMENTATION_DESIGN_AUDIT_20260721.md",
+    "reports/TRANSITION_HISTORY_AUDIT_20260718.md"
+  ],
+  "entries": [
+    {
+      "sequence": 1,
+      "path": "reports/PHASE6_CLOSING_READER_IDENTITY_AUDIT_20260724_FAIL.md",
+      "recorded_on": "2026-07-24",
+      "target_changelog": "0.7.20-24",
+      "candidate_tree": "14772732aa87d1cfde6afd9a25493686bbc213f6"
+    },
+    {
+      "sequence": 2,
+      "path": "reports/PHASE6_CLOSING_READER_IDENTITY_P2_REAUDIT_20260724.md",
+      "recorded_on": "2026-07-24",
+      "target_changelog": "0.7.20-25",
+      "candidate_tree": "b93a518c7cd27720456358d63b4a4026b1980b33",
+      "supersedes": "reports/PHASE6_CLOSING_READER_IDENTITY_AUDIT_20260724_FAIL.md"
+    },
+    {
+      "sequence": 3,
+      "path": "reports/PHASE6_CURRENT_STATE_AUDIT_20260724_FAIL.md",
+      "recorded_on": "2026-07-24",
+      "target_changelog": "0.7.20-27",
+      "candidate_tree": "39da78c8a3c942404ac2ef47378ed228381bdca8"
+    }
+  ]
+}
