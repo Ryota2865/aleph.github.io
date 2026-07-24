@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-2 audit candidate-tree binding施工中
+
+- 正式PASS closure commit `0828082`をmainへpushし、
+  `codex/phase6-audit-tree-binding`でR-2を開始した。doctorはfailures=0。
+- ledgerへcandidate commit/ref/closure allowlistを追加し、Git tree実体、clean HEADまたは
+  fully-staged index、allowlist外pathをread-only照合する。
+- current-state監査candidate treeを証拠commit
+  `9bdfe0e37b81692a842699e865119b0e5ae7f8fb`と
+  `audit-candidate/phase6-current-state-20260725` tagへ固定し、remoteへpushした。
+- focused **20 passed**、関連site/pipeline **44 passed, 26 deselected**、全non-local
+  **425 passed, 1 deselected**、compileall、diff checkがgreen。正式監査待ち。
+- 新作、local inference、有償API call、provider cost照合は実行しない。
+
 ## 2026-07-25 — Phase 6 current-state P1/P2 focused再監査PASS
 
 - 同一Claude Code監査担当が修繕tree

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date
@@ -156,6 +157,7 @@ class RepositoryReader:
                     "audits/",
                     "reports/*AUDIT*.md",
                     "PLAN_CHANGELOG.md",
+                    ".git (read-only HEAD/index/object/ref state)",
                 ),
                 "design_state": ("PLAN.md", "PLAN_CHANGELOG.md", "poetics/history.jsonl"),
                 "deadlines": ("PLAN_CHANGELOG.md", "config/budgets.yaml"),
@@ -277,6 +279,30 @@ class RepositoryReader:
         match = re.fullmatch(r"VERDICT:\s*(PASS|FAIL)", lines[-1], re.I)
         return match.group(1).upper() if match else "UNKNOWN"
 
+    @staticmethod
+    def _valid_closure_paths(report_path: str, value: Any) -> tuple[str, ...] | None:
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            return None
+        if len(value) != len(set(value)):
+            return None
+        fixed = {
+            "PLAN_CHANGELOG.md",
+            "PROGRESS.md",
+            "README.md",
+            "README.en.md",
+            "config/formal-audits.json",
+            "designs/next-designer-execution-plan.md",
+        }
+        paths = tuple(value)
+        if any(
+            Path(item).is_absolute()
+            or ".." in Path(item).parts
+            or (item not in fixed and item != report_path)
+            for item in paths
+        ):
+            return None
+        return paths
+
     def _formal_audits(
         self, warnings: list[str]
     ) -> tuple[tuple[dict[str, Any], ...], bool]:
@@ -337,7 +363,10 @@ class RepositoryReader:
             path = raw.get("path")
             target = raw.get("target_changelog")
             tree = raw.get("candidate_tree")
+            commit = raw.get("candidate_commit")
+            candidate_ref = raw.get("candidate_ref")
             recorded_on = raw.get("recorded_on")
+            closure_paths = self._valid_closure_paths(path, raw.get("closure_paths", []))
             valid = (
                 type(sequence) is int
                 and sequence > 0
@@ -349,7 +378,24 @@ class RepositoryReader:
                 and bool(re.fullmatch(r"\d+(?:\.\d+)*(?:-\d+)?", target))
                 and isinstance(tree, str)
                 and bool(re.fullmatch(r"[0-9a-f]{40}", tree))
+                and (
+                    commit is None
+                    or isinstance(commit, str)
+                    and bool(re.fullmatch(r"[0-9a-f]{40}", commit))
+                )
+                and (
+                    candidate_ref is None
+                    or isinstance(candidate_ref, str)
+                    and bool(
+                        re.fullmatch(
+                            r"refs/tags/audit-candidate/[A-Za-z0-9][A-Za-z0-9._/-]*",
+                            candidate_ref,
+                        )
+                    )
+                    and ".." not in candidate_ref
+                )
                 and isinstance(recorded_on, str)
+                and closure_paths is not None
             )
             try:
                 parsed_on = date.fromisoformat(recorded_on) if isinstance(recorded_on, str) else None
@@ -374,6 +420,9 @@ class RepositoryReader:
                     "recorded_on": recorded_on,
                     "target_changelog": target,
                     "candidate_tree": tree,
+                    "candidate_commit": commit,
+                    "candidate_ref": candidate_ref,
+                    "closure_paths": closure_paths,
                     "supersedes": supersedes,
                 }
             )
@@ -387,8 +436,120 @@ class RepositoryReader:
                 ledger_valid = False
         return tuple(by_path.values()), ledger_valid
 
-    @staticmethod
+    def _tree_binding(
+        self,
+        candidate_tree: str,
+        candidate_commit: str | None,
+        candidate_ref: str | None,
+        closure_paths: tuple[str, ...],
+    ) -> dict[str, Any]:
+        base = {
+            "state": "UNAVAILABLE",
+            "candidate_exists": None,
+            "candidate_commit_exists": None,
+            "candidate_commit_tree": None,
+            "candidate_ref_exists": None,
+            "candidate_ref_commit": None,
+            "head_tree": None,
+            "changed_paths": [],
+            "unexpected_paths": [],
+        }
+
+        def run(*args: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                ["git", "-C", str(self.root), *args],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+
+        try:
+            head = run("rev-parse", "HEAD^{tree}")
+            status = run("status", "--porcelain=v1", "--untracked-files=normal")
+            exists = run("cat-file", "-e", f"{candidate_tree}^{{tree}}")
+            commit_exists = (
+                run("cat-file", "-e", f"{candidate_commit}^{{commit}}")
+                if candidate_commit is not None
+                else None
+            )
+            commit_tree = (
+                run("rev-parse", f"{candidate_commit}^{{tree}}")
+                if candidate_commit is not None
+                else None
+            )
+            ref_commit = (
+                run("rev-parse", f"{candidate_ref}^{{commit}}")
+                if candidate_ref is not None
+                else None
+            )
+        except (OSError, subprocess.SubprocessError):
+            return base
+        if head.returncode != 0 or status.returncode != 0:
+            return base
+        head_tree = head.stdout.strip()
+        candidate_exists = exists.returncode == 0
+        candidate_commit_exists = commit_exists is not None and commit_exists.returncode == 0
+        resolved_commit_tree = (
+            commit_tree.stdout.strip()
+            if commit_tree is not None and commit_tree.returncode == 0
+            else None
+        )
+        resolved_ref_commit = (
+            ref_commit.stdout.strip()
+            if ref_commit is not None and ref_commit.returncode == 0
+            else None
+        )
+        base.update(
+            head_tree=head_tree,
+            candidate_exists=candidate_exists,
+            candidate_commit_exists=candidate_commit_exists,
+            candidate_commit_tree=resolved_commit_tree,
+            candidate_ref_exists=resolved_ref_commit is not None,
+            candidate_ref_commit=resolved_ref_commit,
+        )
+        if (
+            not candidate_exists
+            or not candidate_commit_exists
+            or resolved_commit_tree != candidate_tree
+            or resolved_ref_commit != candidate_commit
+        ):
+            return base
+
+        lines = [line for line in status.stdout.splitlines() if line]
+        has_untracked = any(line.startswith("??") for line in lines)
+        has_unstaged = any(
+            not line.startswith("??") and len(line) >= 2 and line[1] != " "
+            for line in lines
+        )
+        has_staged = any(
+            not line.startswith("??") and line[0] != " "
+            for line in lines
+        )
+        if has_untracked or has_unstaged:
+            base["state"] = "DIRTY"
+            return base
+
+        if has_staged:
+            diff = run("diff", "--cached", "--name-only", candidate_tree, "--")
+            state = "INDEX"
+        else:
+            diff = run("diff", "--name-only", candidate_tree, head_tree, "--")
+            state = "HEAD"
+        if diff.returncode != 0:
+            return base
+        changed = sorted(line for line in diff.stdout.splitlines() if line)
+        allowed = set(closure_paths)
+        unexpected = sorted(set(changed) - allowed)
+        base.update(
+            state=state,
+            changed_paths=changed,
+            unexpected_paths=unexpected,
+        )
+        return base
+
     def _assurance(
+        self,
         formal_audits: tuple[dict[str, Any], ...],
         design_state: dict[str, Any],
         ledger_valid: bool,
@@ -405,22 +566,55 @@ class RepositoryReader:
                 "currency": "UNKNOWN",
                 "target_changelog": None,
                 "candidate_tree": None,
+                "closure_paths": [],
+                "tree_binding": {
+                    "state": "UNAVAILABLE",
+                    "candidate_exists": None,
+                    "candidate_commit_exists": None,
+                    "candidate_commit_tree": None,
+                    "candidate_ref_exists": None,
+                    "candidate_ref_commit": None,
+                    "head_tree": None,
+                    "changed_paths": [],
+                    "unexpected_paths": [],
+                },
             }
         else:
             changelog = design_state.get("changelog_latest")
-            currency = (
-                "UNKNOWN"
-                if not changelog
-                else "CURRENT"
-                if latest["target_changelog"] == changelog
-                else "NEEDS_AUDIT"
+            binding = self._tree_binding(
+                latest["candidate_tree"],
+                latest["candidate_commit"],
+                latest["candidate_ref"],
+                latest["closure_paths"],
             )
+            if not changelog or binding["candidate_exists"] is False:
+                currency = "UNKNOWN"
+            elif not binding["candidate_commit_exists"]:
+                currency = "UNKNOWN"
+            elif binding["candidate_commit_tree"] != latest["candidate_tree"]:
+                currency = "UNKNOWN"
+            elif not binding["candidate_ref_exists"]:
+                currency = "UNKNOWN"
+            elif binding["candidate_ref_commit"] != latest["candidate_commit"]:
+                currency = "UNKNOWN"
+            elif latest["target_changelog"] != changelog:
+                currency = "NEEDS_AUDIT"
+            elif binding["state"] == "UNAVAILABLE":
+                currency = "UNKNOWN"
+            elif binding["state"] == "DIRTY" or binding["unexpected_paths"]:
+                currency = "NEEDS_AUDIT"
+            else:
+                currency = "CURRENT"
             formal = {
                 "status": latest["verdict"],
                 "path": latest["path"],
                 "currency": currency,
                 "target_changelog": latest["target_changelog"],
                 "candidate_tree": latest["candidate_tree"],
+                "candidate_commit": latest["candidate_commit"],
+                "candidate_ref": latest["candidate_ref"],
+                "closure_paths": list(latest["closure_paths"]),
+                "tree_binding": binding,
             }
         return {
             "tests": {"status": "NOT_RECORDED", "provenance": []},

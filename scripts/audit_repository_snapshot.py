@@ -24,6 +24,12 @@ def render_report(snapshot: RepositorySnapshot) -> str:
         f"- latest recorded formal audit: {snapshot.assurance['formal_audit']['status']}",
         f"- formal audit path: {snapshot.assurance['formal_audit']['path'] or 'none'}",
         f"- formal audit currency: {snapshot.assurance['formal_audit']['currency']}",
+        f"- formal audit tree state: {snapshot.assurance['formal_audit']['tree_binding']['state']}",
+        "- formal audit unexpected paths: "
+        + (
+            ", ".join(snapshot.assurance["formal_audit"]["tree_binding"]["unexpected_paths"])
+            or "none"
+        ),
         f"- warnings: {len(snapshot.warnings)}",
         "",
         "## Warnings",

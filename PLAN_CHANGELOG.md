@@ -1,5 +1,28 @@
 # PLAN 変更履歴
 
+## 0.7.20-29 (2026-07-25) — Phase 6 audit candidate-tree binding施工
+
+current-state再監査PASSの残置R-2を、外部callを行わない自己完結tracer bulletとして施工する。
+formal audit ledgerの`candidate_tree`を形式だけでなくGit実体へ束縛し、現在repositoryへの
+適用可能性をcurrencyへ反映する。
+
+最新entryはcandidate tree、同treeを持つ証拠commit、`refs/tags/audit-candidate/`配下のrefを
+三点照合する。clean HEADまたはunstaged/untrackedのないindexとcandidateとの差分を計算し、
+明示`closure_paths`内だけならCURRENT、code等のallowlist外差分やdirty worktreeは
+NEEDS_AUDIT、object/ref不在・不一致・Git利用不能はUNKNOWNへ倒す。
+
+closure allowlistはCHANGELOG、PROGRESS、README日英、formal ledger、execution plan、
+当該PASS report自身だけに限定し、code/test/契約designを許さない。既存監査candidate
+`351cd83ffe0bdaeec527d3dbb512e63070ccd19e`は証拠commit
+`9bdfe0e37b81692a842699e865119b0e5ae7f8fb`とtag
+`audit-candidate/phase6-current-state-20260725`で耐久化し、remoteへもpushする。
+
+詳細契約は`designs/phase6-audit-tree-binding.md`。R-1およびR-3〜R-9は範囲外の残置リスクとし、
+新作、local inference、有償API call、provider cost照合は行わない。Codex施工のため、
+正式完了は独立Claude Code監査PASSを要する。施工候補はfocused **20 passed**、
+関連site/pipeline **44 passed, 26 deselected**、全non-local **425 passed, 1 deselected**、
+compileall、diff checkがgreen。
+
 ## 0.7.20-28 (2026-07-24) — Phase 6 current-state P1/P2 focused再監査PASS
 
 0.7.20-27候補tree `39da78c8a3c942404ac2ef47378ed228381bdca8`を独立Claude Code担当が
