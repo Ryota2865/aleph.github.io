@@ -440,6 +440,15 @@ provider証拠がない計器recordは`matched`を主張せず、`unreconciled`�
 candidate tree実照合は残置R-2として次tracer bullet候補。公開上限の値変更は期限時の
 設計審査まで行わない。
 
+R-2施工状態（2026-07-25）: `designs/phase6-audit-tree-binding.md`と0.7.20-29で、
+candidate tree/commit/tag、clean HEADまたはfully-staged index、closure allowlistをcurrencyへ
+束縛するtracer bulletを施工。初回正式監査FAILの`git diff` timeout P2-1を0.7.20-30で
+fail-closed修繕した。同一監査者がHEAD/INDEX両経路の実timeout RED→GREENを独立確認し、
+P0〜P2なし、**VERDICT: PASS**。R-2はformal完了。初回FAILとPASSのcandidate treeは
+proof commit/tagへ固定し、P3-5をclosureで解消した。P3-1〜P3-4、P3-6、
+Git index flag等の監査uncertaintyは残置する。次の自己完結tracer bullet候補はR-1
+（`supersedes`検証のledger記載順依存）。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

@@ -42,10 +42,12 @@ it. Do not delete, overwrite, or rewrite a FAIL artifact after repair.
 
 Register every new formal artifact in `config/formal-audits.json` in the same closure change. Use
 the next unique monotonic `sequence`, the factual `recorded_on`, the audited implementation's
-`target_changelog`, and its immutable `candidate_tree`. A focused re-audit also records
-`supersedes`. Pre-ledger artifacts remain in `legacy_unordered`; they are retained evidence but
-cannot determine the latest verdict. An unregistered artifact or invalid ledger entry makes the
-latest-verdict projection `UNKNOWN`, never an inferred PASS.
+`target_changelog`, its immutable `candidate_tree`, a proof `candidate_commit` with that exact tree,
+and a durable `candidate_ref` under `refs/tags/audit-candidate/`. A focused re-audit also records
+`supersedes`. The PASS entry declares only the mechanical `closure_paths` allowed after the audited
+tree. Pre-ledger artifacts remain in `legacy_unordered`; they are retained evidence but cannot
+determine the latest verdict. An unregistered artifact, invalid ledger entry, missing object/ref,
+or tree mismatch makes the latest-verdict projection `UNKNOWN`, never an inferred PASS.
 
 For every blocking finding:
 
@@ -62,14 +64,20 @@ residual risks without silently expanding the milestone.
 After `VERDICT: PASS`, make only closure changes:
 
 1. add the raw PASS audit artifact while retaining earlier FAIL artifacts;
-2. register the PASS artifact in `config/formal-audits.json`; keep the audited repair's
-   `target_changelog` number unchanged so currency remains mechanically bound to that target;
+2. create a proof commit with the audited candidate tree, retain it under an
+   `audit-candidate/<scope>-<date>` tag, and register the PASS artifact, tree, commit, full tag ref,
+   and closure paths in `config/formal-audits.json`; keep the audited repair's `target_changelog`
+   number unchanged;
 3. refresh the `RepositorySnapshot`-derived README markers in both languages;
 4. update the execution plan status, the existing target entry in `PLAN_CHANGELOG.md`, and
    `PROGRESS.md` without creating a new design version or changing canon;
 5. run the README snapshot consistency test, all non-local tests, and `git diff --check`;
 6. confirm that the final diff beyond the audited candidate contains only audit evidence and
    mechanical closure documentation.
+
+Push the audit-candidate tag with the eventual branch so the proof commit remains reachable after
+clone. `RepositorySnapshot` may report `CURRENT` from a clean HEAD or a fully staged index only when
+the candidate-to-current diff is wholly inside the declared closure paths.
 
 Any post-audit change to code, tests, contracts, acceptance criteria, or non-derived design meaning
 invalidates the PASS for that candidate and requires another audit. Audit evidence and mechanical

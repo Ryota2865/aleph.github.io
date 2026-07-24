@@ -313,7 +313,8 @@ def main(argv: list[str] | None = None, *, root: Path | None = None) -> int:
         print(
             f"tests: {repository.assurance['tests']['status']}; "
             f"latest recorded formal audit: {formal['status']} "
-            f"(currency={formal['currency']}, path={formal['path'] or 'none'})"
+            f"(currency={formal['currency']}, tree={formal['tree_binding']['state']}, "
+            f"path={formal['path'] or 'none'})"
         )
         for deadline in repository.deadlines:
             print(

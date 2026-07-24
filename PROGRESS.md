@@ -1,5 +1,43 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-2 focused再監査PASS
+
+- 同一Claude Code監査担当が修繕tree
+  `9940cbb4062187ce93fd4cdc394ecc98b52b522c`をread-only再監査した。
+  HEAD/INDEX双方の実timeout RED→GREENと中心契約の非回帰を独立確認し、
+  P0〜P2なし、`VERDICT: PASS`。R-2をformal完了する。
+- focused **21 passed**、全non-local **426 passed, 1 deselected**、compileall、
+  worktree/index diff checkを独立再現。tests greenとformal verdictは分離した。
+- 初回FAIL証拠を保持し、初回／修繕tree双方をproof commitと
+  `audit-candidate/` tagへ固定する。P3-5はclosureで解消し、P3-1〜P3-4、
+  P3-6、監査uncertaintyを残置する。
+- 次の自己完結tracer bullet候補は、false PASSを作らず変更面が狭いR-1
+  （`supersedes`検証のledger記載順依存）。
+
+## 2026-07-25 — R-2初回正式監査FAIL・P2-1修繕
+
+- 初回候補tree `51c9f05ef0c4dababb61542cba61bc8eb3614acf`の独立監査は、
+  tree bindingの中心契約を確認したが、`git diff` timeoutでsnapshot全体が落ちるP2-1を再現し
+  `VERDICT: FAIL`。原文を保存しledger sequence 5へ登録した。
+- timeout故障注入をRED化し、diff probeを既存guardへ含めてGREEN。Git timeout時は
+  `UNAVAILABLE/UNKNOWN`へfail closedし、read surfaceを維持する。
+- 修繕候補はfocused **21 passed**、全non-local **426 passed, 1 deselected**、
+  compileall、worktree/index双方のdiff checkがgreen。
+- P3-1〜P3-4は残置。同一監査担当のfocused再監査を次gateとした。
+
+## 2026-07-25 — Phase 6 R-2 audit candidate-tree binding施工中
+
+- 正式PASS closure commit `0828082`をmainへpushし、
+  `codex/phase6-audit-tree-binding`でR-2を開始した。doctorはfailures=0。
+- ledgerへcandidate commit/ref/closure allowlistを追加し、Git tree実体、clean HEADまたは
+  fully-staged index、allowlist外pathをread-only照合する。
+- current-state監査candidate treeを証拠commit
+  `9bdfe0e37b81692a842699e865119b0e5ae7f8fb`と
+  `audit-candidate/phase6-current-state-20260725` tagへ固定し、remoteへpushした。
+- focused **20 passed**、関連site/pipeline **44 passed, 26 deselected**、全non-local
+  **425 passed, 1 deselected**、compileall、diff checkがgreen。正式監査待ち。
+- 新作、local inference、有償API call、provider cost照合は実行しない。
+
 ## 2026-07-25 — Phase 6 current-state P1/P2 focused再監査PASS
 
 - 同一Claude Code監査担当が修繕tree
