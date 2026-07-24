@@ -1,5 +1,48 @@
 # PLAN 変更履歴
 
+## 0.7.20-30 (2026-07-25) — R-2初回正式監査FAIL・Git diff timeout修繕
+
+R-2 candidate-tree binding候補tree `51c9f05ef0c4dababb61542cba61bc8eb3614acf`を
+独立Claude Code担当がread-only監査した。focused 20件、全non-local
+425 passed, 1 deselected、tree/commit/ref三点、remote tag、HEAD/index、allowlist、
+29＋3独立故障注入を再現し、R-2の中心的soundness契約を肯定した。
+
+一方、最後の`git diff` probeだけが既存timeout guardの外にあり、5秒timeoutで
+`subprocess.TimeoutExpired`がsnapshot全体へ伝播するP2-1を確認し、**VERDICT: FAIL**。
+原文は`reports/PHASE6_AUDIT_TREE_BINDING_AUDIT_20260725_FAIL.md`に保存した。
+
+同じtimeout注入をobservable REDとして追加し、HEAD/indexの`git diff`呼び出しも他のGit probeと
+同じ`OSError`/`SubprocessError` guard内へ移した。timeoutまたは起動失敗ではread surfaceを失わず
+tree bindingをUNAVAILABLE、currencyをUNKNOWNへ倒す。soundness判定、allowlist、作品・予算・
+期限・生成経路は変更しない。修繕候補はfocused **21 passed**、全non-local
+**426 passed, 1 deselected**、compileall、worktree/index双方のdiff checkがgreen。
+
+P3-1〜P3-4と監査uncertaintyは残置し、今回修繕しない。同じ監査担当によるfocused再監査PASSまで
+R-2をformal完了としない。新作、local inference、有償API call、provider cost照合は行わない。
+
+## 0.7.20-29 (2026-07-25) — Phase 6 audit candidate-tree binding施工
+
+current-state再監査PASSの残置R-2を、外部callを行わない自己完結tracer bulletとして施工する。
+formal audit ledgerの`candidate_tree`を形式だけでなくGit実体へ束縛し、現在repositoryへの
+適用可能性をcurrencyへ反映する。
+
+最新entryはcandidate tree、同treeを持つ証拠commit、`refs/tags/audit-candidate/`配下のrefを
+三点照合する。clean HEADまたはunstaged/untrackedのないindexとcandidateとの差分を計算し、
+明示`closure_paths`内だけならCURRENT、code等のallowlist外差分やdirty worktreeは
+NEEDS_AUDIT、object/ref不在・不一致・Git利用不能はUNKNOWNへ倒す。
+
+closure allowlistはCHANGELOG、PROGRESS、README日英、formal ledger、execution plan、
+当該PASS report自身だけに限定し、code/test/契約designを許さない。既存監査candidate
+`351cd83ffe0bdaeec527d3dbb512e63070ccd19e`は証拠commit
+`9bdfe0e37b81692a842699e865119b0e5ae7f8fb`とtag
+`audit-candidate/phase6-current-state-20260725`で耐久化し、remoteへもpushする。
+
+詳細契約は`designs/phase6-audit-tree-binding.md`。R-1およびR-3〜R-9は範囲外の残置リスクとし、
+新作、local inference、有償API call、provider cost照合は行わない。Codex施工のため、
+正式完了は独立Claude Code監査PASSを要する。施工候補はfocused **20 passed**、
+関連site/pipeline **44 passed, 26 deselected**、全non-local **425 passed, 1 deselected**、
+compileall、diff checkがgreen。
+
 ## 0.7.20-28 (2026-07-24) — Phase 6 current-state P1/P2 focused再監査PASS
 
 0.7.20-27候補tree `39da78c8a3c942404ac2ef47378ed228381bdca8`を独立Claude Code担当が
