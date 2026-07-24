@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -43,6 +44,21 @@ def _write_audit_ledger(root, entries):
     (config / "formal-audits.json").write_text(
         json.dumps({"version": 1, "entries": entries}), encoding="utf-8"
     )
+
+
+def _git(root, *args):
+    return subprocess.run(
+        ["git", "-C", str(root), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _init_git(root):
+    _git(root, "init", "-q")
+    _git(root, "config", "user.email", "snapshot-test@example.invalid")
+    _git(root, "config", "user.name", "Repository Snapshot Test")
 
 
 def test_repository_snapshot_aggregates_work_and_experiment_as_audit_json(tmp_path):
@@ -150,13 +166,13 @@ def test_repository_snapshot_exposes_latest_conclusive_audit_separately_from_tes
         "status": "NOT_RECORDED",
         "provenance": [],
     }
-    assert snapshot.assurance["formal_audit"] == {
-        "status": "PASS",
-        "path": "reports/PHASE6_THING_REAUDIT_20260724.md",
-        "currency": "UNKNOWN",
-        "target_changelog": "0.7.20-5",
-        "candidate_tree": "b" * 40,
-    }
+    formal = snapshot.assurance["formal_audit"]
+    assert formal["status"] == "PASS"
+    assert formal["path"] == "reports/PHASE6_THING_REAUDIT_20260724.md"
+    assert formal["currency"] == "UNKNOWN"
+    assert formal["target_changelog"] == "0.7.20-5"
+    assert formal["candidate_tree"] == "b" * 40
+    assert formal["tree_binding"]["state"] == "UNAVAILABLE"
     assert [audit["verdict"] for audit in snapshot.formal_audits] == ["FAIL", "PASS"]
 
 
@@ -194,7 +210,223 @@ def test_audit_ledger_sequence_not_filename_order_selects_latest_and_binds_curre
 
     assert formal["status"] == "FAIL"
     assert formal["path"] == "reports/AAA_NEW_AUDIT.md"
+    assert formal["currency"] == "UNKNOWN"
+
+
+def test_formal_audit_currency_is_bound_to_candidate_tree_and_closure_paths(tmp_path):
+    (tmp_path / "PLAN.md").write_text("0.8.0までの改訂\n", encoding="utf-8")
+    (tmp_path / "PLAN_CHANGELOG.md").write_text(
+        "## 0.8.0 (2026-08-01) — implementation\n", encoding="utf-8"
+    )
+    poetics = tmp_path / "poetics"
+    poetics.mkdir()
+    (poetics / "history.jsonl").write_text("", encoding="utf-8")
+    (tmp_path / "implementation.py").write_text("VALUE = 1\n", encoding="utf-8")
+    _init_git(tmp_path)
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "candidate")
+    candidate_tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+    candidate_commit = _git(tmp_path, "rev-parse", "HEAD")
+    _git(tmp_path, "tag", "audit-candidate/test", candidate_commit)
+
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    report_path = "reports/CURRENT_AUDIT.md"
+    (tmp_path / report_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 1,
+                "path": report_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": candidate_tree,
+                "candidate_commit": candidate_commit,
+                "candidate_ref": "refs/tags/audit-candidate/test",
+                "closure_paths": ["config/formal-audits.json", report_path],
+            }
+        ],
+    )
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "closure")
+
+    formal = RepositoryReader(tmp_path).snapshot().assurance["formal_audit"]
+
     assert formal["currency"] == "CURRENT"
+    assert formal["tree_binding"]["state"] == "HEAD"
+    assert formal["tree_binding"]["changed_paths"] == [
+        "config/formal-audits.json",
+        report_path,
+    ]
+
+    (tmp_path / report_path).write_text("VERDICT: PASS\n\n", encoding="utf-8")
+    _git(tmp_path, "add", report_path)
+    indexed = RepositoryReader(tmp_path).snapshot().assurance["formal_audit"]
+    assert indexed["currency"] == "CURRENT"
+    assert indexed["tree_binding"]["state"] == "INDEX"
+
+    (tmp_path / "implementation.py").write_text("VALUE = 2\n", encoding="utf-8")
+    dirty = RepositoryReader(tmp_path).snapshot().assurance["formal_audit"]
+    assert dirty["currency"] == "NEEDS_AUDIT"
+    assert dirty["tree_binding"]["state"] == "DIRTY"
+
+
+def test_unexpected_committed_path_invalidates_tree_currency(tmp_path):
+    (tmp_path / "PLAN.md").write_text("0.8.0までの改訂\n", encoding="utf-8")
+    (tmp_path / "PLAN_CHANGELOG.md").write_text("## 0.8.0\n", encoding="utf-8")
+    poetics = tmp_path / "poetics"
+    poetics.mkdir()
+    (poetics / "history.jsonl").write_text("", encoding="utf-8")
+    _init_git(tmp_path)
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "candidate")
+    candidate_tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+    candidate_commit = _git(tmp_path, "rev-parse", "HEAD")
+    _git(tmp_path, "tag", "audit-candidate/test", candidate_commit)
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    report_path = "reports/CURRENT_AUDIT.md"
+    (tmp_path / report_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 1,
+                "path": report_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": candidate_tree,
+                "candidate_commit": candidate_commit,
+                "candidate_ref": "refs/tags/audit-candidate/test",
+                "closure_paths": ["config/formal-audits.json", report_path],
+            }
+        ],
+    )
+    (tmp_path / "unreviewed.py").write_text("UNREVIEWED = True\n", encoding="utf-8")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "unreviewed")
+
+    formal = RepositoryReader(tmp_path).snapshot().assurance["formal_audit"]
+
+    assert formal["currency"] == "NEEDS_AUDIT"
+    assert formal["tree_binding"]["unexpected_paths"] == ["unreviewed.py"]
+
+
+def test_nonexistent_candidate_tree_cannot_be_current(tmp_path):
+    (tmp_path / "PLAN.md").write_text("0.8.0までの改訂\n", encoding="utf-8")
+    (tmp_path / "PLAN_CHANGELOG.md").write_text("## 0.8.0\n", encoding="utf-8")
+    poetics = tmp_path / "poetics"
+    poetics.mkdir()
+    (poetics / "history.jsonl").write_text("", encoding="utf-8")
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    report_path = "reports/CURRENT_AUDIT.md"
+    (tmp_path / report_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 1,
+                "path": report_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "0" * 40,
+                "candidate_commit": "0" * 40,
+                "candidate_ref": "refs/tags/audit-candidate/missing",
+                "closure_paths": ["config/formal-audits.json", report_path],
+            }
+        ],
+    )
+    _init_git(tmp_path)
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "closure without candidate")
+
+    formal = RepositoryReader(tmp_path).snapshot().assurance["formal_audit"]
+
+    assert formal["currency"] == "UNKNOWN"
+    assert formal["tree_binding"]["candidate_exists"] is False
+    assert formal["tree_binding"]["candidate_commit_exists"] is False
+    assert formal["tree_binding"]["candidate_ref_exists"] is False
+
+
+def test_git_diff_timeout_preserves_snapshot_and_returns_unknown(tmp_path, monkeypatch):
+    (tmp_path / "PLAN.md").write_text("0.8.0までの改訂\n", encoding="utf-8")
+    (tmp_path / "PLAN_CHANGELOG.md").write_text("## 0.8.0\n", encoding="utf-8")
+    poetics = tmp_path / "poetics"
+    poetics.mkdir()
+    (poetics / "history.jsonl").write_text("", encoding="utf-8")
+    _init_git(tmp_path)
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "candidate")
+    candidate_tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+    candidate_commit = _git(tmp_path, "rev-parse", "HEAD")
+    _git(tmp_path, "tag", "audit-candidate/test", candidate_commit)
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    report_path = "reports/CURRENT_AUDIT.md"
+    (tmp_path / report_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 1,
+                "path": report_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": candidate_tree,
+                "candidate_commit": candidate_commit,
+                "candidate_ref": "refs/tags/audit-candidate/test",
+                "closure_paths": ["config/formal-audits.json", report_path],
+            }
+        ],
+    )
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "closure")
+
+    real_run = subprocess.run
+
+    def timeout_git_diff(args, **kwargs):
+        if "diff" in args:
+            raise subprocess.TimeoutExpired(args, kwargs.get("timeout", 5))
+        return real_run(args, **kwargs)
+
+    monkeypatch.setattr(
+        "aleph.core.repository_snapshot.subprocess.run",
+        timeout_git_diff,
+    )
+
+    snapshot = RepositoryReader(tmp_path).snapshot()
+
+    assert snapshot.assurance["formal_audit"]["currency"] == "UNKNOWN"
+    assert snapshot.assurance["formal_audit"]["tree_binding"]["state"] == "UNAVAILABLE"
+
+
+def test_closure_allowlist_cannot_admit_code_paths(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    report_path = "reports/CURRENT_AUDIT.md"
+    (tmp_path / report_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 1,
+                "path": report_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "a" * 40,
+                "candidate_commit": "b" * 40,
+                "candidate_ref": "refs/tags/audit-candidate/test",
+                "closure_paths": ["aleph/core/repository_snapshot.py"],
+            }
+        ],
+    )
+
+    snapshot = RepositoryReader(tmp_path).snapshot()
+
+    assert snapshot.assurance["formal_audit"]["status"] == "UNKNOWN"
+    assert any("ledger entry is invalid" in warning for warning in snapshot.warnings)
 
 
 def test_non_terminal_or_conflicting_verdict_never_becomes_conclusive(tmp_path):
@@ -372,6 +604,7 @@ def test_audit_report_keeps_snapshot_warnings_visible(tmp_path):
     assert f"- warnings: {len(snapshot.warnings)}" in report
     assert "- tests: NOT_RECORDED" in report
     assert "- latest recorded formal audit: UNKNOWN" in report
+    assert "- formal audit tree state: UNAVAILABLE" in report
     assert all(warning in report for warning in snapshot.warnings)
 
 

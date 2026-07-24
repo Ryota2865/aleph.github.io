@@ -54,7 +54,46 @@
       "recorded_on": "2026-07-25",
       "target_changelog": "0.7.20-28",
       "candidate_tree": "351cd83ffe0bdaeec527d3dbb512e63070ccd19e",
+      "candidate_commit": "9bdfe0e37b81692a842699e865119b0e5ae7f8fb",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-current-state-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_CURRENT_STATE_P1_P2_REAUDIT_20260725.md"
+      ],
       "supersedes": "reports/PHASE6_CURRENT_STATE_AUDIT_20260724_FAIL.md"
+    },
+    {
+      "sequence": 5,
+      "path": "reports/PHASE6_AUDIT_TREE_BINDING_AUDIT_20260725_FAIL.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-29",
+      "candidate_tree": "51c9f05ef0c4dababb61542cba61bc8eb3614acf",
+      "candidate_commit": "357bb1f368e4e7c183e17f226318f8e1d432b413",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-audit-tree-binding-initial-20260725"
+    },
+    {
+      "sequence": 6,
+      "path": "reports/PHASE6_AUDIT_TREE_BINDING_P2_REAUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-30",
+      "candidate_tree": "9940cbb4062187ce93fd4cdc394ecc98b52b522c",
+      "candidate_commit": "40bcb66d7cd17c1a3455e821fe78cacf3d638820",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-audit-tree-binding-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_AUDIT_TREE_BINDING_P2_REAUDIT_20260725.md"
+      ],
+      "supersedes": "reports/PHASE6_AUDIT_TREE_BINDING_AUDIT_20260725_FAIL.md"
     }
   ]
 }
