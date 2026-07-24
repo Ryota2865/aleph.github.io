@@ -1,5 +1,75 @@
 # PLAN 変更履歴
 
+## 0.7.20-26 (2026-07-24) — Phase 6 P2 focused再監査PASS
+
+初回FAILを発行した同一Claude Code監査担当が、P2修繕候補tree
+`b93a518c7cd27720456358d63b4a4026b1980b33`をread-onlyでfocused再監査した。
+開始・終了時のtree hash一致、unstaged/untracked 0件、focused **69 passed**、
+全non-local **410 passed, 1 deselected**、修繕前treeでの5 RED、独立故障注入を再現した。
+
+P2-1のcheckpoint非依存v1拒否と、P2-2の完全manifest/pricing/slot/version identity耐久化は
+いずれも根本原因に対して閉鎖され、P0–P2なし、**VERDICT: PASS**。原文は
+`reports/PHASE6_CLOSING_READER_IDENTITY_P2_REAUDIT_20260724.md`へ保存した。初回FAIL artifactは
+保持する。
+
+P3-1〜P3-10は非blocking残置リスクとして保存する。とくにruntimeの実行済みslot被覆未照合、
+tokenizer artifact再hash偽造、dirty/split GGUF、手組み`RunBudgetPlan`の偽hash、JSON数値表記差
+によるfail-closed再開拒否を、今回のformal PASSが解消したとは扱わない。有償provider実費経路も
+範囲外・未検証のままである。
+
+本項によりclosing reserve算出とreader tokenizer identityのPhase 6 tracer bulletをformal
+完了とする。Phase 6全体の統治・公開・運用整合が完了したことは意味しない。
+
+## 0.7.20-25 (2026-07-24) — Phase 6初回正式監査FAIL・P2修繕
+
+Phase 6 closing reserve・reader tokenizer identity候補tree
+`14772732aa87d1cfde6afd9a25493686bbc213f6`を、施工者と異なるClaude Code担当が
+read-only正式監査し、focused 27件、全non-local 405 passed, 1 deselected、独立故障注入
+60件以上を再現した。tokenizer identityのGGUFからの独立再計算と、closing reserveの
+算出・被覆・奇形入力fail-closedには肯定的証拠を得た。
+
+一方、次の同根P2を2件確認し、**VERDICT: FAIL**となった。原文は
+`reports/PHASE6_CLOSING_READER_IDENTITY_AUDIT_20260724_FAIL.md`へ保存した。
+
+1. v1拒否がcheckpointの存在だけに依存し、空・非JSON checkpointまたは正常な初回checkpoint後の
+   seed差し替えで、導出reserveのないv1 protected runを再開できた。
+2. v2のversion、closing slot、provider/model、価格版、課金軸がBatchSpec/reservation identityに
+   入らず、同額repricingやv1/v2差し替えが既存予約を誤って再利用できた。
+
+observable RED 4経路を追加し、v2必須gateを`RealDeps`と`Budget.admit_run_plan`の両方で
+checkpoint非依存にした。さらに完全なcanonical run manifest hashと
+`phase6-run-budget-v2` protected definitionを全BatchSpecへ束縛し、予約作成・冪等再admission・
+restart再水和がversion/pricing/slot変更を拒否するよう修繕した。v1は履歴解釈用にparseできるが、
+protected normal runのadmissionには使えない。
+
+修繕後はfocused **69 passed**、全non-local **410 passed, 1 deselected**、compileall、
+diff checkがgreen。P3群は原監査artifactの残置リスクとして保持し、範囲拡大して修繕しない。
+同じClaude Code監査担当によるfocused再監査PASSまでは本tracer bulletおよびPhase 6を
+formal完了としない。
+
+## 0.7.20-24 (2026-07-24) — Phase 6開始: closing reserve・reader tokenizer identity
+
+Phase 6の最初の二つの実行前gateを、外部callを行わない自己完結tracer bulletとして施工した。
+
+1. protected normal-run manifest v2へ`closing_slots`を追加した。外部slotはprovider、
+   model、価格版、`input_tokens`/`output_tokens`を含む全課金軸のunit ceilingと単価を固定し、
+   deterministic slotも0 USDの完了条件として登録する。slot最大額の合計をコードが再計算し、
+   closing batchの`max_amount`、closing pool、算出reserveの三者が一致しなければadmission前に
+   fail closedする。任意USD総額は根拠として信頼しない。
+2. manifest v1は既存fixture・開始済みrunの読取/回復互換として保持するが、新しいprotected
+   normal runはv2以外を拒否する。これによりlegacy互換を新規runの抜け道にしない。
+3. local Qwen3.6 GGUFからtokenizer metadataを読み、tokens、token types、mergesの順序付き
+   content hash、model/pre-tokenizer、BOS/EOS/PAD、add-BOS、chat template、および
+   llama.cpp revisionをcanonical化したreader tokenizer identityを発行した。ファイル名・mtime・
+   `provider-default`はverified identityに使わない。artifactのhash不一致またはreader model
+   alias不一致では`unverified`へ倒し、比較可能性を主張しない。
+4. provider statement adapterとcall単位照合は追加していない。cost運用は0.7.20-23どおり
+   best-effortであり、今回の検証では新作・local inference・有償API callを実行していない。
+
+詳細契約は`designs/phase6-closing-reader-identity.md`、発行artifactは
+`config/identities/reader-tokenizer.json`に置く。本施工はtests greenであってformal audit
+PASSではない。Codex施工のPhase 6候補はPLAN §12に従い別監査者の正式監査を要する。
+
 ## 0.7.20-23 (2026-07-24) — cost照合を継続可能なbest-effort運用へ変更
 
 オーナーは、詳細なcall単位cost照合は運用負荷が高く継続性を損なうため、厳密なprovider
