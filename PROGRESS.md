@@ -1,5 +1,37 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 current-state P1/P2 focused再監査PASS
+
+- 同一Claude Code監査担当が修繕tree
+  `351cd83ffe0bdaeec527d3dbb512e63070ccd19e`をread-only再監査し、初回F-1〜F-7を全件閉鎖。
+  P0/P1なし、`VERDICT: PASS`。初回FAILを保持し、PASS原文とledger sequence 4を追加した。
+- 監査者はfocused 16件、全non-local 421 passed, 1 deselected、compileall、diff check、
+  独立故障注入を再現した。tests greenとformal verdictは分離した。
+- R-1〜R-9を残置。candidate tree実照合のないcurrency（R-2）を次tracer bulletの最優先候補とし、
+  今回のclosureではコード・test・契約を変更しない。
+- 新作、local inference、有償API call、provider cost照合は実行していない。
+
+## 2026-07-24 — Phase 6 current-state初回監査FAIL・修繕中
+
+- 初回候補tree `39da78c8a3c942404ac2ef47378ed228381bdca8`の独立監査は、検証greenを再現したが
+  audit辞書順と見出し語彙によるfalse PASS/CURRENTをP1として確認し`VERDICT: FAIL`。
+- FAIL原文を保持し、明示formal-audit ledger、末尾verdict、対象CHANGELOG bindingへ置換する。
+  汎用版parser、provenance、poetics fail-closedも同じfocused scopeで修繕する。
+- 期限到来時のREADME整合test REDは、公開上限999のreviewを強制する意図的gateとして正典化した。
+- observable REDを固定し、focused **16 passed**、全non-local **421 passed, 1 deselected**、
+  compileall、diff checkがgreen。次gateは同一Claude Code担当のfocused再監査。
+
+## 2026-07-24 — Phase 6 current-state tracer bullet施工green・正式監査待ち
+
+- `RepositorySnapshot`へtestsとformal auditを分離した`assurance`、PLAN/CHANGELOG/詩学版の
+  `design_state`を追加した。最新記録verdictは一箇所から取得できるが、最新正典変更が監査PASSで
+  閉じるまでは`currency=NEEDS_AUDIT`となり、過去PASSを現候補全体へ誤適用しない。
+- 公開上限999の2026-08-01期限を`UPCOMING/EXPIRED`としてREADME・CLI・監査面へ出し、期限超過時は
+  private dashboardの人間gateへ出す。値の自動変更は行わない。
+- `aleph resume`を`run`と同じ引数・同じ再開経路のaliasにした。
+- 新作、local inference、有償API callは実行していない。focused/full verificationと独立監査は
+  この候補の次gate。
+
 ## 2026-07-24 — Phase 6 P2 focused再監査PASS
 
 - 同一Claude Code監査担当が修繕tree

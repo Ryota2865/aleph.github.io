@@ -67,9 +67,7 @@ def _pid_alive(pid_path: Path) -> bool | None:
     return True
 
 
-def collect_works(root: Path) -> list[dict]:
-    """Adapt the authoritative RepositorySnapshot to the historical dashboard shape."""
-    repository = RepositoryReader(root).snapshot()
+def _adapt_works(repository) -> list[dict]:
     jobs = {job["work_id"]: job.get("alive") for job in repository.active_jobs}
     return [
         {
@@ -87,12 +85,22 @@ def collect_works(root: Path) -> list[dict]:
     ]
 
 
+def collect_works(root: Path) -> list[dict]:
+    """Adapt the authoritative RepositorySnapshot to the historical dashboard shape."""
+    return _adapt_works(RepositoryReader(root).snapshot())
+
+
 def collect_budget_status(root: Path, budgets: dict) -> dict:
     """Adapt the authoritative RepositorySnapshot budget projection."""
     return RepositoryReader(root, budget_config=budgets).snapshot().budget
 
 
-def collect_pending_gates(policies: dict, budget_status: dict) -> list[str]:
+def collect_pending_gates(
+    policies: dict,
+    budget_status: dict,
+    *,
+    deadlines: tuple[dict, ...] = (),
+) -> list[str]:
     """人間ゲートを一級市民に（designs/ui.md 原則2）: 保留中のものだけを列挙する."""
     gates = []
     if not policies.get("publication", {}).get("first_publish_ack", False):
@@ -107,6 +115,12 @@ def collect_pending_gates(policies: dict, budget_status: dict) -> list[str]:
         gates.append(
             f"月間API予算が80%を超過（{budget_status['api_spent']:.1f} / {api_cap:.1f} USD）"
         )
+    for deadline in deadlines:
+        if deadline.get("expired") is True:
+            gates.append(
+                f"期限切れ: {deadline['decision']}（期限 {deadline['due']}）。"
+                f"{deadline['required_action']}"
+            )
     return gates
 
 
@@ -186,9 +200,10 @@ def render_html(works: list[dict], budget: dict, gates: list[str], decisions: li
 
 def build(root: Path = ROOT) -> Path:
     cfg = load_config(root)
-    works = collect_works(root)
-    budget = collect_budget_status(root, cfg.budgets)
-    gates = collect_pending_gates(cfg.policies, budget)
+    repository = RepositoryReader(root, budget_config=cfg.budgets).snapshot()
+    works = _adapt_works(repository)
+    budget = repository.budget
+    gates = collect_pending_gates(cfg.policies, budget, deadlines=repository.deadlines)
     decisions = collect_recent_decisions(root)
     out_path = root / "state" / "dashboard.html"
     out_path.parent.mkdir(parents=True, exist_ok=True)

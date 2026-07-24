@@ -31,11 +31,21 @@ response. The formal auditor must not edit the candidate or write its own report
 Treat tests-green, a Hermes pre-audit, and the formal verdict as separate evidence. Hermes never
 replaces the Claude Code milestone audit required for Codex-built work.
 
+The report's final non-empty line must be exactly `VERDICT: PASS` or `VERDICT: FAIL`. Prose,
+quoted verdicts, bold Japanese labels, filenames, and directory order are not machine verdicts.
+
 ## 3. Preserve FAIL and repair
 
 Copy the auditor response from its report heading through the final verdict without changing its
 meaning. Store it under `reports/` with `AUDIT` in the filename so `RepositorySnapshot` can inventory
 it. Do not delete, overwrite, or rewrite a FAIL artifact after repair.
+
+Register every new formal artifact in `config/formal-audits.json` in the same closure change. Use
+the next unique monotonic `sequence`, the factual `recorded_on`, the audited implementation's
+`target_changelog`, and its immutable `candidate_tree`. A focused re-audit also records
+`supersedes`. Pre-ledger artifacts remain in `legacy_unordered`; they are retained evidence but
+cannot determine the latest verdict. An unregistered artifact or invalid ledger entry makes the
+latest-verdict projection `UNKNOWN`, never an inferred PASS.
 
 For every blocking finding:
 
@@ -52,10 +62,13 @@ residual risks without silently expanding the milestone.
 After `VERDICT: PASS`, make only closure changes:
 
 1. add the raw PASS audit artifact while retaining earlier FAIL artifacts;
-2. refresh the `RepositorySnapshot`-derived README markers in both languages;
-3. update the execution plan status, `PLAN_CHANGELOG.md`, and `PROGRESS.md` without changing canon;
-4. run the README snapshot consistency test, all non-local tests, and `git diff --check`;
-5. confirm that the final diff beyond the audited candidate contains only audit evidence and
+2. register the PASS artifact in `config/formal-audits.json`; keep the audited repair's
+   `target_changelog` number unchanged so currency remains mechanically bound to that target;
+3. refresh the `RepositorySnapshot`-derived README markers in both languages;
+4. update the execution plan status, the existing target entry in `PLAN_CHANGELOG.md`, and
+   `PROGRESS.md` without creating a new design version or changing canon;
+5. run the README snapshot consistency test, all non-local tests, and `git diff --check`;
+6. confirm that the final diff beyond the audited candidate contains only audit evidence and
    mechanical closure documentation.
 
 Any post-audit change to code, tests, contracts, acceptance criteria, or non-derived design meaning
