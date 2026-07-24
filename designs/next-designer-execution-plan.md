@@ -5,7 +5,8 @@
 入力: `reports/DESIGNER_INSIGHTS_20260718.md`
 状態: **全面採用（2026-07-18、オーナー明示承認）**。各phaseはこの順序を正典上の
 実行方針とし、個々の施工では設計変更の門、必要なオーナー承認、施工者・監査者の
-分離を経る。
+分離を経る。Phase 5は2026-07-24に正式独立監査PASSで完了した。オーナーの同日決定により、
+現任設計者CodexはPhase 6の正式完了まで継続し、途中で設計者を交代しない。
 
 ## 0. 目的
 
@@ -331,6 +332,72 @@ novelty値、niche report、material card、work colophonがidentityを参照す
 
 ## Phase 6 — 統治・公開・運用の整合
 
+### 6.0 Phase 6前のdecision gate
+
+以下は2026-07-24の設計者分類と同日のオーナー回答を統合したgateである。model/prompt、
+人間labelの合意床、Author候補、費用削減床など、表に明記していない値は未決のままとする。
+
+| 項目 | Phase 6との境界 | 決定・状態 |
+|---|---|---|
+| closing予約 | 新しいprotected normal runの開始前に必要。文書・read-only施工だけならPhase 6開始のblockerではない | **承認済み**。恒久的な固定USDではなく、走行前manifestのclosing slotごとのprovider/model、価格版、入力・出力token上限から最大費用を合算する |
+| reader tokenizer identity | 新しい`reader.mean_logprob`測定または比較の前に必要 | オーナー入力を待たず、local GGUFのtokenizer metadataから決定的identityを作る。未検証identityのrecordは比較不能のままにする |
+| house-style label protocol | `fixation.house_style`をprovisionalから昇格し、自動判断へ使う前に必要。Phase 6の統治・公開整合だけには不要 | **負荷枠を承認済み**。短い抜粋12組、3択、2名（1名はオーナー）、15–20分/人以内。LLMは候補抽出だけに使い、blindな人間goldを置換しない |
+| Author migration benchmark | Authorを変更する前に必要。現Authorを固定するPhase 6の開始前には不要 | Phase 6完了後へ延期を推奨。候補、費用削減床、刺激数、有償call上限は未決 |
+| 小規模corpus拡張 | 現Atlas identityを変えるため、Phase 6のcurrent-state整合には不要 | Phase 6中は現Atlas固定を推奨。拡張の価値判断は未決 |
+| provider statement adapter | provider usage statementを取得でき、`matched`を主張する前に必要 | **証拠分類を承認済み**。top-up通知は`funding_receipt`。usage情報がない間は`unreconciled`を維持する |
+
+したがって、全項目をPhase 6開始前に決める必要はない。外部callを伴う新規runをPhase 6中に
+行う場合はclosing予約が先行する。reader計器を新規発行する場合はtokenizer identityが先行する。
+Author、corpus、statement adapterは上記条件が発生しない限りPhase 6完了後へ延期できる。
+
+Phase 6では新作のprotected normal runを既定では行わない。健全な進行に必要な場合だけ、
+設計者が必要性、最大費用、入力、成功・停止条件を事前記録した有償runを実施できる。
+この許可はrunごとのmanifest、closing reserve、既存hard cap、formal gateを緩和しない。
+
+#### closing reserve算出契約
+
+外部callを行う各closing slot `s`について、走行前に次を固定する。
+
+```text
+slot_max(s) =
+  input_token_ceiling(s)  * input_usd_per_token(pricing_version, model)
+  + output_token_ceiling(s) * output_usd_per_token(pricing_version, model)
+
+closing_reserve = sum(slot_max(s) for external closing slots)
+```
+
+cached input、reasoning token、固定call料など別課金軸があるproviderでは、適用可能な最大単価を
+同じ価格版へ含める。決定的な題・event・final投影等の無料slotも完了条件へ登録するが、
+予約額は0とする。価格版、model、課金軸、token ceilingのいずれかが不明ならrun admissionを
+拒否する。manifestの任意USDを根拠なく信頼せず、計算値と`max_amount`の一致を検証する。
+
+#### house-style低負荷protocolの外枠
+
+- 12組の短い抜粋を、`同じ装置 | 担体・役割を変えた変形 | 異なる・不明`の3択で独立annotationする。
+- annotatorは2名で、1名はオーナー。各annotatorの作業時間は15–20分以内を目標とする。
+- LLMは候補組とhard negativeを作れるが、annotatorへLLM labelや理由を事前表示しない。
+- model/prompt、抜粋単位、もう1名のannotator、合意床と不一致裁定は未決であり、
+  annotation開始前に固定する。12組の結果を見てから合意床を下げない。
+
+### 6.0.1 Provider dashboardから必要な情報
+
+証拠は次の三層を混同しない。
+
+1. `funding_receipt`: provider、チャージ日時、金額、通貨、取引ID（存在する場合）。
+   利用可能残高の来歴には使えるが、call費用との`matched`判定には使わない。
+2. 集計usage: 対象期間とtimezone、provider/project、model、input/cached-input/output/reasoning
+   token、請求額、通貨、割引・credit・refund。日別またはmodel別集計なら、同じ粒度の台帳集計と
+   照合できるが、個別callの一致は主張しない。
+3. call単位usage: provider request/call ID、発生日時とtimezone、model revision、token内訳、
+   請求額・通貨、status、refund/reversal。repositoryのcall recordへ同じprovider request IDが
+   保存されている場合だけ、call単位の三面照合候補にする。
+
+取得はCSVまたはJSON exportを優先し、export生成日時、対象期間、timezone、列定義を一緒に残す。
+スクリーンショットしかない場合は原証拠として保存できるが、自動adapterの入力とはみなさない。
+API key、完全なaccount ID、支払カード、住所等の秘密・個人情報は取得物へ含めず、必要なら
+安定した非秘密project labelへ置換する。dashboardが集計粒度しか提供しない場合も正常であり、
+その粒度を越える精度を推定しない。
+
 ### 6.1 正式監査
 
 - M7/M8の現行修理を、施工者と異なる監査者が再検証する。
@@ -342,7 +409,8 @@ novelty値、niche report、material card、work colophonがidentityを参照す
 `designs/critic-role.md`とFable 5の条件付き承認を反映したPLAN §12.2を実装する。
 2026-07-19以降、外部批評はAPIを自動経路として継続する。設計者と批評家を同一モデルが
 兼任してもよいが、依頼・文書・権限を分離する。批評専用月額はまだ適正値が不明なため、
-当面は総API上限$65の内数としてcall/charge provenanceを残し、全文脈を削るのではなく
+当面は総API上限$71（2026-07-19のオーナー決定）の内数としてcall/charge provenanceを残し、
+全文脈を削るのではなく
 頻度と対象数で調整する。専用枠は実測後にオーナー決定を受けて追加する。これと並行し、
 2026-07-20以降はClaude Proの$100クレジットを使うオーナー起動の手動全体批評adapterを
 残す。これはAPI費用へ合算せず、PLAN §12.2の記録interfaceを満たす場合だけ正式な批評入力とする。

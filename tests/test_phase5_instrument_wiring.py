@@ -119,6 +119,10 @@ def test_review_projects_four_instruments_and_keeps_invalid_parse_out_of_disagre
     }
     assert records["parse.reliability"]["value"] == pytest.approx(2 / 3)
     assert records["parse.reliability"]["confidence"]["invalid_slots"] == 1
+    assert (
+        records["parse.reliability"]["identities"]["retry_policy"]
+        == "semantic-retries:0"
+    )
     assert records["reader.mean_logprob"]["value"] == pytest.approx(-2.0)
     assert records["novelty.atlas_cosine"]["identities"]["atlas_identity"] == "atlas-full-a"
 

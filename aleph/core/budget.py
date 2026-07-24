@@ -27,6 +27,7 @@ import fcntl
 
 LEDGERS = ("api", "harness", "local")
 POOLS = ("player", "held_out", "closing")
+DEFAULT_SEMANTIC_RETRIES = 0
 _AMOUNT_EPSILON = 1e-9
 
 # 各台帳の上限をどのbudgets.yamlキーから読むか、およびリセット周期。
@@ -83,7 +84,7 @@ class BatchSpec:
     expected_slots: tuple[str, ...] = ()
     phases: tuple[str, ...] = ()
     input_manifest_hash: str = ""
-    semantic_retries: int = 0
+    semantic_retries: int = DEFAULT_SEMANTIC_RETRIES
     atomic_projection: bool = True
     protected_definition_version: str = "phase5-v1"
 
@@ -796,6 +797,7 @@ _BATCH_KEYS = frozenset(
         "semantic_retries",
     }
 )
+_BATCH_REQUIRED_KEYS = _BATCH_KEYS - {"semantic_retries"}
 
 
 @dataclass(frozen=True)
@@ -905,7 +907,7 @@ class RunBudgetPlan:
             unknown_batch = set(item.keys()) - _BATCH_KEYS
             if unknown_batch:
                 raise ValueError(f"{prefix}: unknown keys: {sorted(unknown_batch)}")
-            missing_batch = _BATCH_KEYS - set(item.keys())
+            missing_batch = _BATCH_REQUIRED_KEYS - set(item.keys())
             if missing_batch:
                 raise ValueError(f"{prefix}: missing keys: {sorted(missing_batch)}")
 
@@ -967,7 +969,7 @@ class RunBudgetPlan:
                 )
 
             # semantic_retries
-            sr = item["semantic_retries"]
+            sr = item.get("semantic_retries", DEFAULT_SEMANTIC_RETRIES)
             if isinstance(sr, bool) or not isinstance(sr, int):
                 raise ValueError(
                     f"{prefix}: semantic_retries must be an integer >=0, "

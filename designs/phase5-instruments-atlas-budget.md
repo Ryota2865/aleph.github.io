@@ -208,6 +208,10 @@ budget reservationはparse失敗を解決しない。次を別に実装する。
 4. transport retryは既存Routerのprovider retryとして分離し、semantic retryと合算しない。
 5. parse failureは`parse.reliability`の証拠とする。評価予算の欠損と報告項目を分ける。
 
+2026-07-24のオーナー決定により、semantic retryの**既定値は0**とする。manifestで
+`semantic_retries`を省略したbatchは0へ正規化する。1回のretryが必要なbatchだけ、
+追加callの予約額を含めて走行前manifestへ`semantic_retries: 1`を明示する。
+
 w0009の既存artifactは不変の反例fixtureとし、同じIDでscoreを復元・再生成しない。
 
 ## 8. 既存`WorkSnapshot`を深くする
@@ -365,7 +369,6 @@ pool残額を独自解釈してはならない。
 ## 15. 設計後にも残る未決
 
 - house-style classifierのmodel/prompt、人間labelとの最低合意床。
-- semantic parse retryの既定回数（0または1）。batchごとに事前登録が必要。
 - closing予約の金額。w0009の実測は見積りfixtureにできるが、永久値にしない。
 - 次Atlasのcorpus拡張有無。identity実装と拡張の価値判断は分ける。
 - Author候補と費用削減床`X%`。Phase 5完了後のオーナー判断とする。

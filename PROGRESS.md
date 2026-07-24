@@ -1,5 +1,36 @@
 # PROGRESS
 
+## 2026-07-24 — Phase 6前gateのオーナー回答を記録
+
+- closing reserveは固定USDでなく、manifest登録済みclosing slotのprovider/model価格版と
+  入出力token上限から最大費用を合算する方式に決定した。価格・上限不明はfail closedとする。
+- Phase 6で新作runは予定しない。健全な進行に必要な場合だけ有償runを許容するが、
+  事前登録・予算保護・監査gateは維持する。
+- house-style label protocolは短い抜粋12組、3択、2名の低負荷案を承認。1名はオーナー。
+  LLMによる候補抽出は許すが、blindな人間goldを置換しない。
+- Providerの入金通知は`funding_receipt`へ分離する。dashboard取得項目は
+  `designs/next-designer-execution-plan.md` §6.0.1へ整理した。
+
+## 2026-07-24 — Codex設計者をPhase 6完了まで継続
+
+- オーナー決定により、Phase 5完了後の設計者交代予定を上書きし、現任CodexがPhase 6の
+  正式完了まで設計を継続する。根拠となる利用率はオーナー報告（週次枠70%残、
+  Phase 5C開始からPhase 5完了まで約30%消費）であり、repository計器による測定ではない。
+- 独立し境界の明確な施工・調査・予備監査ではサブエージェントまたはローカルHermesを
+  選択肢とする。ただし設計権限、統合判断、正典更新はCodexに残し、正式監査の施工者分離を
+  維持する。
+- Phase 6前の判断候補は`designs/next-designer-execution-plan.md` §6.0で、実行前blocker、
+  計器利用前gate、Phase 6後へ延期可能な項目に分けた。未承認の推奨をオーナー決定として
+  扱わない。
+
+## 2026-07-24 — semantic retry既定値0を固定
+
+- オーナー決定により、semantic parse retryの既定値を0とした。normal-run manifestで
+  `semantic_retries`を省略すると0へ正規化し、canonical reservation identityにも0を残す。
+- 1回のretryは例外batchだけが走行前manifestへ明示できる。負数・bool・未登録attemptは拒否し、
+  transport retryとは分離する。通常reviewの`parse.reliability` identityも
+  `semantic-retries:0`へ明示化した。
+
 ## 2026-07-24 — Phase 5C正式監査・P2-1修繕再監査PASS、Phase 5完了
 
 - Phase 5C candidate `fd9740f2595e5c5d0779661cb1cd67ea606827c2`をClaude Code

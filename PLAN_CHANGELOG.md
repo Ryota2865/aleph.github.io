@@ -1,5 +1,47 @@
 # PLAN 変更履歴
 
+## 0.7.20-22 (2026-07-24) — Phase 6前gateのオーナー回答
+
+オーナーは、Phase 6前のdecision gateについて次を決定した。
+
+1. **closing予約**は恒久的な固定USDにしない。各runの走行前manifestへ登録したclosing
+   slotごとに、provider/modelの価格版と入力・出力token上限から最大費用を算出し、その合計を
+   closing poolへ予約する。必要な価格または上限が不明なrunはadmissionで拒否する。
+2. Phase 6中に新作のprotected normal runは予定しない。ただしPhase 6を健全に進めるため
+   必要と設計者が判断した場合は、有償runを許可する。これは事前登録、protected reservation、
+   既存予算上限、監査gateを免除しない。
+3. house-style校正は、短い抜粋12組の3択annotationを2名で行う低負荷protocolを採用可能と
+   する。2名のうち1名はオーナーとする。LLMは候補抽出とhard negative生成に使えるが、
+   人間annotatorへ事前labelを見せず、人間goldを置換しない。
+4. Providerから届く「チャージ日時・金額・通貨」だけの通知は`funding_receipt`として扱う。
+   call/model/token使用量の証拠ではないため、これだけで`matched`を主張しない。dashboardから
+   usage情報を取得できる場合に備え、必要項目と照合粒度をPhase 6設計へ固定する。
+
+## 0.7.20-21 (2026-07-24) — Codex設計者をPhase 6完了まで継続
+
+オーナーは、Codexの週次利用枠が70%残っており、Phase 5C開始からPhase 5完了までの
+消費が約30%だったとの観測にもとづき、現任設計者Codexの任期を**Phase 6正式完了まで**
+継続すると決定した。これにより、Phase 5完了後にFable 5へ設計者を交代する旧予定を
+上書きする。レートリミットがある期間の途中交代を避け、設計意図と判断履歴の連続性を
+優先する。Fable 5は必要に応じて外部批評家または独立監査者を担えるが、本決定だけで
+設計権限者へ復帰しない。
+
+Codexは、自己完結しファイル境界が明確な施工・調査・予備監査について、利用枠と検証費用を
+勘案してサブエージェントまたはローカルHermes agentへ委任できる。委任は設計権限の移譲
+ではなく、Codexが仕様、統合判断、独立検証、正典更新の責任を保持する。Codex自身が施工した
+正式milestoneを監査しないというPLAN §12.1の分離原則は変更しない。
+
+## 0.7.20-20 (2026-07-24) — semantic retry既定値0を承認
+
+オーナーは、semantic parse retryの既定値を**0**と決定した。provider callが成功して
+schema parseだけに失敗した場合も、未登録の裁量再生成を行わず、raw response、call/charge、
+parse failureを`parse.reliability`の証拠として保存する。timeout等のtransport retryは
+既存Routerの責務として分離し、semantic retry回数へ合算しない。
+
+normal-run manifestで`semantic_retries`を省略したbatchは0へ正規化する。1回のsemantic retryを
+行う例外batchだけ、追加call費用をreserveへ含め、走行前manifestに
+`semantic_retries: 1`を明示する。負数・bool・未登録attemptは引き続きfail closedとする。
+
 ## 0.7.20-19 (2026-07-24) — Phase 5C正式監査・P2-1修繕再監査PASS
 
 Phase 5C step 9–12をcommit

@@ -460,7 +460,7 @@ def _review_instrument_records(
                 "prompt": jury_prompt_hash,
                 "schema": "jury-score-critique-v1",
                 "parser": "aleph.core.model_output:parse_model_output",
-                "retry_policy": "none",
+                "retry_policy": "semantic-retries:0",
                 "batch_manifest": batch_manifest,
             },
             confidence={

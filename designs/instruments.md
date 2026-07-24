@@ -106,6 +106,14 @@ deltaを返す。不一致なら`comparable=false`とwarningを返し、数値�
 - **既知の盲点**: tokenizer/model交換で尺度が変わる。驚きと文学的効力は同義ではない。
 - **次の校正条件**: 同一model/context内の既知の低/高確率fixtureと驚きの解釈を分ける。
 
+2026-07-24のread-only調査では、現行`reader_model`はllama-swap alias
+`Qwen3.6-27B-Q4_K_M`が指すlocal GGUFであり、GGUF v3 metadataに
+`tokenizer.ggml.model=gpt2`、`tokenizer.ggml.pre=qwen35`、tokens/token types/merges、
+BOS/EOS/PAD、add-BOS、chat templateが格納されている。したがってownerからtokenizer名を
+聞き取る必要はない。実装するidentityは、これらtokenizer metadataのcanonical hashと
+tokenize実装のllama.cpp revisionを含める。ファイル名、mtime、`provider-default`文字列だけを
+identityにしてはならない。model artifact/quantization identityはtokenizer identityと分けて残す。
+
 ### 3.7 `parse.reliability` v1 — `provisional`
 
 - **主張**: 事前登録したschemaに対する有効projectionの割合と失敗様式。model能力全体ではない。
@@ -115,7 +123,7 @@ deltaを返す。不一致なら`comparable=false`とwarningを返し、数値�
 - **最終校正日**: 未校正。
 - **既知反例**: w0009は6 call全完了でも1 parse失敗により二次score全体が欠損した。
 - **既知の盲点**: 有効JSONでも意味が不正な場合を検出しない。
-- **次の校正条件**: juror slotごとの即時硬化と、retry 0/1のfixtureを事前登録で検証する。
+- **次の校正条件**: 既定retry 0と、manifestへ明示したoverride 1のfixtureを分けて検証する。
 
 ### 3.8 `run.completion` v1 — `provisional`
 

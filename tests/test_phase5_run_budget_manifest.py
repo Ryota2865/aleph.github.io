@@ -67,6 +67,23 @@ def test_routing_is_bound_into_reservation_identity() -> None:
     assert first.canonical() != second.canonical()
 
 
+def test_semantic_retry_defaults_to_zero_but_explicit_one_is_preserved() -> None:
+    defaulted = _manifest()
+    del defaulted["batches"][0]["semantic_retries"]
+    default_batch = RunBudgetPlan.from_manifest(
+        defaulted, work_id="w0010"
+    ).batches[0]
+    assert default_batch.semantic_retries == 0
+    assert default_batch.canonical()["semantic_retries"] == 0
+
+    explicit = _manifest()
+    explicit["batches"][0]["semantic_retries"] = 1
+    explicit_batch = RunBudgetPlan.from_manifest(
+        explicit, work_id="w0010"
+    ).batches[0]
+    assert explicit_batch.semantic_retries == 1
+
+
 @pytest.mark.parametrize(
     ("mutate", "message"),
     [

@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from aleph.core.config import REQUIRED_ROLES, ConfigError, load_config
+from aleph.core.budget import DEFAULT_SEMANTIC_RETRIES
 from aleph.core.llm import scrub_secrets, sha256_text
 from aleph.core.loop import ALLOWED_TRANSITIONS, TERMINAL_STATES, State, validate_transition
 from aleph.explore.vault import VaultAccessError, check_vault_access
@@ -61,6 +62,9 @@ def test_policies_declare_critical_decisions():
     c = cfg.policies["critique"]
     assert c["score_is_information_not_objective"] is True  # PLAN §7.1 Goodhart回避
     assert c["external_anchor"] == "on_collaboration_only"  # PLAN §14.3-6
+    assert c["semantic_retries_default"] == DEFAULT_SEMANTIC_RETRIES == 0
+    assert c["semantic_retry_override_requires_manifest"] is True
+    assert c["transport_retry_is_separate"] is True
     assert cfg.policies["poetics"]["seed_from_human"] is False  # PLAN §14.3-10
     assert cfg.policies["vault"]["readonly"] is True  # PLAN §4.5
     assert cfg.policies["publication"]["signature"] == "model-credits"  # PLAN §14.3-9
