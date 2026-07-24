@@ -19,7 +19,7 @@ import time
 import uuid
 from copy import deepcopy
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
@@ -87,6 +87,7 @@ class BatchSpec:
     semantic_retries: int = DEFAULT_SEMANTIC_RETRIES
     atomic_projection: bool = True
     protected_definition_version: str = "phase5-v1"
+    run_manifest_hash: str = ""
 
     def canonical(self) -> dict[str, Any]:
         return {
@@ -103,6 +104,7 @@ class BatchSpec:
             "semantic_retries": self.semantic_retries,
             "atomic_projection": self.atomic_projection,
             "protected_definition_version": self.protected_definition_version,
+            "run_manifest_hash": self.run_manifest_hash,
         }
 
 
@@ -116,6 +118,60 @@ class BatchReservation:
     charged: float
     status: str
     period_key: str
+
+
+@dataclass(frozen=True)
+class ClosingChargeAxis:
+    """One versioned billing axis used to derive a closing slot maximum."""
+
+    name: str
+    unit_ceiling: int
+    usd_per_unit: float
+
+    @property
+    def max_amount(self) -> float:
+        return self.unit_ceiling * self.usd_per_unit
+
+    def canonical(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "unit_ceiling": self.unit_ceiling,
+            "usd_per_unit": self.usd_per_unit,
+        }
+
+
+@dataclass(frozen=True)
+class ClosingSlot:
+    """A paid external or free deterministic step required to close a run."""
+
+    slot_id: str
+    batch_id: str
+    kind: str
+    provider: str | None = None
+    model: str | None = None
+    pricing_version: str | None = None
+    axes: tuple[ClosingChargeAxis, ...] = ()
+
+    @property
+    def max_amount(self) -> float:
+        return math.fsum(axis.max_amount for axis in self.axes)
+
+    def canonical(self) -> dict[str, Any]:
+        value: dict[str, Any] = {
+            "slot_id": self.slot_id,
+            "batch_id": self.batch_id,
+            "kind": self.kind,
+        }
+        if self.kind == "external":
+            value.update(
+                {
+                    "provider": self.provider,
+                    "model": self.model,
+                    "pricing_version": self.pricing_version,
+                    "axes": [axis.canonical() for axis in self.axes],
+                }
+            )
+        return value
 
 
 @dataclass
@@ -440,6 +496,22 @@ class Budget:
         """Atomically register and reserve every batch in a normal-run plan."""
         if not isinstance(plan, RunBudgetPlan):
             raise TypeError("plan must be RunBudgetPlan")
+        if plan.version != 2:
+            raise ValueError(
+                "new protected normal run requires run_budget version 2 "
+                "with a derived closing reserve"
+            )
+        if (
+            not re.fullmatch(r"[0-9a-f]{64}", plan.manifest_hash)
+            or plan.closing_reserve is None
+            or not plan.closing_slots
+            or any(
+                spec.run_manifest_hash != plan.manifest_hash
+                or spec.protected_definition_version != "phase6-run-budget-v2"
+                for spec in plan.batches
+            )
+        ):
+            raise ValueError("run plan manifest identity is incomplete or inconsistent")
         snapshot = None
         with self._transaction():
             snapshot = (
@@ -784,7 +856,8 @@ def _canonical_hash(payload: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 _VALID_PHASES = frozenset({"L1", "L2", "L3", "L4-L5", "L6", "L7"})
-_MANIFEST_TOP_KEYS = frozenset({"version", "cap_amount", "pools", "batches"})
+_MANIFEST_TOP_KEYS_V1 = frozenset({"version", "cap_amount", "pools", "batches"})
+_MANIFEST_TOP_KEYS_V2 = _MANIFEST_TOP_KEYS_V1 | {"closing_slots"}
 _BATCH_KEYS = frozenset(
     {
         "batch_id",
@@ -805,9 +878,13 @@ class RunBudgetPlan:
     """Parsed and validated protected-budget manifest for a single run."""
 
     charged_to: str
+    version: int
+    manifest_hash: str
     cap_amount: float
     pool_limits: tuple[tuple[str, float], ...]
     batches: tuple[BatchSpec, ...]
+    closing_slots: tuple[ClosingSlot, ...] = ()
+    closing_reserve: float | None = None
 
     def batch_for(self, phase: str, role: str) -> BatchSpec:
         """Return the unique BatchSpec for *phase* + *role*, or raise."""
@@ -836,18 +913,17 @@ class RunBudgetPlan:
         if any(not isinstance(key, str) for key in data):
             raise ValueError("manifest keys must be strings")
 
-        # --- top-level key check ---
-        unknown_top = set(data.keys()) - _MANIFEST_TOP_KEYS
+        # --- version and top-level key check ---
+        version = data.get("version")
+        if not isinstance(version, int) or isinstance(version, bool) or version not in (1, 2):
+            raise ValueError(f"manifest version must be integer 1 or 2, got {version!r}")
+        top_keys = _MANIFEST_TOP_KEYS_V1 if version == 1 else _MANIFEST_TOP_KEYS_V2
+        unknown_top = set(data.keys()) - top_keys
         if unknown_top:
             raise ValueError(f"unknown manifest keys: {sorted(unknown_top)}")
-        missing_top = _MANIFEST_TOP_KEYS - set(data.keys())
+        missing_top = top_keys - set(data.keys())
         if missing_top:
             raise ValueError(f"missing manifest keys: {sorted(missing_top)}")
-
-        # --- version ---
-        version = data["version"]
-        if not isinstance(version, int) or isinstance(version, bool) or version != 1:
-            raise ValueError(f"manifest version must be integer 1, got {version!r}")
 
         # --- cap_amount ---
         cap_amount = data["cap_amount"]
@@ -1027,9 +1103,175 @@ class RunBudgetPlan:
                 "manifest must include at least one closing-pool batch covering phase L7"
             )
 
+        closing_slots: tuple[ClosingSlot, ...] = ()
+        closing_reserve: float | None = None
+        if version == 2:
+            closing_slots, closing_reserve = _parse_closing_slots_v2(
+                data["closing_slots"],
+                batch_specs=tuple(batch_specs),
+                closing_pool_limit=pool_values["closing"],
+            )
+        manifest_hash = _canonical_hash(data)
+        protected_definition_version = (
+            "phase6-run-budget-v2" if version == 2 else "phase5-run-budget-v1"
+        )
+        batch_specs = [
+            replace(
+                spec,
+                protected_definition_version=protected_definition_version,
+                run_manifest_hash=manifest_hash,
+            )
+            for spec in batch_specs
+        ]
+
         return cls(
             charged_to=charged_to,
+            version=version,
+            manifest_hash=manifest_hash,
             cap_amount=cap_amount,
             pool_limits=tuple((p, pool_values[p]) for p in POOLS),
             batches=tuple(batch_specs),
+            closing_slots=closing_slots,
+            closing_reserve=closing_reserve,
         )
+
+
+def _parse_closing_slots_v2(
+    raw_slots: Any,
+    *,
+    batch_specs: tuple[BatchSpec, ...],
+    closing_pool_limit: float,
+) -> tuple[tuple[ClosingSlot, ...], float]:
+    """Derive the v2 closing reserve; never trust a caller-supplied USD total."""
+    if not isinstance(raw_slots, list) or not raw_slots:
+        raise ValueError("closing_slots must be a non-empty list")
+
+    closing_batches = {
+        spec.batch_id: spec for spec in batch_specs if spec.pool == "closing"
+    }
+    expected = {
+        (spec.batch_id, slot_id)
+        for spec in closing_batches.values()
+        for slot_id in spec.expected_slots
+    }
+    parsed: list[ClosingSlot] = []
+    seen: set[tuple[str, str]] = set()
+
+    for idx, raw in enumerate(raw_slots):
+        prefix = f"closing_slots[{idx}]"
+        if not isinstance(raw, Mapping) or any(not isinstance(k, str) for k in raw):
+            raise ValueError(f"{prefix}: must be a mapping with string keys")
+        kind = raw.get("kind")
+        allowed = (
+            {"slot_id", "batch_id", "kind"}
+            if kind == "deterministic"
+            else {
+                "slot_id",
+                "batch_id",
+                "kind",
+                "provider",
+                "model",
+                "pricing_version",
+                "axes",
+            }
+        )
+        if set(raw) != allowed:
+            raise ValueError(f"{prefix}: fields must be exactly {sorted(allowed)}")
+
+        slot_id = raw.get("slot_id")
+        batch_id = raw.get("batch_id")
+        if not isinstance(slot_id, str) or not slot_id.strip():
+            raise ValueError(f"{prefix}: slot_id must be a non-empty string")
+        if not isinstance(batch_id, str) or batch_id not in closing_batches:
+            raise ValueError(f"{prefix}: batch_id must name a closing batch")
+        identity = (batch_id, slot_id)
+        if identity in seen:
+            raise ValueError(f"{prefix}: duplicate closing slot {identity!r}")
+        seen.add(identity)
+
+        if kind == "deterministic":
+            parsed.append(ClosingSlot(slot_id=slot_id, batch_id=batch_id, kind=kind))
+            continue
+        if kind != "external":
+            raise ValueError(f"{prefix}: kind must be external or deterministic")
+
+        strings: dict[str, str] = {}
+        for key in ("provider", "model", "pricing_version"):
+            value = raw.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{prefix}: {key} must be a non-empty string")
+            strings[key] = value
+
+        axes_raw = raw.get("axes")
+        if not isinstance(axes_raw, list) or not axes_raw:
+            raise ValueError(f"{prefix}: axes must be a non-empty list")
+        axes: list[ClosingChargeAxis] = []
+        axis_names: set[str] = set()
+        for axis_idx, axis_raw in enumerate(axes_raw):
+            axis_prefix = f"{prefix}.axes[{axis_idx}]"
+            if not isinstance(axis_raw, Mapping) or set(axis_raw) != {
+                "name",
+                "unit_ceiling",
+                "usd_per_unit",
+            }:
+                raise ValueError(
+                    f"{axis_prefix}: fields must be exactly "
+                    "['name', 'unit_ceiling', 'usd_per_unit']"
+                )
+            name = axis_raw["name"]
+            ceiling = axis_raw["unit_ceiling"]
+            rate = axis_raw["usd_per_unit"]
+            if not isinstance(name, str) or not name.strip() or name in axis_names:
+                raise ValueError(f"{axis_prefix}: name must be non-empty and unique")
+            if isinstance(ceiling, bool) or not isinstance(ceiling, int) or ceiling < 0:
+                raise ValueError(f"{axis_prefix}: unit_ceiling must be an integer >=0")
+            if isinstance(rate, bool) or not isinstance(rate, (int, float)):
+                raise ValueError(f"{axis_prefix}: usd_per_unit must be a number")
+            rate = float(rate)
+            if not math.isfinite(rate) or rate < 0:
+                raise ValueError(f"{axis_prefix}: usd_per_unit must be finite and >=0")
+            axis_names.add(name)
+            axes.append(ClosingChargeAxis(name, ceiling, rate))
+        missing_token_axes = {"input_tokens", "output_tokens"} - axis_names
+        if missing_token_axes:
+            raise ValueError(
+                f"{prefix}: external slot missing required axes "
+                f"{sorted(missing_token_axes)}"
+            )
+        parsed.append(
+            ClosingSlot(
+                slot_id=slot_id,
+                batch_id=batch_id,
+                kind=kind,
+                provider=strings["provider"],
+                model=strings["model"],
+                pricing_version=strings["pricing_version"],
+                axes=tuple(axes),
+            )
+        )
+
+    if seen != expected:
+        raise ValueError(
+            "closing_slots must cover closing expected_slots exactly; "
+            f"missing={sorted(expected - seen)}, extra={sorted(seen - expected)}"
+        )
+
+    by_batch = {
+        batch_id: math.fsum(
+            slot.max_amount for slot in parsed if slot.batch_id == batch_id
+        )
+        for batch_id in closing_batches
+    }
+    for batch_id, derived in by_batch.items():
+        declared = closing_batches[batch_id].max_amount
+        if abs(derived - declared) > _AMOUNT_EPSILON:
+            raise ValueError(
+                f"closing batch {batch_id!r} max_amount {declared} does not match "
+                f"derived slot maximum {derived}"
+            )
+    reserve = math.fsum(slot.max_amount for slot in parsed)
+    if abs(reserve - closing_pool_limit) > _AMOUNT_EPSILON:
+        raise ValueError(
+            f"closing pool {closing_pool_limit} does not match derived closing reserve {reserve}"
+        )
+    return tuple(parsed), reserve

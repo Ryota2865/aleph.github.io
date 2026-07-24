@@ -332,6 +332,13 @@ novelty値、niche report、material card、work colophonがidentityを参照す
 
 ## Phase 6 — 統治・公開・運用の整合
 
+**状態（2026-07-24）:** 開始。closing reserve算出とreader tokenizer identityを、
+新作・有償callなしの自己完結tracer bulletとして施工した。初回正式監査は、v1 checkpoint
+bypassとpricing/slot/versionのreservation identity欠落をP2として検出し**FAIL**。原文を保存し、
+observable REDから同根修繕した。同一監査者のfocused再監査でP0–P2なし、
+**VERDICT: PASS**。このtracer bulletはformal完了した。詳細は
+`designs/phase6-closing-reader-identity.md`。Phase 6全体は継続中であり完了とはしない。
+
 ### 6.0 Phase 6前のdecision gate
 
 以下は2026-07-24の設計者分類と同日のオーナー回答を統合したgateである。model/prompt、

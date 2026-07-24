@@ -605,6 +605,11 @@ class RealDeps:
             self._run_budget_plan = RunBudgetPlan.from_manifest(
                 run_budget, work_id=self._work_id
             )
+            if self._run_budget_plan.version != 2:
+                raise ValueError(
+                    "new protected normal run requires run_budget version 2 "
+                    "with a derived closing reserve"
+                )
         try:
             experiment = seed.get("experiment") if isinstance(seed, dict) else None
             if isinstance(experiment, dict) and experiment.get("id"):
@@ -647,6 +652,25 @@ class RealDeps:
         reader_model = str(
             reader.get("model") or reader.get("provider") or "unknown-reader"
         )
+        reader_tokenizer = f"provider-default:{reader_model}:unverified"
+        tokenizer_identity_path = (
+            Path(__file__).resolve().parent.parent
+            / "config"
+            / "identities"
+            / "reader-tokenizer.json"
+        )
+        if tokenizer_identity_path.is_file():
+            from aleph.core.tokenizer_identity import TokenizerIdentity
+
+            try:
+                tokenizer_identity = TokenizerIdentity.load(tokenizer_identity_path)
+            except (OSError, ValueError, json.JSONDecodeError):
+                tokenizer_identity = None
+            if (
+                tokenizer_identity is not None
+                and tokenizer_identity.payload["model_ref"] == reader_model
+            ):
+                reader_tokenizer = f"gguf-tokenizer:{tokenizer_identity.hash}"
         try:
             identity_ref = str((self.index_dir / "identity.json").relative_to(Path.cwd()))
         except ValueError:
@@ -660,7 +684,7 @@ class RealDeps:
             "jury_roster": _canonical_hash(jury),
             "jury_model_ref": f"jury-roster:{_canonical_hash(jury)}",
             "reader_model": reader_model,
-            "reader_tokenizer": f"provider-default:{reader_model}:unverified",
+            "reader_tokenizer": reader_tokenizer,
             "reader_context": (
                 f"max_tokens={reader.get('max_tokens', 'provider-default')};"
                 "review-segments=18000/6000-v1"

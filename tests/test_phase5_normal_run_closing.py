@@ -11,6 +11,7 @@ from aleph.core.budget import (
     Budget,
     BudgetExceeded,
     BudgetUnreconciled,
+    ReservationConflict,
     RunBudgetPlan,
 )
 from aleph.core.config import load_config
@@ -38,13 +39,35 @@ def _batch(batch_id, pool, role, amount, phases):
 
 def _manifest(*, closing=0.6):
     return {
-        "version": 1,
+        "version": 2,
         "cap_amount": 2.0 + closing,
         "pools": {"player": 1.0, "held_out": 1.0, "closing": closing},
         "batches": [
             _batch("player-author", "player", "author_primary", 1.0, ["L1", "L4-L5"]),
             _batch("heldout-jury", "held_out", "critic_jury", 1.0, ["L6"]),
             _batch("closing-author", "closing", "author_primary", closing, ["L7"]),
+        ],
+        "closing_slots": [
+            {
+                "slot_id": "closing-author-slot",
+                "batch_id": "closing-author",
+                "kind": "external",
+                "provider": "fixture",
+                "model": "fixture-author",
+                "pricing_version": "fixture-v1",
+                "axes": [
+                    {
+                        "name": "input_tokens",
+                        "unit_ceiling": 0,
+                        "usd_per_unit": 0.0,
+                    },
+                    {
+                        "name": "output_tokens",
+                        "unit_ceiling": 1,
+                        "usd_per_unit": closing,
+                    },
+                ],
+            }
         ],
     }
 
@@ -77,6 +100,88 @@ def test_run_admission_is_all_or_nothing_before_the_first_transition(tmp_path):
 
     assert budget.status()["reservations"]["active_count"] == 0
     assert budget.scope_remaining("run:w-run") is None
+
+
+def test_new_normal_run_rejects_unpriced_legacy_manifest(tmp_path):
+    manifest = _manifest()
+    manifest["version"] = 1
+    del manifest["closing_slots"]
+
+    with pytest.raises(ValueError, match="requires run_budget version 2"):
+        _real_deps(tmp_path, manifest=manifest)
+
+
+@pytest.mark.parametrize("checkpoint_text", ["{}", "not json at all"])
+def test_checkpoint_cannot_bypass_v2_gate(tmp_path, checkpoint_text):
+    manifest = _manifest()
+    manifest["version"] = 1
+    del manifest["closing_slots"]
+    config = load_config(ROOT)
+    work = Work(tmp_path / "works", "w-run")
+    work.create({"run_budget": manifest})
+    work.checkpoint.write_text(checkpoint_text, encoding="utf-8")
+    budget = Budget(config, state_path=tmp_path / "budget.json")
+    router = Router(config, CallLogger(work.calls), budget)
+
+    with pytest.raises(ValueError, match="requires run_budget version 2"):
+        RealDeps(
+            work,
+            router,
+            config=config,
+            index_dir=tmp_path / "atlas",
+            search_fn=lambda *args, **kwargs: [],
+            poetics_dir=tmp_path / "poetics",
+        )
+
+
+def test_repricing_same_closing_amount_conflicts_with_admitted_identity(tmp_path):
+    _, budget, _, deps = _real_deps(tmp_path)
+    original = deps.begin_run_budget()
+    changed = _manifest()
+    slot = changed["closing_slots"][0]
+    slot.update(
+        provider="openai",
+        model="gpt-5.5",
+        pricing_version="openai-2099-01-01",
+    )
+    slot["axes"] = [
+        {
+            "name": "input_tokens",
+            "unit_ceiling": 600_000,
+            "usd_per_unit": changed["pools"]["closing"] / 600_000,
+        },
+        {"name": "output_tokens", "unit_ceiling": 0, "usd_per_unit": 0.0},
+    ]
+    changed_plan = RunBudgetPlan.from_manifest(changed, work_id="w-run")
+
+    with pytest.raises(ReservationConflict, match="different manifest"):
+        budget.admit_run_plan(changed_plan)
+
+    assert budget.load_run_plan_reservations(deps._run_budget_plan) == original
+
+
+def test_v1_plan_cannot_rehydrate_v2_admission(tmp_path):
+    _, budget, _, deps = _real_deps(tmp_path)
+    deps.begin_run_budget()
+    legacy = _manifest()
+    legacy["version"] = 1
+    del legacy["closing_slots"]
+    legacy_plan = RunBudgetPlan.from_manifest(legacy, work_id="w-run")
+
+    with pytest.raises(ReservationConflict, match="identity mismatch"):
+        budget.load_run_plan_reservations(legacy_plan)
+
+
+def test_budget_admission_rejects_v1_even_without_pipeline(tmp_path):
+    manifest = _manifest()
+    manifest["version"] = 1
+    del manifest["closing_slots"]
+    plan = RunBudgetPlan.from_manifest(manifest, work_id="w-run")
+    config = load_config(ROOT)
+    budget = Budget(config, state_path=tmp_path / "budget.json")
+
+    with pytest.raises(ValueError, match="requires run_budget version 2"):
+        budget.admit_run_plan(plan)
 
 
 def test_real_deps_routes_api_calls_to_the_phase_role_reservation(tmp_path):

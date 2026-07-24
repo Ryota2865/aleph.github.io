@@ -1,5 +1,51 @@
 # PROGRESS
 
+## 2026-07-24 — Phase 6 P2 focused再監査PASS
+
+- 同一Claude Code監査担当が修繕tree
+  `b93a518c7cd27720456358d63b4a4026b1980b33`をread-only再監査し、P2-1/P2-2を閉鎖。
+  P0–P2なし、`VERDICT: PASS`。原文を
+  `reports/PHASE6_CLOSING_READER_IDENTITY_P2_REAUDIT_20260724.md`へ保存し、初回FAILも保持した。
+- focused 69件、全non-local 410 passed, 1 deselected、修繕前5 RED、独立故障注入を監査者が
+  再現した。tokenizer scopeは修繕前後でbyte-identical。
+- P3-1〜P3-10と有償provider実費経路未検証を残置リスクとして保持する。closing reserve・
+  reader tokenizer identity tracer bulletはformal完了。Phase 6全体は継続中。
+- PASS artifact追加に伴いRepositorySnapshotのformal audit件数を25へ機械更新する。
+
+## 2026-07-24 — Phase 6初回正式監査FAILを保存・P2修繕green
+
+- 初回候補tree `14772732aa87d1cfde6afd9a25493686bbc213f6`に対するClaude Code独立監査は、
+  算出・被覆・tokenizer identity再現を肯定した一方、v1 checkpoint bypassと
+  pricing/slot/versionのreservation identity欠落をP2として再現し、`VERDICT: FAIL`。
+  原文を`reports/PHASE6_CLOSING_READER_IDENTITY_AUDIT_20260724_FAIL.md`へ保存した。
+- P2の4経路をobservable RED化し、v1 admissionをcheckpoint非依存で拒否した。v2の完全な
+  canonical manifest hashとprotected definition versionを各BatchSpecへ耐久化し、同額repricing、
+  v1/v2差し替え、restart再水和でidentity不一致を拒否する。
+- FAIL artifact追加でRepositorySnapshotのformal audit件数が24へ増えたため、README日英の
+  derived statusだけを機械更新した。
+- 修繕後focused **69 passed**、全non-local **410 passed, 1 deselected**、compileall、
+  diff checkがgreen。P3は残置リスクとして保存し、同一監査者のfocused再監査を次gateとする。
+
+## 2026-07-24 — Phase 6開始: closing reserve・reader tokenizer identity施工
+
+- repositoryは`main...origin/main`のclean基線、doctorはfailures=0（NVML sandbox警告のみ）
+  から開始した。
+- `RunBudgetPlan` v2へ構造化`closing_slots`を追加した。外部slotのprovider/model/価格版と
+  課金軸ceiling×単価からreserveを再計算し、closing batch/poolとの不一致、未知・欠落価格軸、
+  bool/NaN、slot欠落をprovider call前に拒否する。新規protected normal runはv2必須、
+  v1は開始済みrunのlegacy回復互換に限定した。
+- `/home/ryota_tanaka/models/gguf/qwen36/Qwen3.6-27B-Q4_K_M.gguf`のGGUF metadataから
+  reader tokenizer identity
+  `af98a8928972c29a99be5604daff1afaff411a1ace658cfae1935500e1e799a0`を発行した。
+  248,320 tokens、248,320 token types、247,587 mergesの順序付きhashとscalar metadata、
+  llama.cpp commit `d77599234ea6e498775aeadbce665eece5bd98cd`を含む。
+- runtimeの`reader.mean_logprob` metadataはreader aliasが一致しartifact検証に成功した場合だけ
+  `gguf-tokenizer:<identity>`を記録する。改変・欠落・alias不一致では従来どおり
+  `provider-default:<model>:unverified`として比較不能を保つ。
+- focused検証27件、全non-local **405 passed, 1 deselected**、compileall、diff checkがgreen。
+  新作、local model inference、有償API call、provider statement取得は行っていない。cost照合は
+  best-effort方針のまま変更なし。formal auditはこの候補の次のgateである。
+
 ## 2026-07-24 — cost証拠をprivate・best-effort運用へ変更
 
 - 請求書、dashboard export、画面保存をlocal `cost/`へ集約し、`.gitignore`で全体を

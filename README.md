@@ -13,7 +13,7 @@ LLMによる文学表現のための自律制作システム。文学的な生�
 <!-- repository-snapshot:start -->
 - 作品記録: 9作（w0009まで）、終端到達: 9作。
 - 公開作品: 5作 — w0004「半呼吸」、w0005「床の硬さ」、w0006「灯のうしろ」、w0007「折り目」、w0008「暗い側」
-- formal audit artifact: 23件。tests greenとformal audit判定は分離して表示する。
+- formal audit artifact: 25件。tests greenとformal audit判定は分離して表示する。
 <!-- repository-snapshot:end -->
 
 M0〜M8（探索・素材・構成・執筆・査読・擱筆・公開の閉ループ、実験スプリント、
