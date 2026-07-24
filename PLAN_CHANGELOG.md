@@ -1,5 +1,18 @@
 # PLAN 変更履歴
 
+## 0.7.20-23 (2026-07-24) — cost照合を継続可能なbest-effort運用へ変更
+
+オーナーは、詳細なcall単位cost照合は運用負荷が高く継続性を損なうため、厳密なprovider
+reconciliationを通常運用・Phase 6完了の必須条件にしないと決定した。providerの請求書、
+dashboard export、画面保存は非公開のlocal `cost/`へ置き、repository追跡から除外する。
+
+この簡素化は、走行前hard cap、protected reservation、call/charge provenance、予算超過時の
+fail closedを緩和しない。通常はrepository台帳を運用値とし、provider dashboardは期間・model別の
+best-effort集計照合、残高確認、重大な差異の調査に限って使う。call単位request IDの完全一致や
+provider statement adapterは、低負荷で取得・維持できる場合だけ任意に行う。provider証拠が
+不足するrecordは`matched`を捏造せず、`unreconciled`または`operational_estimate`と表示するが、
+それだけでPhase 6をblockしない。
+
 ## 0.7.20-22 (2026-07-24) — Phase 6前gateのオーナー回答
 
 オーナーは、Phase 6前のdecision gateについて次を決定した。

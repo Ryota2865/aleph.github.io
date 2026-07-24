@@ -1,5 +1,14 @@
 # PROGRESS
 
+## 2026-07-24 — cost証拠をprivate・best-effort運用へ変更
+
+- 請求書、dashboard export、画面保存をlocal `cost/`へ集約し、`.gitignore`で全体を
+  public repositoryの追跡対象外にした。保存済みデータの本文は施工時に読んでいない。
+- call単位の厳密な三面照合とstatement adapterをPhase 6必須から外した。通常はrepositoryの
+  call/charge台帳とhard capを維持し、provider側は集計sanity checkと重大差異の調査に限定する。
+- これは予算保護の緩和ではない。provider証拠がなければ`matched`を主張しないが、
+  `unreconciled`だけを理由にPhase 6を停止しない。
+
 ## 2026-07-24 — Phase 6前gateのオーナー回答を記録
 
 - closing reserveは固定USDでなく、manifest登録済みclosing slotのprovider/model価格版と

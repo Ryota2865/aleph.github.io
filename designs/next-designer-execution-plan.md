@@ -344,7 +344,7 @@ novelty値、niche report、material card、work colophonがidentityを参照す
 | house-style label protocol | `fixation.house_style`をprovisionalから昇格し、自動判断へ使う前に必要。Phase 6の統治・公開整合だけには不要 | **負荷枠を承認済み**。短い抜粋12組、3択、2名（1名はオーナー）、15–20分/人以内。LLMは候補抽出だけに使い、blindな人間goldを置換しない |
 | Author migration benchmark | Authorを変更する前に必要。現Authorを固定するPhase 6の開始前には不要 | Phase 6完了後へ延期を推奨。候補、費用削減床、刺激数、有償call上限は未決 |
 | 小規模corpus拡張 | 現Atlas identityを変えるため、Phase 6のcurrent-state整合には不要 | Phase 6中は現Atlas固定を推奨。拡張の価値判断は未決 |
-| provider statement adapter | provider usage statementを取得でき、`matched`を主張する前に必要 | **証拠分類を承認済み**。top-up通知は`funding_receipt`。usage情報がない間は`unreconciled`を維持する |
+| provider statement adapter | provider usage statementを取得でき、`matched`を主張する前に必要 | **Phase 6必須外**。top-up通知は`funding_receipt`。通常はbest-effort集計照合とし、低負荷で維持できる場合だけadapterを追加する |
 
 したがって、全項目をPhase 6開始前に決める必要はない。外部callを伴う新規runをPhase 6中に
 行う場合はclosing予約が先行する。reader計器を新規発行する場合はtokenizer identityが先行する。
@@ -379,9 +379,14 @@ cached input、reasoning token、固定call料など別課金軸があるprovide
 - model/prompt、抜粋単位、もう1名のannotator、合意床と不一致裁定は未決であり、
   annotation開始前に固定する。12組の結果を見てから合意床を下げない。
 
-### 6.0.1 Provider dashboardから必要な情報
+### 6.0.1 Provider cost証拠のbest-effort運用
 
-証拠は次の三層を混同しない。
+詳細なcall単位照合は継続性に対して負荷が高いため、Phase 6の必須条件にしない。請求書、
+dashboard export、画面保存は非公開のlocal `cost/`へ保存し、git追跡しない。通常運用では
+repositoryのcall/charge台帳、hard cap、protected reservationを維持し、provider側証拠は
+期間・model別のsanity check、残高確認、重大な差異の調査へ限定する。
+
+取得できる場合も、証拠は次の三層を混同しない。
 
 1. `funding_receipt`: provider、チャージ日時、金額、通貨、取引ID（存在する場合）。
    利用可能残高の来歴には使えるが、call費用との`matched`判定には使わない。
@@ -397,6 +402,11 @@ cached input、reasoning token、固定call料など別課金軸があるprovide
 API key、完全なaccount ID、支払カード、住所等の秘密・個人情報は取得物へ含めず、必要なら
 安定した非秘密project labelへ置換する。dashboardが集計粒度しか提供しない場合も正常であり、
 その粒度を越える精度を推定しない。
+
+call単位request IDの完全一致、全provider共通adapter、毎runの手動downloadは要求しない。
+provider証拠がない計器recordは`matched`を主張せず、`unreconciled`または
+`operational_estimate`と表示する。これは費用値の精度表示であり、hard cap違反や台帳破損が
+ない限りPhase 6のformal completionを単独ではblockしない。
 
 ### 6.1 正式監査
 
