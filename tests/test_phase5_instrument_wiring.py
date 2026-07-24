@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -169,6 +170,47 @@ def test_runtime_completion_is_observed_but_cost_without_provider_statement_is_m
     assert records["cost.reconciled_usd"]["value"] is None
     assert records["cost.reconciled_usd"]["measurement_status"] == "missing"
     assert records["cost.reconciled_usd"]["confidence"]["reconciliation_status"] == "unreconciled"
+
+
+def test_terminal_reprojection_ignores_unrelated_shared_budget_state_changes(tmp_path):
+    work = Work(tmp_path / "works", "w-step11")
+    work.create(
+        {
+            "run_budget": {
+                "version": 1,
+                "batches": [
+                    {"batch_id": "close", "pool": "closing", "role": "author_primary"}
+                ],
+            }
+        }
+    )
+    measured_at = "2026-07-23T00:00:00+00:00"
+    work.append_decision(
+        {
+            "ts": measured_at,
+            "layer": "L7",
+            "decision": "run_completion:complete",
+            "reason": "fixture",
+            "decided_by": "fixture",
+        }
+    )
+    budget_path = tmp_path / "budget.json"
+    budget_path.write_text('{"other_work_spent": 1}', encoding="utf-8")
+    deps = RealDeps.__new__(RealDeps)
+    deps._instrument_recorder = InstrumentRecorder(_registry(), work.measurements)
+    deps.router = SimpleNamespace(
+        budget=SimpleNamespace(state_path=budget_path)
+    )
+
+    deps.record_run_instruments(
+        work, category="complete", stop_path=None, measured_at=measured_at
+    )
+    budget_path.write_text('{"other_work_spent": 2}', encoding="utf-8")
+    deps.record_run_instruments(
+        work, category="complete", stop_path=None, measured_at=measured_at
+    )
+
+    assert len(_rows(work.measurements)) == 2
 
 
 def test_measurement_append_is_idempotent_and_rejects_same_id_with_other_content(

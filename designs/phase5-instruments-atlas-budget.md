@@ -2,10 +2,9 @@
 
 日付: 2026-07-21
 設計者: Codex（sol）
-状態: **実装前独立設計監査PASS。Phase 5A/5B core実装・独立監査PASS（2026-07-21）。
-通常run予算manifestの厳格な入力境界、一括admission、role別routing、closing settlementと
-終了分類を実装済み。修繕candidate `db8567c`は正式再監査PASS（2026-07-23）。
-5C、Atlas再構築、新規有料実走は未着手。**
+状態: **Phase 5A–5C実装・正式独立監査PASS（2026-07-24）。Phase 5C candidate
+`fd9740f`の正式監査後、終端record identityのP2-1をtree `5596038`で修繕し、
+同じClaude Code担当のfocused再監査もP0–P2なし、VERDICT: PASS。Phase 5完了。**
 調査証拠: `reports/PHASE5_READ_ONLY_INVENTORY_20260721.md`
 計器定義: `designs/instruments.md`
 

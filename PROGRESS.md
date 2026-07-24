@@ -1,5 +1,22 @@
 # PROGRESS
 
+## 2026-07-24 — Phase 5C正式監査・P2-1修繕再監査PASS、Phase 5完了
+
+- Phase 5C candidate `fd9740f2595e5c5d0779661cb1cd67ea606827c2`をClaude Code
+  （Opus 4.8）の別担当がread-only正式監査した。focused **82 passed**、全non-local
+  **388 passed, 1 deselected**、独立故障注入59項目、実Atlas/workのread-only検査を再現し、
+  P0/P1なし、`VERDICT: PASS`。原文は
+  `reports/PHASE5C_FORMAL_MILESTONE_AUDIT_20260723.md`。
+- P2-1の共有`budget.json`変動による終端record重複をRED（2→4行）で再現し、
+  measurement identityをrun manifest、固定completion event、当該work callsだけへ限定した。
+  修繕tree `55960380567e5c040fb95cfbf9f77947644ee231`を同じ監査担当が再監査し、
+  実Budget/Router故障注入、focused **83 passed, 24 deselected**、全non-local
+  **389 passed, 1 deselected**を再現、**P0–P2なし、VERDICT: PASS**。
+  原文は`reports/PHASE5C_P2_1_REAUDIT_20260724.md`。
+- 残余P3はreview再査読identity、stop path collision、identity欠落Atlasの無言停止、
+  read-only snapshotのmtime touch、Atlas起動時hash費用、measurement appendのO(n²)。
+  最初のprotected実走前に必須だったP2-1は解消し、Phase 5を正式完了とする。
+
 ## 2026-07-23 — Phase 5C step 11–12 計器配線・施工者受入監査green
 
 - 新規workの`measurements.jsonl`へregistry検証済みrecordを冪等appendする

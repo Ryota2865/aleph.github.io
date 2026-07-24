@@ -714,14 +714,6 @@ class RealDeps:
             },
             {"ref": f"works/{work.work_id}/calls.jsonl", "hash": _file_hash(work.calls)},
         ]
-        budget = getattr(getattr(self, "router", None), "budget", None)
-        budget_path = getattr(budget, "state_path", None)
-        if budget_path is not None and Path(budget_path).is_file():
-            try:
-                budget_ref = str(Path(budget_path).relative_to(Path.cwd()))
-            except ValueError:
-                budget_ref = f"budget-state:{_file_hash(Path(budget_path))}"
-            refs_list.append({"ref": budget_ref, "hash": _file_hash(Path(budget_path))})
         refs = tuple(refs_list)
         run_manifest_hash = _canonical_hash(run_manifest)
         closing = [

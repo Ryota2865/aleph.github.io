@@ -1,5 +1,31 @@
 # PLAN 変更履歴
 
+## 0.7.20-19 (2026-07-24) — Phase 5C正式監査・P2-1修繕再監査PASS
+
+Phase 5C step 9–12をcommit
+`fd9740f2595e5c5d0779661cb1cd67ea606827c2`として固定し、施工者と異なる
+Claude Code（Opus 4.8）担当がread-only正式監査した。doctor failures=0、
+Phase 5 focused **82 passed**、全non-local **388 passed, 1 deselected**、
+独立故障注入59項目と実Atlas/workのread-only検査を再現し、
+**P0/P1なし、VERDICT: PASS**。原文は
+`reports/PHASE5C_FORMAL_MILESTONE_AUDIT_20260723.md`。
+
+監査P2-1は、repository共有`budget.json`のhashがwork単位の終端measurement identityへ
+混入し、無関係な別workの予算活動後のrecoveryで同じcompletion/cost recordを重複させる
+欠陥だった。observable REDで2行→4行を再現し、終端recordのidentity材料をrun manifest、
+固定completion event、当該workのcallsへ限定した。修繕tree
+`55960380567e5c040fb95cfbf9f77947644ee231`を同じ監査担当がfocused再監査し、
+実Budget/Routerによる陽性・陰性対照、focused **83 passed, 24 deselected**、
+全non-local **389 passed, 1 deselected**を再現して
+**P0–P2なし、VERDICT: PASS**。原文は
+`reports/PHASE5C_P2_1_REAUDIT_20260724.md`。
+
+元監査の残余P3は、review再査読の`measured_at`、stop path変化時のmeasurement collision、
+identity欠落Atlasでの無言計測停止、read-only snapshotのmtime touch、Atlas起動時再hash、
+measurement stream全読込み性能である。P2修繕でstop path collisionの偶然のmaskが外れるが、
+silent duplicationよりfail closedであり再監査を阻害しないと判定された。
+本項は監査証拠と機械的closureだけを追記し、Phase 5を正式完了とする。
+
 ## 0.7.20-18 (2026-07-23) — Phase 5B後半 通常run closing正式再監査PASS
 
 Codex施工の通常run一括admission、API phase/role reservation routing、closing settlement、
