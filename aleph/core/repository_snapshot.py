@@ -211,7 +211,9 @@ class RepositoryReader:
                 if work.is_published and str(work.published_at or "").startswith(period):
                     publish_count += 1
         cap = publish.get("max_per_month")
-        if cap is not None and type(cap) is not int:
+        if "max_per_month" not in publish:
+            warnings.append("publish.max_per_month is missing; deadline is unavailable")
+        elif cap is not None and type(cap) is not int:
             warnings.append("publish.max_per_month is not an integer; deadline is unavailable")
         ledger_limits = {
             "api": (api.get("usd_per_month", 0.0), "month"),

@@ -484,6 +484,13 @@ focused 28件、全non-local 433 passed, 1 deselectedがgreen。
 独立Claude Code監査は26件の故障注入とidentity不変を確認し、P0〜P3なし、
 **VERDICT: PASS**。R-5はformal完了。
 
+R-6施工状態（2026-07-25）: 0.7.20-35と`designs/phase6-missing-publish-cap.md`で、
+`publish.max_per_month`欠落時にdeadline不在理由をwarningへ出すtracer bulletを開始した。
+`deadlines=()`と`publish_cap=None`を維持したままwarningだけが欠落するobservable REDを、
+missing key分岐の追加でGREEN化した。R-7〜R-9、R-2残置P3、R-4監査P3は範囲外。
+focused 29件、全non-local 434 passed, 1 deselectedがgreen。
+Codex施工のため独立Claude Code正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

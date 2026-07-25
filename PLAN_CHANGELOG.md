@@ -1,5 +1,18 @@
 # PLAN 変更履歴
 
+## 0.7.20-35 (2026-07-25) — Phase 6 publish cap欠落の可視化
+
+current-state独立再監査の残置R-6を、外部callのない自己完結tracer bulletとして施工する。
+`publish.max_per_month`が非整数ならwarningを出す一方、key自体が欠落するとdeadline面が
+warningなしで消えていた。欠落時もdeadlineを捏造せず空のまま保ち、その理由をwarningへ出す。
+
+公開snapshot面のREDで`deadlines=()`、`publish_cap=None`、warning欠落を固定し、
+missing keyの分岐を一つ追加してGREEN化する。既存の非整数、999期限、通常capの意味は変えない。
+詳細契約は`designs/phase6-missing-publish-cap.md`。R-7〜R-9、R-2残置P3、
+R-4監査P3は範囲外。正式完了は独立Claude Code監査PASSを要する。新作、local inference、
+有償API call、provider cost照合は行わない。focused **29 passed**、全non-local
+**434 passed, 1 deselected**、compileall、diff checkがgreen。
+
 ## 0.7.20-34 (2026-07-25) — Phase 6 formal audit ledger provenance明示
 
 current-state独立再監査の残置R-5を、外部callのない自己完結tracer bulletとして施工する。
