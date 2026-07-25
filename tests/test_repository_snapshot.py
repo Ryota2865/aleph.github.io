@@ -733,6 +733,39 @@ def test_missing_newer_ledger_artifact_does_not_fall_back_to_older_pass(tmp_path
     assert any("ledger entry is invalid" in warning for warning in snapshot.warnings)
 
 
+def test_audit_path_cannot_be_both_legacy_and_registered(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    path = "reports/OVERLAP_AUDIT.md"
+    (tmp_path / path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    config = tmp_path / "config"
+    config.mkdir()
+    (config / "formal-audits.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "legacy_unordered": [path],
+                "entries": [
+                    {
+                        "sequence": 99,
+                        "path": path,
+                        "recorded_on": "2026-07-25",
+                        "target_changelog": "0.7.20-38",
+                        "candidate_tree": "a" * 40,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = RepositoryReader(tmp_path).snapshot()
+
+    assert snapshot.assurance["formal_audit"]["status"] == "UNKNOWN"
+    assert snapshot.formal_audits[0]["ledger"] == "legacy"
+    assert f"formal audit path is both legacy and registered: {path}" in snapshot.warnings
+
+
 def test_repository_snapshot_reports_design_state_and_expired_deadline(tmp_path):
     (tmp_path / "PLAN.md").write_text(
         "**版**: 0.6 + 0.7.20-4までの改訂\n", encoding="utf-8"

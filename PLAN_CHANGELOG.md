@@ -1,5 +1,15 @@
 # PLAN 変更履歴
 
+## 0.7.20-38 (2026-07-25) — Phase 6 audit path分類排他
+
+current-state独立再監査の残置R-9を自己完結tracer bulletとして施工する。同一artifact pathを
+`legacy_unordered`とregistered `entries`へ同時記載したledgerは矛盾としてfail closedする。
+重複pathを明示warningし、registered昇格を拒否してformal statusをUNKNOWNへ倒す。
+
+詳細契約は`designs/phase6-audit-path-disjoint.md`。R-1〜R-9外の残置P3は範囲外。
+正式完了は独立Claude Code監査PASSを要する。外部callは行わない。focused **32 passed**、
+全non-local **437 passed, 1 deselected**、compileall、diff checkがgreen。
+
 ## 0.7.20-37 (2026-07-25) — Phase 6 poetics履歴欠落の可視化
 
 current-state独立再監査の残置R-8を自己完結tracer bulletとして施工する。`poetics/`は存在するが

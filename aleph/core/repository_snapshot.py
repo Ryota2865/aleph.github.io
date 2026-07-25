@@ -361,6 +361,15 @@ class RepositoryReader:
             warnings.append("formal audit ledger entries are invalid")
             entries = []
             ledger_valid = False
+        legacy_paths = set(legacy)
+        entry_paths = {
+            raw["path"]
+            for raw in entries
+            if isinstance(raw, dict) and isinstance(raw.get("path"), str)
+        }
+        for path in sorted(legacy_paths & entry_paths):
+            warnings.append(f"formal audit path is both legacy and registered: {path}")
+            ledger_valid = False
         declared_sequences = {
             raw["path"]: raw["sequence"]
             for raw in entries
@@ -388,6 +397,7 @@ class RepositoryReader:
                 and sequence not in seen_sequences
                 and isinstance(path, str)
                 and path in by_path
+                and path not in legacy_paths
                 and path not in registered_paths
                 and isinstance(target, str)
                 and bool(re.fullmatch(r"\d+(?:\.\d+)*(?:-\d+)?", target))

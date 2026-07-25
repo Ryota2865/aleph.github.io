@@ -505,6 +505,12 @@ v0値は維持しwarning欠落REDだけをGREEN化した。focused 31件、全no
 436 passed, 1 deselectedがgreen。独立Claude Code監査はP0〜P3なし、
 **VERDICT: PASS**。R-8はformal完了。R-9と残置P3は範囲外。
 
+R-9施工状態（2026-07-25）: 0.7.20-38と`designs/phase6-audit-path-disjoint.md`で、
+同一pathのlegacy/registered二重分類をfail closedするtracer bulletを開始した。旧実装の
+無警告registered昇格PASSを、overlap warning、entry拒否、ledger UNKNOWNへGREEN化した。
+focused 32件、全non-local 437 passed, 1 deselectedがgreen。
+R-1〜R-9外の残置P3は範囲外。正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、
