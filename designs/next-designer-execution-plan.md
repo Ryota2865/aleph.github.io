@@ -471,7 +471,9 @@ R-4施工状態（2026-07-25）: 0.7.20-33と`designs/phase6-budget-snapshot-iso
 開始した。返却payloadの`ledgers`、`ledger_status`、`work_spent`を変更するとfrozen snapshotへ
 逆流するobservable REDを、budgetのdeep copy一箇所でGREEN化した。R-5〜R-9と
 R-2残置P3は範囲外。focused 27件、全non-local 432 passed, 1 deselectedがgreen。
-Codex施工のため独立Claude Code正式監査待ち。
+独立Claude Code監査は旧実装の三面逆流RED、候補のsnapshot不変、再serialization非汚染、
+空budget shape不変を確認した。P0〜P2なし、**VERDICT: PASS**。R-4はformal完了。
+他の浅いitem copyと未実行runtime/provider経路はP3残余として保持する。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。

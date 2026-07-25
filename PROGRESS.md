@@ -1,17 +1,18 @@
 # PROGRESS
 
-## 2026-07-25 — Phase 6 R-4 budget snapshot分離施工中
+## 2026-07-25 — Phase 6 R-4正式監査PASS
 
-- R-3 closure commit `d882c36`から`codex/phase6-r4-budget-snapshot-copy`を開始。
-- `RepositorySnapshot.to_dict()`の返却payloadから`budget.ledgers.api.spent`、
-  `budget.ledger_status.api.spent`、`budget.work_spent`を変更するとsnapshot本体へ逆流する
-  公開interface REDを再現した。
-- `budget`返却時のdeep copy一箇所でGREEN化。budget算出、台帳、上限、予約、費用、
-  provenance、他snapshot面は変更しない。
+- 独立Claude Code担当がcandidate tree
+  `ab0901a821716cb57da231df97706015fe0e4164`をread-only監査した。
+  旧実装の三面逆流REDを再現し、候補のsnapshot不変、再serialization非汚染、
+  空budget shape不変を確認した。
 - focused **27 passed**、全non-local **432 passed, 1 deselected**、compileall、
-  diff checkがgreen。正式独立監査待ち。
-- R-5〜R-9とR-2残置P3は未変更。新作、local inference、有償API call、
-  provider cost照合は行わない。
+  diff checksを独立再現。P0〜P2なし、`VERDICT: PASS`。R-4をformal完了する。
+- candidateをproof commit `2ee0f339b7ff73249837c94d88302b8b16093ebe`と
+  `audit-candidate/phase6-budget-snapshot-isolation-20260725` tagへ固定した。
+- 他の浅いitem copyと未実行runtime/provider経路はP3残余。新作、local inference、
+  有償API call、provider cost照合は行わない。
+- 次の自己完結tracer bulletはR-5。
 
 ## 2026-07-25 — Phase 6 R-3正式監査PASS
 

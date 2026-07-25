@@ -15,6 +15,15 @@ Codex施工のため正式完了は独立Claude Code監査PASSを要する。新
 有償API call、provider cost照合は行わない。focused **27 passed**、全non-local
 **432 passed, 1 deselected**、compileall、diff checkがgreen。
 
+独立Claude Code担当がcandidate tree `ab0901a821716cb57da231df97706015fe0e4164`を
+read-only正式監査した。旧実装で`ledgers`、`ledger_status`、`work_spent`三面の逆流REDを
+再現し、候補ではsnapshot不変、二度目の`to_dict()`非汚染、空budgetのshape不変を確認した。
+focused **27 passed**、全non-local **432 passed, 1 deselected**を独立再現し、
+P0〜P2なし、**VERDICT: PASS**。R-4をformal完了する。候補はproof commit
+`2ee0f339b7ff73249837c94d88302b8b16093ebe`と
+`audit-candidate/phase6-budget-snapshot-isolation-20260725` tagへ固定した。
+他の浅いitem copyと、未実行runtime/provider経路はP3残余として保持する。
+
 ## 0.7.20-32 (2026-07-25) — Phase 6 formal verdict厳密化
 
 current-state独立再監査の残置R-3を、外部callのない自己完結tracer bulletとして施工する。

@@ -130,6 +130,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_AUDIT_STRICT_VERDICT_AUDIT_20260725.md"
       ]
+    },
+    {
+      "sequence": 9,
+      "path": "reports/PHASE6_BUDGET_SNAPSHOT_ISOLATION_AUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-33",
+      "candidate_tree": "ab0901a821716cb57da231df97706015fe0e4164",
+      "candidate_commit": "2ee0f339b7ff73249837c94d88302b8b16093ebe",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-budget-snapshot-isolation-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_BUDGET_SNAPSHOT_ISOLATION_AUDIT_20260725.md"
+      ]
     }
   ]
 }
