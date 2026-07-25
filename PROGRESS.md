@@ -1,5 +1,14 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 formal完了
+
+- closing reserve・reader tokenizer identityとcurrent-state R-1〜R-9は全て独立正式監査PASS。
+- clean HEADのRepositorySnapshotはlatest audit PASS、currency CURRENT、tree state HEAD、
+  unexpected pathsなし。README日英、changelog 0.7.20-38、詩学v1、期限表示が一致する。
+- Author migration、corpus拡張、provider adapter、house-style計器昇格は正典どおり条件付きまたは
+  Phase 6後へ延期。残置P3は非blockingで、公開上限999の2026-08-01 owner review gateは維持する。
+- 新作、local inference、有償API call、provider cost照合を追加せずPhase 6をformal完了する。
+
 ## 2026-07-25 — Phase 6 R-9正式監査PASS
 
 - 独立Claude Code担当がcandidate tree `8474e45f0f161254ea5e5ed3c63d482405a71762`を

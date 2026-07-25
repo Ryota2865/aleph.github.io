@@ -332,12 +332,13 @@ novelty値、niche report、material card、work colophonがidentityを参照す
 
 ## Phase 6 — 統治・公開・運用の整合
 
-**状態（2026-07-24）:** 開始。closing reserve算出とreader tokenizer identityを、
+**状態（2026-07-25）: formal完了。** closing reserve算出とreader tokenizer identityを、
 新作・有償callなしの自己完結tracer bulletとして施工した。初回正式監査は、v1 checkpoint
 bypassとpricing/slot/versionのreservation identity欠落をP2として検出し**FAIL**。原文を保存し、
 observable REDから同根修繕した。同一監査者のfocused再監査でP0–P2なし、
 **VERDICT: PASS**。このtracer bulletはformal完了した。詳細は
-`designs/phase6-closing-reader-identity.md`。Phase 6全体は継続中であり完了とはしない。
+`designs/phase6-closing-reader-identity.md`。続くcurrent-state施工とR-1〜R-9も全て独立正式監査
+PASSとなり、clean HEADでformal audit、README、期限付き決定が一致したためPhase 6全体を完了する。
 
 ### 6.0 Phase 6前のdecision gate
 
@@ -511,6 +512,11 @@ R-9施工状態（2026-07-25）: 0.7.20-38と`designs/phase6-audit-path-disjoint
 focused 32件、全non-local 437 passed, 1 deselectedがgreen。
 独立Claude Code監査はP0〜P3なし、**VERDICT: PASS**。R-9はformal完了し、
 current-state再監査のR-1〜R-9は全てformal PASS。R-series外の残置P3は範囲外。
+
+Phase 6全体判定（2026-07-25）: clean HEADのRepositorySnapshotはlatest audit PASS、
+currency CURRENT、tree state HEAD、unexpected pathsなし。§6.0の未実施項目は発動条件前または
+Phase 6後へ明示延期され、残置P3は非blocking。2026-08-01公開上限review gateを維持したまま、
+追加の新作・local inference・有償callなしでPhase 6をformal完了する。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。

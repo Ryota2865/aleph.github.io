@@ -17,6 +17,13 @@ read-only正式監査した。overlapのPASS/FAIL/UNKNOWN、最大sequence、全
 `audit-candidate/phase6-audit-path-disjoint-20260725` tagへ固定した。
 これによりcurrent-state再監査が列挙したR-1〜R-9はすべてformal PASSとなった。
 
+Phase 6全体の完了条件を再照合した。closing reserve・reader tokenizer identity、正式監査、
+批評家役職、current-state projection、README日英、期限付き決定の可視化はすべて正典どおり
+成立し、RepositorySnapshotはclean HEADで`PASS / CURRENT`を返す。Author migration、
+corpus拡張、provider adapter、house-style計器昇格は発動条件前またはPhase 6後へ明示延期済みで、
+残置P3も非blockingである。2026-08-01の公開上限再審査は期限時のowner gateとして維持する。
+したがって、追加実装や有償runなしに**Phase 6をformal完了**とする。
+
 ## 0.7.20-37 (2026-07-25) — Phase 6 poetics履歴欠落の可視化
 
 current-state独立再監査の残置R-8を自己完結tracer bulletとして施工する。`poetics/`は存在するが
