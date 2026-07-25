@@ -15,6 +15,13 @@ R-6〜R-9、R-2残置P3、R-4監査P3は範囲外。Codex施工のため正式�
 focused **28 passed**、全non-local **433 passed, 1 deselected**、compileall、
 diff checkがgreen。
 
+独立Claude Code担当がcandidate tree `d18330b71992c2f9fd5315059e214f621e80838e`を
+read-only正式監査した。旧実装RED、両provenance面、degraded ledger、entry metadata、
+assurance不変を含む26件の故障注入を全件確認し、P0〜P3なし、**VERDICT: PASS**。
+R-5をformal完了する。候補はproof commit
+`b179d2d502b4f1eaa796a26f4f87ade5d08b2d1b`と
+`audit-candidate/phase6-audit-ledger-provenance-20260725` tagへ固定した。
+
 ## 0.7.20-33 (2026-07-25) — Phase 6 budget snapshot返却値の分離
 
 current-state独立再監査の残置R-4を、外部callのない自己完結tracer bulletとして施工する。

@@ -148,6 +148,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_BUDGET_SNAPSHOT_ISOLATION_AUDIT_20260725.md"
       ]
+    },
+    {
+      "sequence": 10,
+      "path": "reports/PHASE6_AUDIT_LEDGER_PROVENANCE_AUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-34",
+      "candidate_tree": "d18330b71992c2f9fd5315059e214f621e80838e",
+      "candidate_commit": "b179d2d502b4f1eaa796a26f4f87ade5d08b2d1b",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-audit-ledger-provenance-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_AUDIT_LEDGER_PROVENANCE_AUDIT_20260725.md"
+      ]
     }
   ]
 }

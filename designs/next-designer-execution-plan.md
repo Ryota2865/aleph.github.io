@@ -481,7 +481,8 @@ R-5施工状態（2026-07-25）: 0.7.20-34と`designs/phase6-audit-ledger-proven
 artifact directoriesだけを出所表示するobservable REDを、既存provenance tupleへの一項目追加で
 GREEN化した。R-6〜R-9、R-2残置P3、R-4監査P3は範囲外。
 focused 28件、全non-local 433 passed, 1 deselectedがgreen。
-Codex施工のため独立Claude Code正式監査待ち。
+独立Claude Code監査は26件の故障注入とidentity不変を確認し、P0〜P3なし、
+**VERDICT: PASS**。R-5はformal完了。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
