@@ -1,5 +1,22 @@
 # PLAN 変更履歴
 
+## 0.7.20-32 (2026-07-25) — Phase 6 formal verdict厳密化
+
+current-state独立再監査の残置R-3を、外部callのない自己完結tracer bulletとして施工する。
+formal audit artifactのmachine verdictは、最終非空行そのものが
+`VERDICT: PASS`または`VERDICT: FAIL`と厳密一致する場合だけ確定する。
+
+現行のcase-insensitive regex、コロン後の任意空白、行全体のstripによる広い受理を廃止する。
+大小文字違い、空白欠落／過剰、tab、行頭末尾空白、suffixはすべて`UNKNOWN`へfail closedする。
+空白だけの末尾行を「非空行」に数えない既存意味は維持する。
+
+詳細契約は`designs/phase6-audit-strict-verdict.md`。ledger順序、tree binding、closure allowlist、
+作品、予算、期限、生成経路は変更しない。R-4〜R-9とR-2残置P3は範囲外。
+Codex施工のため正式完了は独立Claude Code監査PASSを要する。新作、local inference、
+有償API call、provider cost照合は行わない。施工候補はobservable RED 2件から修繕し、
+focused **26 passed**、全non-local **431 passed, 1 deselected**、compileall、
+diff checkがgreen。
+
 ## 0.7.20-31 (2026-07-25) — Phase 6 audit supersedes順序独立化
 
 current-state独立再監査の残置R-1を、外部callのない自己完結tracer bulletとして施工する。

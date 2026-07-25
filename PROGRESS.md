@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-3 formal verdict厳密化施工中
+
+- R-1 closure commit `3cadc6b`から`codex/phase6-r3-strict-verdict`を開始。
+  doctorはfailures=0、worktree clean、RTX 3090も確認したがlocal inferenceは行わない。
+- machine verdictを最終非空行の厳密な2文字列へ限定する。case、空白、tab、prefix/suffixの
+  曖昧化は`UNKNOWN`へfail closedし、空白だけの末尾行は無視する。
+- 規約外lowercaseが直接PASSとなる偽陽性と、最新曖昧artifactがconclusiveになる経路を
+  2本のREDで固定し、元lineの2文字列照合だけでGREEN化した。
+- focused **26 passed**、全non-local **431 passed, 1 deselected**、compileall、
+  diff checkがgreen。正式独立監査待ち。
+- ledger順序、tree binding、closure allowlist、作品、予算、期限、生成経路は非変更。
+- 新作、local inference、有償API call、provider cost照合は行わない。
+
 ## 2026-07-25 — Phase 6 R-1正式監査PASS
 
 - 独立Claude Code担当がcandidate tree

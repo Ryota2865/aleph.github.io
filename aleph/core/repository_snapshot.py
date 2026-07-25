@@ -273,11 +273,13 @@ class RepositoryReader:
 
     @staticmethod
     def _terminal_verdict(text: str) -> str:
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        lines = [line for line in text.splitlines() if line.strip()]
         if not lines:
             return "UNKNOWN"
-        match = re.fullmatch(r"VERDICT:\s*(PASS|FAIL)", lines[-1], re.I)
-        return match.group(1).upper() if match else "UNKNOWN"
+        return {
+            "VERDICT: PASS": "PASS",
+            "VERDICT: FAIL": "FAIL",
+        }.get(lines[-1], "UNKNOWN")
 
     @staticmethod
     def _valid_closure_paths(report_path: str, value: Any) -> tuple[str, ...] | None:

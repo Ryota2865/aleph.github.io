@@ -458,6 +458,13 @@ fail closedにする。observable RED 2件から修繕し、focused 24件、全n
 17ケースを独立注入し、P0〜P3なし、**VERDICT: PASS**。R-1はformal完了。
 次の自己完結tracer bullet候補はR-3（terminal verdictの厳密大小文字契約）。
 
+R-3施工状態（2026-07-25）: 0.7.20-32と`designs/phase6-audit-strict-verdict.md`で、
+machine verdictを最終非空行そのものの厳密な`VERDICT: PASS|FAIL`へ限定するtracer bulletを
+開始した。case-insensitive、空白欠落／過剰、tab、行頭末尾空白、suffixの受理を廃止し、
+曖昧なartifactは`UNKNOWN`へfail closedする。observable RED 2件から修繕し、
+focused 26件、全non-local 431 passed, 1 deselectedがgreen。
+Codex施工のため独立Claude Code正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

@@ -579,6 +579,58 @@ def test_non_terminal_or_conflicting_verdict_never_becomes_conclusive(tmp_path):
     assert any("ledger artifact has no terminal verdict" in warning for warning in snapshot.warnings)
 
 
+def test_terminal_verdict_requires_exact_case_and_spacing():
+    assert RepositoryReader._terminal_verdict("VERDICT: PASS\n") == "PASS"
+    assert RepositoryReader._terminal_verdict("VERDICT: FAIL\n\n \t\n") == "FAIL"
+
+    for malformed in (
+        "verdict: pass",
+        "Verdict: PASS",
+        "VERDICT: pass",
+        "VERDICT:PASS",
+        "VERDICT:  PASS",
+        "VERDICT:\tPASS",
+        " VERDICT: PASS",
+        "VERDICT: PASS ",
+        "VERDICT: PASS (see appendix)",
+    ):
+        assert RepositoryReader._terminal_verdict(malformed) == "UNKNOWN"
+
+
+def test_malformed_latest_verdict_does_not_fall_back_or_become_conclusive(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    old_path = "reports/OLD_AUDIT.md"
+    new_path = "reports/NEW_REAUDIT.md"
+    (tmp_path / old_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    (tmp_path / new_path).write_text("verdict: pass\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 1,
+                "path": old_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "a" * 40,
+            },
+            {
+                "sequence": 2,
+                "path": new_path,
+                "recorded_on": "2026-08-02",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "b" * 40,
+                "supersedes": old_path,
+            },
+        ],
+    )
+
+    snapshot = RepositoryReader(tmp_path).snapshot()
+
+    assert snapshot.assurance["formal_audit"]["status"] == "UNKNOWN"
+    assert any("ledger artifact has no terminal verdict" in warning for warning in snapshot.warnings)
+
+
 def test_unregistered_audit_artifact_invalidates_latest_claim(tmp_path):
     reports = tmp_path / "reports"
     reports.mkdir()
