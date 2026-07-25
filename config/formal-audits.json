@@ -184,6 +184,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_MISSING_PUBLISH_CAP_AUDIT_20260725.md"
       ]
+    },
+    {
+      "sequence": 12,
+      "path": "reports/PHASE6_CHANGELOG_VERSION_ORDER_AUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-36",
+      "candidate_tree": "57250a822ff8f095200df0e07c486a9cad1e7557",
+      "candidate_commit": "dae11558180b3ea9efbb2ffb36ed6ee0c5464af5",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-changelog-version-order-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_CHANGELOG_VERSION_ORDER_AUDIT_20260725.md"
+      ]
     }
   ]
 }

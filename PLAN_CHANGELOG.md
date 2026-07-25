@@ -12,6 +12,13 @@ R-4監査P3は範囲外。正式完了は独立Claude Code監査PASSを要する
 有償API call、provider cost照合は行わない。focused **30 passed**、全non-local
 **435 passed, 1 deselected**、compileall、diff checkがgreen。
 
+独立Claude Code担当がcandidate tree `57250a822ff8f095200df0e07c486a9cad1e7557`を
+read-only正式監査した。旧RED、全24順列、数値順、両fence、blockquote、post-fence復帰、
+既存版形式とstale判定を独立検証し、P0〜P2なし、**VERDICT: PASS**。R-7をformal完了する。
+候補はproof commit `dae11558180b3ea9efbb2ffb36ed6ee0c5464af5`と
+`audit-candidate/phase6-changelog-version-order-20260725` tagへ固定した。
+版separator平坦化、未閉fence、空白indent fenceはP3残余として保持する。
+
 ## 0.7.20-35 (2026-07-25) — Phase 6 publish cap欠落の可視化
 
 current-state独立再監査の残置R-6を、外部callのない自己完結tracer bulletとして施工する。
