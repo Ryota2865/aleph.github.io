@@ -202,6 +202,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_CHANGELOG_VERSION_ORDER_AUDIT_20260725.md"
       ]
+    },
+    {
+      "sequence": 13,
+      "path": "reports/PHASE6_MISSING_POETICS_HISTORY_AUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-37",
+      "candidate_tree": "57d95d4ca9ebf2d82eec301026a943e96e82d7d5",
+      "candidate_commit": "d4654f86e1fc8d7c751b78a5f23305f797d3821a",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-missing-poetics-history-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_MISSING_POETICS_HISTORY_AUDIT_20260725.md"
+      ]
     }
   ]
 }
