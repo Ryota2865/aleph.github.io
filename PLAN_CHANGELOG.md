@@ -10,6 +10,13 @@ current-state独立再監査の残置R-9を自己完結tracer bulletとして施
 正式完了は独立Claude Code監査PASSを要する。外部callは行わない。focused **32 passed**、
 全non-local **437 passed, 1 deselected**、compileall、diff checkがgreen。
 
+独立Claude Code担当がcandidate tree `8474e45f0f161254ea5e5ed3c63d482405a71762`を
+read-only正式監査した。overlapのPASS/FAIL/UNKNOWN、最大sequence、全順列、非overlap同値、
+既存validationを独立検証し、P0〜P3なし、**VERDICT: PASS**。R-9をformal完了する。
+候補はproof commit `6af4dbd0829ac91255ddde506b9271c79d0f7816`と
+`audit-candidate/phase6-audit-path-disjoint-20260725` tagへ固定した。
+これによりcurrent-state再監査が列挙したR-1〜R-9はすべてformal PASSとなった。
+
 ## 0.7.20-37 (2026-07-25) — Phase 6 poetics履歴欠落の可視化
 
 current-state独立再監査の残置R-8を自己完結tracer bulletとして施工する。`poetics/`は存在するが

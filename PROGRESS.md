@@ -1,13 +1,14 @@
 # PROGRESS
 
-## 2026-07-25 — Phase 6 R-9 audit path分類排他施工中
+## 2026-07-25 — Phase 6 R-9正式監査PASS
 
-- R-8 closure commit `a4f177b`から`codex/phase6-r9-audit-ledger-path-disjoint`を開始。
-- legacyとsequence 99 entryの同一PASS pathがregisteredへ昇格するREDを再現。
-- overlapを明示warningし、entry昇格を拒否してledger全体をUNKNOWNへGREEN化。
-- focused **32 passed**、全non-local **437 passed, 1 deselected**、compileall、
-  diff checkがgreen。正式独立監査待ち。
-- R-1〜R-9外の残置P3は未変更。外部callなし。
+- 独立Claude Code担当がcandidate tree `8474e45f0f161254ea5e5ed3c63d482405a71762`を
+  read-only監査し、overlap全系と非overlap同値を確認した。
+- focused **32 passed**、全non-local **437 passed, 1 deselected**を独立再現。
+  P0〜P3なし、`VERDICT: PASS`。R-9をformal完了する。
+- candidateをproof commit `6af4dbd0829ac91255ddde506b9271c79d0f7816`と
+  `audit-candidate/phase6-audit-path-disjoint-20260725` tagへ固定した。
+- current-state再監査のR-1〜R-9は全てformal PASS。次はPhase 6全体closure判定。
 
 ## 2026-07-25 — Phase 6 R-8正式監査PASS
 
