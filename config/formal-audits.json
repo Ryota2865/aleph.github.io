@@ -166,6 +166,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_AUDIT_LEDGER_PROVENANCE_AUDIT_20260725.md"
       ]
+    },
+    {
+      "sequence": 11,
+      "path": "reports/PHASE6_MISSING_PUBLISH_CAP_AUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-35",
+      "candidate_tree": "5390cb2e0212418fe9247659db0054f233aa8838",
+      "candidate_commit": "2b36671de9ea9e2bb6acac0bf89c00ad7916a4ce",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-missing-publish-cap-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_MISSING_PUBLISH_CAP_AUDIT_20260725.md"
+      ]
     }
   ]
 }

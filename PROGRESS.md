@@ -1,14 +1,14 @@
 # PROGRESS
 
-## 2026-07-25 — Phase 6 R-6 publish cap欠落可視化施工中
+## 2026-07-25 — Phase 6 R-6正式監査PASS
 
-- R-5 closure commit `6c2d7ec`から`codex/phase6-r6-missing-publish-cap`を開始。
-- `publish.max_per_month`欠落時にdeadlineとcapはfail-closedになるがwarningが無いREDを再現。
-- missing keyだけにwarningを追加してGREEN化。非整数、999期限、通常capは変更しない。
-- focused **29 passed**、全non-local **434 passed, 1 deselected**、compileall、
-  diff checkがgreen。正式独立監査待ち。
-- R-7〜R-9、R-2残置P3、R-4監査P3は未変更。新作、local inference、有償API call、
-  provider cost照合は行わない。
+- 独立Claude Code担当がcandidate tree `5390cb2e0212418fe9247659db0054f233aa8838`を
+  read-only監査し、全中心契約を独立故障注入で確認した。
+- focused **29 passed**、全non-local **434 passed, 1 deselected**を独立再現。
+  P0〜P3なし、`VERDICT: PASS`。R-6をformal完了する。
+- candidateをproof commit `2b36671de9ea9e2bb6acac0bf89c00ad7916a4ce`と
+  `audit-candidate/phase6-missing-publish-cap-20260725` tagへ固定した。
+- 新作、local inference、有償API call、provider cost照合は行わない。次はR-7。
 
 ## 2026-07-25 — Phase 6 R-5正式監査PASS
 

@@ -13,6 +13,13 @@ R-4監査P3は範囲外。正式完了は独立Claude Code監査PASSを要する
 有償API call、provider cost照合は行わない。focused **29 passed**、全non-local
 **434 passed, 1 deselected**、compileall、diff checkがgreen。
 
+独立Claude Code担当がcandidate tree `5390cb2e0212418fe9247659db0054f233aa8838`を
+read-only正式監査した。欠落2経路の旧RED、malformed値、999期限境界、通常cap、config不能を
+独立注入し、差分がmissing warning一件だけであることを確認した。P0〜P3なし、
+**VERDICT: PASS**。R-6をformal完了する。候補はproof commit
+`2b36671de9ea9e2bb6acac0bf89c00ad7916a4ce`と
+`audit-candidate/phase6-missing-publish-cap-20260725` tagへ固定した。
+
 ## 0.7.20-34 (2026-07-25) — Phase 6 formal audit ledger provenance明示
 
 current-state独立再監査の残置R-5を、外部callのない自己完結tracer bulletとして施工する。
