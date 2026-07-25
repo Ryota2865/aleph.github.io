@@ -109,6 +109,16 @@ def test_repository_snapshot_dict_cannot_mutate_nested_budget_state(tmp_path):
     assert snapshot.budget["work_spent"]["w9100"] == 1.25
 
 
+def test_formal_audit_provenance_names_the_authoritative_ledger(tmp_path):
+    payload = RepositoryReader(tmp_path).snapshot().to_dict()
+
+    assert payload["provenance"]["formal_audits"] == [
+        "config/formal-audits.json",
+        "audits/",
+        "reports/*AUDIT*.md",
+    ]
+
+
 def test_site_dashboard_and_cli_share_state_title_and_selected_draft(tmp_path, capsys):
     _published_work(tmp_path)
 

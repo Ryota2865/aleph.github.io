@@ -475,6 +475,14 @@ R-2残置P3は範囲外。focused 27件、全non-local 432 passed, 1 deselected�
 空budget shape不変を確認した。P0〜P2なし、**VERDICT: PASS**。R-4はformal完了。
 他の浅いitem copyと未実行runtime/provider経路はP3残余として保持する。
 
+R-5施工状態（2026-07-25）: 0.7.20-34と`designs/phase6-audit-ledger-provenance.md`で、
+`RepositorySnapshot.formal_audits`の公開provenanceへ権威ledger
+`config/formal-audits.json`を明示するtracer bulletを開始した。ledger metadataを使いながら
+artifact directoriesだけを出所表示するobservable REDを、既存provenance tupleへの一項目追加で
+GREEN化した。R-6〜R-9、R-2残置P3、R-4監査P3は範囲外。
+focused 28件、全non-local 433 passed, 1 deselectedがgreen。
+Codex施工のため独立Claude Code正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

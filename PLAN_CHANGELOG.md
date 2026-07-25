@@ -1,5 +1,20 @@
 # PLAN 変更履歴
 
+## 0.7.20-34 (2026-07-25) — Phase 6 formal audit ledger provenance明示
+
+current-state独立再監査の残置R-5を、外部callのない自己完結tracer bulletとして施工する。
+`RepositorySnapshot.formal_audits`の各entryは、artifact本文だけでなく
+`config/formal-audits.json`のledger、sequence、target changelog、candidate identityを使う。
+一方、公開provenanceは`audits/`と`reports/*AUDIT*.md`だけを列挙し、権威ledgerを隠していた。
+
+公開serialized payloadを通るREDで不一致を固定し、`formal_audits` provenance tupleの先頭へ
+`config/formal-audits.json`を追加する。formal auditの列挙、検証、verdict、currency、tree binding、
+closure規則は変更しない。詳細契約は`designs/phase6-audit-ledger-provenance.md`。
+R-6〜R-9、R-2残置P3、R-4監査P3は範囲外。Codex施工のため正式完了は独立Claude Code監査PASSを
+要する。新作、local inference、有償API call、provider cost照合は行わない。
+focused **28 passed**、全non-local **433 passed, 1 deselected**、compileall、
+diff checkがgreen。
+
 ## 0.7.20-33 (2026-07-25) — Phase 6 budget snapshot返却値の分離
 
 current-state独立再監査の残置R-4を、外部callのない自己完結tracer bulletとして施工する。

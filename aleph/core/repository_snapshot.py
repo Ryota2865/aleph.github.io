@@ -151,7 +151,11 @@ class RepositoryReader:
                 "budget": ("config/budgets.yaml", "state/budget.json"),
                 "experiments": ("works/*/seed.json#experiment.id",),
                 "active_jobs": ("state/run_<work_id>.pid",),
-                "formal_audits": ("audits/", "reports/*AUDIT*.md"),
+                "formal_audits": (
+                    "config/formal-audits.json",
+                    "audits/",
+                    "reports/*AUDIT*.md",
+                ),
                 "assurance": (
                     "config/formal-audits.json",
                     "audits/",

@@ -1,5 +1,17 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-5 formal audit ledger provenance施工中
+
+- R-4 closure commit `8af11d7`から`codex/phase6-r5-audit-ledger-provenance`を開始。
+- `formal_audits`がledger metadataを使う一方、serialized provenanceがartifact directoriesだけを
+  返すhonesty不一致を公開interface REDで再現した。
+- provenance tupleの先頭へ`config/formal-audits.json`を追加してGREEN化。artifact pathsと
+  assurance provenanceは維持し、verdict、currency、tree binding、closure規則は変更しない。
+- focused **28 passed**、全non-local **433 passed, 1 deselected**、compileall、
+  diff checkがgreen。正式独立監査待ち。
+- R-6〜R-9、R-2残置P3、R-4監査P3は未変更。新作、local inference、有償API call、
+  provider cost照合は行わない。
+
 ## 2026-07-25 — Phase 6 R-4正式監査PASS
 
 - 独立Claude Code担当がcandidate tree
