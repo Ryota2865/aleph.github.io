@@ -1,5 +1,31 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-1正式監査PASS
+
+- 独立Claude Code担当がcandidate tree
+  `a6e9a2c9c2520d89809e6d40e2b29fc4bdd08a08`をread-only監査した。
+  開始／終了identity一致、旧RED再現、3-entry全6配列順と不正lineageを独立注入し、
+  P0〜P3なし、`VERDICT: PASS`。R-1をformal完了する。
+- focused **24 passed**、全non-local **429 passed, 1 deselected**、compileall、
+  diff checksを独立再現。tests greenとformal verdictは分離した。
+- candidateをproof commit `f42ba01c4ccfa368410dee2c19c040a2f5d518bb`と
+  `audit-candidate/phase6-audit-supersedes-order-20260725` tagへ固定する。
+- R-3〜R-9とR-2残置P3は未変更。次候補はformal verdictの偽陽性を閉じるR-3
+  （terminal `VERDICT: PASS|FAIL`の厳密大小文字契約）。
+
+## 2026-07-25 — Phase 6 R-1 supersedes順序独立化施工中
+
+- main `d9f320e`、clean worktree、doctor failures=0から
+  `codex/phase6-r1-supersedes-order`を開始した。
+- `entries`配列順ではなく`sequence`で`supersedes`を解決し、参照先は厳密に過去のsequence
+  だけに限定する。逆順記載を受理し、self/future/cycle/missing参照はfail closedに保つ。
+- reverse-order正当ledgerのfalse UNKNOWNと、future参照を受理する不正PASSを2本のREDで固定し、
+  path→sequenceの事前収集と厳密な大小比較だけでGREEN化した。
+- focused **24 passed**、全non-local **429 passed, 1 deselected**、compileall、
+  diff checkがgreen。正式独立監査待ち。
+- 作品、予算、期限、tree binding、verdict抽出、closure allowlistは非変更。
+- 新作、local inference、有償API call、provider cost照合は行わない。
+
 ## 2026-07-25 — Phase 6 R-2 focused再監査PASS
 
 - 同一Claude Code監査担当が修繕tree

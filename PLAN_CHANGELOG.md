@@ -1,5 +1,25 @@
 # PLAN 変更履歴
 
+## 0.7.20-31 (2026-07-25) — Phase 6 audit supersedes順序独立化
+
+current-state独立再監査の残置R-1を、外部callのない自己完結tracer bulletとして施工する。
+formal audit ledgerの`entries`配列順を意味に使わず、`sequence`を唯一の権威順序とする。
+`supersedes`はledger内に存在し、自entryより厳密に小さいsequenceを持つentryだけを参照できる。
+これによりsequence降順の正当なledgerを受理しつつ、自己参照、future参照、cycle、欠落参照は
+fail closedな`UNKNOWN`とする。
+
+詳細契約は`designs/phase6-audit-supersedes-order.md`。作品、予算、期限、tree binding、
+verdict抽出、closure allowlistは変更しない。R-3〜R-9とR-2監査の残置P3は範囲外。
+新作、local inference、有償API call、provider cost照合は行わない。施工候補は
+observable RED 2件から修繕し、
+focused **24 passed**、全non-local **429 passed, 1 deselected**、compileall、
+diff checkがgreen。
+
+独立Claude Code担当がcandidate tree `a6e9a2c9c2520d89809e6d40e2b29fc4bdd08a08`を
+read-only正式監査した。reverse-order旧RED、3-entry全6配列順、missing/self/future/cycle、
+壊れた参照先を含む17ケースを独立注入し、false PASSなし、既存validation無回帰、
+P0〜P3なし、**VERDICT: PASS**。R-1をformal完了する。
+
 ## 0.7.20-30 (2026-07-25) — R-2初回正式監査FAIL・Git diff timeout修繕
 
 R-2 candidate-tree binding候補tree `51c9f05ef0c4dababb61542cba61bc8eb3614acf`を

@@ -213,6 +213,130 @@ def test_audit_ledger_sequence_not_filename_order_selects_latest_and_binds_curre
     assert formal["currency"] == "UNKNOWN"
 
 
+def test_supersedes_resolution_uses_sequence_not_json_array_order(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    old_path = "reports/OLD_AUDIT.md"
+    new_path = "reports/NEW_REAUDIT.md"
+    (tmp_path / old_path).write_text("VERDICT: FAIL\n", encoding="utf-8")
+    (tmp_path / new_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 2,
+                "path": new_path,
+                "recorded_on": "2026-08-02",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "b" * 40,
+                "supersedes": old_path,
+            },
+            {
+                "sequence": 1,
+                "path": old_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "a" * 40,
+            },
+        ],
+    )
+
+    snapshot = RepositoryReader(tmp_path).snapshot()
+
+    assert snapshot.assurance["formal_audit"]["status"] == "PASS"
+    assert snapshot.assurance["formal_audit"]["path"] == new_path
+    assert not any("ledger entry is invalid" in warning for warning in snapshot.warnings)
+
+
+def test_supersedes_cannot_reference_same_or_future_sequence(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    old_path = "reports/OLD_AUDIT.md"
+    future_path = "reports/FUTURE_AUDIT.md"
+    (tmp_path / old_path).write_text("VERDICT: FAIL\n", encoding="utf-8")
+    (tmp_path / future_path).write_text("VERDICT: PASS\n", encoding="utf-8")
+    _write_audit_ledger(
+        tmp_path,
+        [
+            {
+                "sequence": 2,
+                "path": future_path,
+                "recorded_on": "2026-08-02",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "b" * 40,
+            },
+            {
+                "sequence": 1,
+                "path": old_path,
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "a" * 40,
+                "supersedes": future_path,
+            },
+        ],
+    )
+
+    snapshot = RepositoryReader(tmp_path).snapshot()
+
+    assert snapshot.assurance["formal_audit"]["status"] == "UNKNOWN"
+    assert any("ledger entry is invalid" in warning for warning in snapshot.warnings)
+
+
+def test_supersedes_missing_self_and_cycle_are_fail_closed(tmp_path):
+    cases = {
+        "missing": [
+            {
+                "sequence": 1,
+                "path": "reports/A_AUDIT.md",
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "a" * 40,
+                "supersedes": "reports/MISSING_AUDIT.md",
+            }
+        ],
+        "self": [
+            {
+                "sequence": 1,
+                "path": "reports/A_AUDIT.md",
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "a" * 40,
+                "supersedes": "reports/A_AUDIT.md",
+            }
+        ],
+        "cycle": [
+            {
+                "sequence": 2,
+                "path": "reports/B_AUDIT.md",
+                "recorded_on": "2026-08-02",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "b" * 40,
+                "supersedes": "reports/A_AUDIT.md",
+            },
+            {
+                "sequence": 1,
+                "path": "reports/A_AUDIT.md",
+                "recorded_on": "2026-08-01",
+                "target_changelog": "0.8.0",
+                "candidate_tree": "a" * 40,
+                "supersedes": "reports/B_AUDIT.md",
+            },
+        ],
+    }
+    for case, entries in cases.items():
+        root = tmp_path / case
+        reports = root / "reports"
+        reports.mkdir(parents=True)
+        for entry in entries:
+            (root / entry["path"]).write_text("VERDICT: PASS\n", encoding="utf-8")
+        _write_audit_ledger(root, entries)
+
+        snapshot = RepositoryReader(root).snapshot()
+
+        assert snapshot.assurance["formal_audit"]["status"] == "UNKNOWN"
+        assert any("ledger entry is invalid" in warning for warning in snapshot.warnings)
+
+
 def test_formal_audit_currency_is_bound_to_candidate_tree_and_closure_paths(tmp_path):
     (tmp_path / "PLAN.md").write_text("0.8.0までの改訂\n", encoding="utf-8")
     (tmp_path / "PLAN_CHANGELOG.md").write_text(

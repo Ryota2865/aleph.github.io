@@ -49,6 +49,10 @@ tree. Pre-ledger artifacts remain in `legacy_unordered`; they are retained evide
 determine the latest verdict. An unregistered artifact, invalid ledger entry, missing object/ref,
 or tree mismatch makes the latest-verdict projection `UNKNOWN`, never an inferred PASS.
 
+The JSON order of `entries` carries no meaning; `sequence` is the sole authoritative order.
+`supersedes` must name another registered entry whose sequence is strictly lower than the referring
+entry. Missing, self, same/future-sequence, and cyclic references invalidate the ledger.
+
 For every blocking finding:
 
 1. reproduce the observable failure with a focused RED test;

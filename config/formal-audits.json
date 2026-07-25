@@ -94,6 +94,24 @@
         "reports/PHASE6_AUDIT_TREE_BINDING_P2_REAUDIT_20260725.md"
       ],
       "supersedes": "reports/PHASE6_AUDIT_TREE_BINDING_AUDIT_20260725_FAIL.md"
+    },
+    {
+      "sequence": 7,
+      "path": "reports/PHASE6_AUDIT_SUPERSEDES_ORDER_AUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-31",
+      "candidate_tree": "a6e9a2c9c2520d89809e6d40e2b29fc4bdd08a08",
+      "candidate_commit": "f42ba01c4ccfa368410dee2c19c040a2f5d518bb",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-audit-supersedes-order-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_AUDIT_SUPERSEDES_ORDER_AUDIT_20260725.md"
+      ]
     }
   ]
 }
