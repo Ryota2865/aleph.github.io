@@ -656,10 +656,24 @@ class RepositoryReader:
         changelog = _read(self.root / "PLAN_CHANGELOG.md")
         version_pattern = r"\d+(?:\.\d+)*(?:-\d+)?"
         declared_match = re.search(rf"({version_pattern})までの改訂", plan)
-        latest_match = re.search(
-            rf"^##\s+({version_pattern})(?:\s+\([^\n]*\))?(?:\s+[—-]\s+(.+))?\s*$",
-            changelog,
-            re.M,
+        heading_pattern = re.compile(
+            rf"^##\s+({version_pattern})(?:\s+\([^\n]*\))?(?:\s+[—-]\s+(.+))?\s*$"
+        )
+        heading_matches = []
+        fence: str | None = None
+        for line in changelog.splitlines():
+            marker = line[:3]
+            if marker in {"```", "~~~"}:
+                fence = None if fence == marker else marker if fence is None else fence
+                continue
+            if fence is None:
+                match = heading_pattern.fullmatch(line)
+                if match:
+                    heading_matches.append(match)
+        latest_match = max(
+            heading_matches,
+            key=lambda match: tuple(int(part) for part in re.findall(r"\d+", match.group(1))),
+            default=None,
         )
         declared = declared_match.group(1) if declared_match else None
         latest = latest_match.group(1) if latest_match else None

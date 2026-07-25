@@ -1,5 +1,17 @@
 # PLAN 変更履歴
 
+## 0.7.20-36 (2026-07-25) — Phase 6 CHANGELOG版順の明示化
+
+current-state独立再監査の残置R-7を自己完結tracer bulletとして施工する。CHANGELOGの
+物理的な最初の見出しをlatestとせず、fence外のtop-level版見出しを収集し、数値版順の最大を
+権威latestとする。code fenceと引用内の例示見出しは候補にしない。
+
+旧実装が先頭の旧版を選ぶREDを公開snapshot面で固定し、reader内の局所parseでGREEN化する。
+詳細契約は`designs/phase6-changelog-version-order.md`。R-8〜R-9、R-2残置P3、
+R-4監査P3は範囲外。正式完了は独立Claude Code監査PASSを要する。新作、local inference、
+有償API call、provider cost照合は行わない。focused **30 passed**、全non-local
+**435 passed, 1 deselected**、compileall、diff checkがgreen。
+
 ## 0.7.20-35 (2026-07-25) — Phase 6 publish cap欠落の可視化
 
 current-state独立再監査の残置R-6を、外部callのない自己完結tracer bulletとして施工する。

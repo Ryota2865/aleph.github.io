@@ -1,5 +1,14 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-7 CHANGELOG版順施工中
+
+- R-6 closure commit `c11950c`から`codex/phase6-r7-changelog-order`を開始。
+- 先頭の旧版が後方の正規最新版を隠すREDを再現。
+- fence外top-level見出しを収集し、数値版順最大を選んでGREEN化。code fenceと引用は除外。
+- focused **30 passed**、全non-local **435 passed, 1 deselected**、compileall、
+  diff checkがgreen。正式独立監査待ち。
+- R-8〜R-9、R-2残置P3、R-4監査P3は未変更。外部callなし。
+
 ## 2026-07-25 — Phase 6 R-6正式監査PASS
 
 - 独立Claude Code担当がcandidate tree `5390cb2e0212418fe9247659db0054f233aa8838`を

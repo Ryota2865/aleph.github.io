@@ -492,6 +492,12 @@ focused 29件、全non-local 434 passed, 1 deselectedがgreen。
 独立Claude Code監査は全中心契約とidentity不変を確認し、P0〜P3なし、
 **VERDICT: PASS**。R-6はformal完了。
 
+R-7施工状態（2026-07-25）: 0.7.20-36と`designs/phase6-changelog-version-order.md`で、
+CHANGELOGのfence外top-level版見出しを数値版順で選ぶtracer bulletを開始した。物理先頭の旧版が
+後方の正規最新版を隠すREDをGREEN化し、code fenceと引用内例示をlatest候補から除外する。
+R-8〜R-9、R-2残置P3、R-4監査P3は範囲外。focused 30件、全non-local
+435 passed, 1 deselectedがgreen。独立Claude Code正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

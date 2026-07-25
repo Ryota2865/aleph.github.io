@@ -793,6 +793,29 @@ def test_changelog_parser_keeps_hyphenated_version_without_title_and_supports_ne
     assert design["stale"] == []
 
 
+def test_changelog_latest_uses_version_order_and_ignores_fenced_headings(tmp_path):
+    (tmp_path / "PLAN.md").write_text("0.8.1までの改訂\n", encoding="utf-8")
+    (tmp_path / "PLAN_CHANGELOG.md").write_text(
+        "\n".join(
+            [
+                "## 0.7.20-35 (2026-07-25) — physically first",
+                "```markdown",
+                "## 9.9.9 (2099-01-01) — fenced example",
+                "```",
+                "> ## 8.8.8 (2098-01-01) — quoted example",
+                "## 0.8.1 (2026-08-01) — authoritative latest",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    design = RepositoryReader(tmp_path).snapshot().design_state
+
+    assert design["changelog_latest"] == "0.8.1"
+    assert design["latest_change"] == "authoritative latest"
+    assert design["stale"] == []
+
+
 def test_expired_repository_deadline_is_a_dashboard_gate():
     gates = collect_pending_gates(
         {"publication": {"first_publish_ack": True}, "poetics": {"first_revision_requires_human_ack": True}},
