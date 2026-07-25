@@ -353,6 +353,13 @@ class RepositoryReader:
             warnings.append("formal audit ledger entries are invalid")
             entries = []
             ledger_valid = False
+        declared_sequences = {
+            raw["path"]: raw["sequence"]
+            for raw in entries
+            if isinstance(raw, dict)
+            and isinstance(raw.get("path"), str)
+            and type(raw.get("sequence")) is int
+        }
         seen_sequences: set[int] = set()
         registered_paths: set[str] = set()
         for raw in entries:
@@ -403,8 +410,14 @@ class RepositoryReader:
             except ValueError:
                 valid = False
             supersedes = raw.get("supersedes")
+            superseded_sequence = (
+                declared_sequences.get(supersedes) if isinstance(supersedes, str) else None
+            )
             if supersedes is not None and (
-                not isinstance(supersedes, str) or supersedes not in registered_paths
+                not isinstance(supersedes, str)
+                or type(sequence) is not int
+                or superseded_sequence is None
+                or superseded_sequence >= sequence
             ):
                 valid = False
             if not valid:

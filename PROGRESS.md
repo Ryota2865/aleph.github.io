@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-1 supersedes順序独立化施工中
+
+- main `d9f320e`、clean worktree、doctor failures=0から
+  `codex/phase6-r1-supersedes-order`を開始した。
+- `entries`配列順ではなく`sequence`で`supersedes`を解決し、参照先は厳密に過去のsequence
+  だけに限定する。逆順記載を受理し、self/future/cycle/missing参照はfail closedに保つ。
+- reverse-order正当ledgerのfalse UNKNOWNと、future参照を受理する不正PASSを2本のREDで固定し、
+  path→sequenceの事前収集と厳密な大小比較だけでGREEN化した。
+- focused **24 passed**、全non-local **429 passed, 1 deselected**、compileall、
+  diff checkがgreen。正式独立監査待ち。
+- 作品、予算、期限、tree binding、verdict抽出、closure allowlistは非変更。
+- 新作、local inference、有償API call、provider cost照合は行わない。
+
 ## 2026-07-25 — Phase 6 R-2 focused再監査PASS
 
 - 同一Claude Code監査担当が修繕tree

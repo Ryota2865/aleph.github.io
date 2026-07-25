@@ -449,6 +449,13 @@ proof commit/tagへ固定し、P3-5をclosureで解消した。P3-1〜P3-4、P3-
 Git index flag等の監査uncertaintyは残置する。次の自己完結tracer bullet候補はR-1
 （`supersedes`検証のledger記載順依存）。
 
+R-1施工状態（2026-07-25）: 0.7.20-31と
+`designs/phase6-audit-supersedes-order.md`で、ledger `entries`のJSON配列順を意味から除き、
+`sequence`だけを権威順序とするtracer bulletを開始した。`supersedes`は厳密に小さいsequenceの
+既存entryだけを参照でき、reverse-order記載を受理しつつself/future/cycle/missing参照を
+fail closedにする。observable RED 2件から修繕し、focused 24件、全non-local
+429 passed, 1 deselectedがgreen。Codex施工のため独立Claude Code正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、
