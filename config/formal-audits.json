@@ -112,6 +112,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_AUDIT_SUPERSEDES_ORDER_AUDIT_20260725.md"
       ]
+    },
+    {
+      "sequence": 8,
+      "path": "reports/PHASE6_AUDIT_STRICT_VERDICT_AUDIT_20260725.md",
+      "recorded_on": "2026-07-25",
+      "target_changelog": "0.7.20-32",
+      "candidate_tree": "8580d52b01bf4a00b37db65af729e83ffedabb75",
+      "candidate_commit": "c6256990e19a35d73d612b1534565650a1341f42",
+      "candidate_ref": "refs/tags/audit-candidate/phase6-audit-strict-verdict-20260725",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_AUDIT_STRICT_VERDICT_AUDIT_20260725.md"
+      ]
     }
   ]
 }

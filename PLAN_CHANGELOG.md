@@ -17,6 +17,14 @@ Codex施工のため正式完了は独立Claude Code監査PASSを要する。新
 focused **26 passed**、全non-local **431 passed, 1 deselected**、compileall、
 diff checkがgreen。
 
+独立Claude Code担当がcandidate tree `8580d52b01bf4a00b37db65af729e83ffedabb75`を
+read-only正式監査した。旧実装の偽陽性9件を独立再現し、候補では26ケースすべて期待どおり、
+曖昧な最新artifactから旧PASSへのfallbackもないことを実projectionで確認した。
+focused **26 passed**、全non-local **431 passed, 1 deselected**を独立再現し、
+P0〜P3なし、**VERDICT: PASS**。R-3をformal完了する。候補はproof commit
+`c6256990e19a35d73d612b1534565650a1341f42`と
+`audit-candidate/phase6-audit-strict-verdict-20260725` tagへ固定した。
+
 ## 0.7.20-31 (2026-07-25) — Phase 6 audit supersedes順序独立化
 
 current-state独立再監査の残置R-1を、外部callのない自己完結tracer bulletとして施工する。

@@ -462,8 +462,9 @@ R-3施工状態（2026-07-25）: 0.7.20-32と`designs/phase6-audit-strict-verdic
 machine verdictを最終非空行そのものの厳密な`VERDICT: PASS|FAIL`へ限定するtracer bulletを
 開始した。case-insensitive、空白欠落／過剰、tab、行頭末尾空白、suffixの受理を廃止し、
 曖昧なartifactは`UNKNOWN`へfail closedする。observable RED 2件から修繕し、
-focused 26件、全non-local 431 passed, 1 deselectedがgreen。
-Codex施工のため独立Claude Code正式監査待ち。
+focused 26件、全non-local 431 passed, 1 deselectedがgreen。独立Claude Code監査は
+旧実装の偽陽性9件を再現し、候補の26ケース、no-fallback/no-alternate-path、candidate identity
+不変を確認した。P0〜P3なし、**VERDICT: PASS**。R-3はformal完了。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
