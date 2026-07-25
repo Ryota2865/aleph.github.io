@@ -1,5 +1,20 @@
 # PLAN 変更履歴
 
+## 0.7.20-33 (2026-07-25) — Phase 6 budget snapshot返却値の分離
+
+current-state独立再監査の残置R-4を、外部callのない自己完結tracer bulletとして施工する。
+`RepositorySnapshot.to_dict()`は、返却payloadの変更がfrozen snapshot本体へ逆流しない
+detachedな読み取り値を返す。現行は`assurance`と`design_state`だけをdeep copyする一方、
+`budget`を参照のまま返すため、呼出し側が`ledgers`、`ledger_status`、`work_spent`の
+入れ子dictを変更するとsnapshotの観測値も変化する。
+
+公開interfaceを通るREDで逆流を固定し、`budget`返却時のdeep copy一箇所だけで修繕する。
+budgetの算出、台帳、上限、予約、費用、provenanceは変更しない。詳細契約は
+`designs/phase6-budget-snapshot-isolation.md`。R-5〜R-9とR-2残置P3は範囲外。
+Codex施工のため正式完了は独立Claude Code監査PASSを要する。新作、local inference、
+有償API call、provider cost照合は行わない。focused **27 passed**、全non-local
+**432 passed, 1 deselected**、compileall、diff checkがgreen。
+
 ## 0.7.20-32 (2026-07-25) — Phase 6 formal verdict厳密化
 
 current-state独立再監査の残置R-3を、外部callのない自己完結tracer bulletとして施工する。

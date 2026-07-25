@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-4 budget snapshot分離施工中
+
+- R-3 closure commit `d882c36`から`codex/phase6-r4-budget-snapshot-copy`を開始。
+- `RepositorySnapshot.to_dict()`の返却payloadから`budget.ledgers.api.spent`、
+  `budget.ledger_status.api.spent`、`budget.work_spent`を変更するとsnapshot本体へ逆流する
+  公開interface REDを再現した。
+- `budget`返却時のdeep copy一箇所でGREEN化。budget算出、台帳、上限、予約、費用、
+  provenance、他snapshot面は変更しない。
+- focused **27 passed**、全non-local **432 passed, 1 deselected**、compileall、
+  diff checkがgreen。正式独立監査待ち。
+- R-5〜R-9とR-2残置P3は未変更。新作、local inference、有償API call、
+  provider cost照合は行わない。
+
 ## 2026-07-25 — Phase 6 R-3正式監査PASS
 
 - 独立Claude Code担当がcandidate tree

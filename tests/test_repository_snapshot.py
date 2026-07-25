@@ -73,6 +73,42 @@ def test_repository_snapshot_aggregates_work_and_experiment_as_audit_json(tmp_pa
     assert payload["experiments"] == [{"experiment_id": "exp-fixture", "work_id": "w9100"}]
 
 
+def test_repository_snapshot_dict_cannot_mutate_nested_budget_state(tmp_path):
+    state = tmp_path / "state"
+    state.mkdir()
+    (state / "budget.json").write_text(
+        json.dumps(
+            {
+                "ledgers": {
+                    "api": {"spent": 1.25, "period_key": "2026-07"},
+                    "harness": {"spent": 2},
+                    "local": {"spent": 3},
+                },
+                "work_spent": {"w9100": 1.25},
+            }
+        ),
+        encoding="utf-8",
+    )
+    snapshot = RepositoryReader(
+        tmp_path,
+        budget_config={
+            "publish": {"max_per_month": 4},
+            "api": {"usd_per_month": 71.0, "usd_per_work": 9.0},
+            "harness": {"calls_per_day": 100},
+            "local": {"gpu_hours_per_day": 8},
+        },
+    ).snapshot()
+
+    payload = snapshot.to_dict()
+    payload["budget"]["ledgers"]["api"]["spent"] = 99.0
+    payload["budget"]["ledger_status"]["api"]["spent"] = 99.0
+    payload["budget"]["work_spent"]["w9100"] = 99.0
+
+    assert snapshot.budget["ledgers"]["api"]["spent"] == 1.25
+    assert snapshot.budget["ledger_status"]["api"]["spent"] == 1.25
+    assert snapshot.budget["work_spent"]["w9100"] == 1.25
+
+
 def test_site_dashboard_and_cli_share_state_title_and_selected_draft(tmp_path, capsys):
     _published_work(tmp_path)
 

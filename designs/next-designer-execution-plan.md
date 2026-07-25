@@ -466,6 +466,13 @@ focused 26件、全non-local 431 passed, 1 deselectedがgreen。独立Claude Cod
 旧実装の偽陽性9件を再現し、候補の26ケース、no-fallback/no-alternate-path、candidate identity
 不変を確認した。P0〜P3なし、**VERDICT: PASS**。R-3はformal完了。
 
+R-4施工状態（2026-07-25）: 0.7.20-33と`designs/phase6-budget-snapshot-isolation.md`で、
+`RepositorySnapshot.to_dict()`のbudget返却値をsnapshot本体から分離するtracer bulletを
+開始した。返却payloadの`ledgers`、`ledger_status`、`work_spent`を変更するとfrozen snapshotへ
+逆流するobservable REDを、budgetのdeep copy一箇所でGREEN化した。R-5〜R-9と
+R-2残置P3は範囲外。focused 27件、全non-local 432 passed, 1 deselectedがgreen。
+Codex施工のため独立Claude Code正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

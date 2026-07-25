@@ -31,7 +31,7 @@ class RepositorySnapshot:
     def to_dict(self) -> dict[str, Any]:
         return {
             "works": [work.to_dict() for work in self.works],
-            "budget": self.budget,
+            "budget": deepcopy(self.budget),
             "experiments": [dict(item) for item in self.experiments],
             "active_jobs": [dict(item) for item in self.active_jobs],
             "formal_audits": [dict(item) for item in self.formal_audits],
