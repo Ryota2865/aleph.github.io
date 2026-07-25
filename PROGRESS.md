@@ -1,5 +1,14 @@
 # PROGRESS
 
+## 2026-07-25 — Phase 6 R-8 poetics履歴欠落可視化施工中
+
+- R-7 closure commit `3e484fa`から`codex/phase6-r8-missing-poetics-history`を開始。
+- poetics dirあり・history欠落でv0だがwarningなしのREDを再現。
+- canonical v0 fallbackを維持し、欠落理由warningだけを追加してGREEN化。
+- focused **31 passed**、全non-local **436 passed, 1 deselected**、compileall、
+  diff checkがgreen。正式独立監査待ち。
+- R-9と残置P3は未変更。外部callなし。
+
 ## 2026-07-25 — Phase 6 R-7正式監査PASS
 
 - 独立Claude Code担当がcandidate tree `57250a822ff8f095200df0e07c486a9cad1e7557`を

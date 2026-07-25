@@ -778,6 +778,15 @@ def test_missing_publish_cap_makes_deadline_unavailable_with_warning(tmp_path):
     assert "publish.max_per_month is missing; deadline is unavailable" in snapshot.warnings
 
 
+def test_missing_poetics_history_reports_v0_fallback(tmp_path):
+    (tmp_path / "poetics").mkdir()
+
+    snapshot = RepositoryReader(tmp_path).snapshot()
+
+    assert snapshot.design_state["poetics_version"] == 0
+    assert "poetics/history.jsonl is missing; poetics defaults to v0" in snapshot.warnings
+
+
 def test_changelog_parser_keeps_hyphenated_version_without_title_and_supports_next_series(tmp_path):
     (tmp_path / "PLAN.md").write_text("0.8.0までの改訂\n", encoding="utf-8")
     (tmp_path / "PLAN_CHANGELOG.md").write_text(

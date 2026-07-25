@@ -499,6 +499,11 @@ R-8〜R-9、R-2残置P3、R-4監査P3は範囲外。focused 30件、全non-local
 435 passed, 1 deselectedがgreen。独立Claude Code監査はP0〜P2なし、
 **VERDICT: PASS**。R-7はformal完了。版separator、未閉fence、indent fenceはP3残余。
 
+R-8施工状態（2026-07-25）: 0.7.20-37と`designs/phase6-missing-poetics-history.md`で、
+poetics history欠落時のcanonical v0 fallback理由をwarningへ出すtracer bulletを開始した。
+v0値は維持しwarning欠落REDだけをGREEN化した。focused 31件、全non-local
+436 passed, 1 deselectedがgreen。R-9と残置P3は範囲外。正式監査待ち。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、

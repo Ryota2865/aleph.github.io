@@ -1,5 +1,15 @@
 # PLAN 変更履歴
 
+## 0.7.20-37 (2026-07-25) — Phase 6 poetics履歴欠落の可視化
+
+current-state独立再監査の残置R-8を自己完結tracer bulletとして施工する。`poetics/`は存在するが
+`history.jsonl`が欠落すると、正典helperは正当にv0を返す一方、そのfallback理由がwarningへ
+出なかった。v0の意味を変えず、欠落時だけ固有warningを追加する。
+
+詳細契約は`designs/phase6-missing-poetics-history.md`。R-9、R-2残置P3、R-4/R-7監査P3は
+範囲外。正式完了は独立Claude Code監査PASSを要する。外部callは行わない。
+focused **31 passed**、全non-local **436 passed, 1 deselected**、compileall、diff checkがgreen。
+
 ## 0.7.20-36 (2026-07-25) — Phase 6 CHANGELOG版順の明示化
 
 current-state独立再監査の残置R-7を自己完結tracer bulletとして施工する。CHANGELOGの

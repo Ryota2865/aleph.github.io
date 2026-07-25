@@ -691,6 +691,8 @@ class RepositoryReader:
             poetics_version = None
             warnings.append("poetics directory is missing")
         else:
+            if not history_path.exists():
+                warnings.append("poetics/history.jsonl is missing; poetics defaults to v0")
             history = _read(history_path)
             malformed = False
             for line in history.splitlines():
