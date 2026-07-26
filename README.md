@@ -13,7 +13,7 @@ LLMによる文学表現のための自律制作システム。文学的な生�
 <!-- repository-snapshot:start -->
 - 作品記録: 9作（w0009まで）、終端到達: 9作。
 - 公開作品: 5作 — w0004「半呼吸」、w0005「床の硬さ」、w0006「灯のうしろ」、w0007「折り目」、w0008「暗い側」
-- assurance: tests: NOT_RECORDED、最新記録formal audit: PASS（reports/PHASE6_AUDIT_PATH_DISJOINT_AUDIT_20260725.md）、currency: NEEDS_AUDIT、保存artifact: 37件。
+- assurance: tests: NOT_RECORDED、最新記録formal audit: PASS（reports/PHASE6_POST_CAMPAIGN_CALIBRATION_AUDIT_20260726.md）、currency: CURRENT、保存artifact: 38件。
 - 設計状態: changelog 0.7.20-40、詩学 v1。
 - 期限: UPCOMING — publish.max_per_month=999 temporary July exception（2026-08-01）。
 <!-- repository-snapshot:end -->

@@ -27,6 +27,15 @@ Fable 5とオーナーの探索・AI固有性対話を
 詩学reflection、新機構の施工は行わない。`ef2a9ed`の監査対象commitは変更せず、その後続の
 別commitとして記録する。
 
+独立Claude Code（Opus 4.8）担当がcandidate commit
+`3def8311e093333b0236d00ac38775c308db6925`、tree
+`d5bbcdc1e54dbbc378d7c6e07d52a55f5900ce61`をread-only正式監査した。17項目の一次情報、
+正典間整合、費用・期限・非目標・scope disciplineを照合し、P0〜P3なし、
+**VERDICT: PASS**。補足確認でfocused **49 passed**に加え、全non-local
+**437 passed, 1 deselected**、compileall、diff checkを独立再現した。
+候補は`audit-candidate/post-phase6-literary-campaign-calibration-20260726` tagへ固定し、
+0.7.20-40をformal完了する。
+
 ## 0.7.20-39 (2026-07-26) — Phase 6後 8–9月文学的帰還campaign
 
 オーナーは`reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md`の横断診断と

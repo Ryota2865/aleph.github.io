@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-07-26 — 8–9月文学的帰還campaign校正 正式監査PASS
+
+- 独立Claude Code（Opus 4.8）担当がcommit `3def8311e093333b0236d00ac38775c308db6925`、
+  tree `d5bbcdc1e54dbbc378d7c6e07d52a55f5900ce61`をread-only正式監査した。
+- 17項目の一次情報と正典整合を確認し、P0〜P3なし、`VERDICT: PASS`。
+  補足確認でfocused **49 passed**、全non-local **437 passed, 1 deselected**、compileall、
+  diff checkを独立再現した。
+- 監査原文と補足を
+  `reports/PHASE6_POST_CAMPAIGN_CALIBRATION_AUDIT_20260726.md`へ保存し、sequence 15として
+  ledger登録した。候補はproof tag
+  `audit-candidate/post-phase6-literary-campaign-calibration-20260726`へ固定する。
+- 0.7.20-40をformal完了する。新作、有償call、local inference、config・poetics変更なし。
+
 ## 2026-07-26 — Fable 5補遺とcampaign校正
 
 - 探索境界、潜在空間・隠れ層、AI固有性のreader依存性についてのFable 5／オーナー対話を

@@ -545,6 +545,12 @@ Phase 6後へ明示延期され、残置P3は非blocking。2026-08-01公開上�
 - 隠れ層探索、operator inventory、「一行の徴」の計器は10月へ留保し、既設
   `transmute`＋制約実験を先に審査する。
 
+Formal closure（2026-07-26）: 独立Claude Code（Opus 4.8）がcommit `3def831`、tree
+`d5bbcdc1e54dbbc378d7c6e07d52a55f5900ce61`をread-only監査した。17項目の一次情報と
+正典間整合を確認し、補足確認でfocused 49件、全non-local 437 passed, 1 deselected、
+compileall、diff checkを独立再現した。P0〜P3なし、**VERDICT: PASS**。
+0.7.20-40と8–9月campaign校正をformal完了する。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、承認済みの4へ戻す。

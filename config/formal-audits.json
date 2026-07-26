@@ -238,6 +238,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_AUDIT_PATH_DISJOINT_AUDIT_20260725.md"
       ]
+    },
+    {
+      "sequence": 15,
+      "path": "reports/PHASE6_POST_CAMPAIGN_CALIBRATION_AUDIT_20260726.md",
+      "recorded_on": "2026-07-26",
+      "target_changelog": "0.7.20-40",
+      "candidate_tree": "d5bbcdc1e54dbbc378d7c6e07d52a55f5900ce61",
+      "candidate_commit": "3def8311e093333b0236d00ac38775c308db6925",
+      "candidate_ref": "refs/tags/audit-candidate/post-phase6-literary-campaign-calibration-20260726",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/PHASE6_POST_CAMPAIGN_CALIBRATION_AUDIT_20260726.md"
+      ]
     }
   ]
 }
