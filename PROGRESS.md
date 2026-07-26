@@ -8,8 +8,9 @@
 - 24抜粋が記録したsource範囲の連続部分であること、A/B orientation、source hash、
   回答欄12件を機械照合した。Markdown原本と紙配布用PDFのhash、PDF生成経路を
   sealed provenanceへ記録した。
-- 状態は`PREPARED / UNLABELED / OWNER LOCK REQUIRED`。二人目の独立した人間annotatorと、
-  提案合意床exact 10/12・不一致非強制裁定をオーナーがlockするまでannotationを開始しない。
+- 二人目の独立した人間annotatorを確保し、合意床exact 10/12、不一致非強制裁定、
+  床未達時のprovisional維持をオーナーがlockした。時間は一度の着席で30～40分を目安とし、
+  超過で打ち切らず実所要時間を保存する。状態は`READY FOR INDEPENDENT ANNOTATION / UNLABELED`。
 - 新作、local inference、有償API call、config・poetics・instrument status変更なし。
 
 ## 2026-07-26 — 8–9月文学的帰還campaign校正 正式監査PASS

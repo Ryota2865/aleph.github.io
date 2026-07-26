@@ -1,6 +1,6 @@
 # fixation.house_style 人間blind annotation packet v1
 
-状態: **PREPARED / UNLABELED / OWNER LOCK REQUIRED**
+状態: **READY FOR INDEPENDENT ANNOTATION / UNLABELED / OWNER LOCKED**
 
 ## 目的
 
@@ -32,7 +32,8 @@
 
 1. 文章の出典、作品名、この組み合わせが選ばれた理由、もう一人の回答を調べない。
 2. 回答が終わるまで、もう一人の回答者と相談しない。
-3. 全12組を一度に回答する。目安は15～20分。
+3. 全12組を一度の着席で回答する。目安は30～40分。40分を超えても途中で打ち切らず、
+   実際にかかった時間を記録する。
 4. 回答後は書き直さない。回答者ID、実施日時、かかった時間と一緒に保存する。
 
 ## P01

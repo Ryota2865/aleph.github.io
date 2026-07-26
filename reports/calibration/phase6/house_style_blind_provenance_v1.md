@@ -1,20 +1,23 @@
 # fixation.house_style blind packet provenance v1
 
-状態: **PREPARED / OWNER LOCK REQUIRED / DO NOT SHOW BEFORE BOTH LABELS ARE LOCKED**
+状態: **SEALED INPUT PROVENANCE / OWNER LOCKED / DO NOT SHOW BEFORE BOTH LABELS ARE LOCKED**
 
-## annotation開始前にオーナーがlockするprotocol
+## annotation開始前にオーナーがlockしたprotocol
 
 - instrument: `fixation.house_style` v1（provisional）
 - packet: `reports/calibration/phase6/house_style_blind_packet_v1.md`
 - print artifact: `reports/calibration/phase6/house_style_blind_packet_v1.pdf`（人間annotatorへの配布対象）
 - candidate selector: Codex設計者。候補抽出とhard negative作成だけを担当し、人間goldを置換しない。
-- annotation actor: 人間2名。1名はオーナー、もう1名は独立した人間annotator（未指定。開始前に固定）。
+- annotation actor: 人間2名。1名はオーナー、もう1名は確保済みの独立した人間annotator。
+  個人情報は本文へ記載せず、それぞれの回答票でannotator IDを固定する。
 - annotation model/prompt: なし。packet本文の三択説明だけを使用する。
 - excerpt unit: 既存採用稿（w0009はselected draft v3）の連続部分からなる短い抜粋。
   見出し、題名、work IDを表示しない。
 - labels: `S = 同じ装置`、`T = 担体・役割を変えた変形`、`U = 異なる・不明`
-- proposed agreement floor: exact agreement `10/12`以上。オーナー承認後にlockし、結果を見て閾値を下げない。
-- proposed disagreement handling: 不一致は強制裁定せず、pair単位で両labelを保存する。合意床未達なら
+- timing: 全12組を一度の着席で回答する。目安は30～40分。40分で打ち切らず、
+  annotatorごとの実所要時間を保存する。
+- agreement floor: exact agreement `10/12`以上。結果を見て閾値を下げない。
+- disagreement handling: 不一致は強制裁定せず、pair単位で両labelを保存する。合意床未達なら
   `fixation.house_style`をprovisionalのまま維持する。合意床達成だけで自動判断へ昇格しない。
 - prohibited: annotatorへの候補選定理由・予想label・source mappingの事前表示、相談、
   classifier training、prompt tuning、結果を見た後の抜粋差替え。
@@ -84,9 +87,9 @@ house-style-v1|979c3e75e0fc7c119832f34df1b11ee59399a968|{pair_id}
 | `works/w0008/final/text.md` | `72c545f8bd0f5be89a5ff8aeeb5c44bf415a9f75ed0f2b56588750ef1fffdfd1` |
 | `works/w0009/drafts/v3.md` | `1b351e11fad55967c7f7f7821c1fc5e72e3092b15a61dcbbbe416e97c755649c` |
 
-Source Markdown SHA-256: `3285a114919f153d90a039d37aeee9136fa39bde487cb884b81393ef8f804663`
+Source Markdown SHA-256: `e01c464efebf8ce4667433c69588029ea9eb939db070dd6f0ada1f42b33dad1e`
 
-Print PDF SHA-256: `7550c5efdb35c2b6643235df6c2223ad6a29713a5ab70e0c34a915b4e6e02b00`
+Print PDF SHA-256: `ebab0bf6bb5a1491022afd323aec30256f06c1fcffc12ab5989e91449cee8687`
 
 PDF build: `.zed/tasks.json`の`Markdown → PDF (Typst)` task、Pandoc 3.10.1、
 `--from=gfm --pdf-engine=typst --variable=papersize:a4`。出力はPDF 1.7、5頁。
