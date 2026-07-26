@@ -1,5 +1,37 @@
 # PLAN 変更履歴
 
+## 0.7.20-39 (2026-07-26) — Phase 6後 8–9月文学的帰還campaign
+
+オーナーは`reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md`の横断診断と
+Codexの独立評価を受け、2026年8–9月を作品生成・外部批評・帰還へ集中する期限付きcampaign
+として承認した。詳細正典は`designs/post-phase6-aug-sep-literary-campaign.md`。
+
+1. Author migration benchmarkまでは現行frontier Authorを維持する。「月N作」は完成数を指し、
+   生成、完成、公開を分ける。完成は月1–2、公開実績は月0–1、公開上限は月4とする。
+2. `publish.max_per_month=999`は2026-08-01に4へ戻す。今日configを変更して7月の期限付き条件を
+   遡及変更しない。
+3. 8–9月はClaude Pro $20、ChatGPT Plus/Codex $20、従量API hard cap $45の月額最大包絡
+   **$85**を承認する。owner-only Fable 5クレジットは別枠。7月のAPI cap $71と実績を
+   遡及変更せず、API cap 45は2026-08-01にconfigへ反映する。10月に月$60基線を再審査する。
+4. 二か月で通常文学run 3–4件程度を想定するがノルマ化しない。Author benchmarkは独立scope。
+   各runは価格版・token上限・closing slotからworst-caseを予約し、過去平均だけでadmitしない。
+5. 次の文学的runまで新しい非blockingインフラを既定で開始しない。例外は安全、期限、
+   正式監査finding、次runの直接blocker。AIDE²最適化とcorpus拡張は当面開始しない。
+   Codexは8–9月も維持するが、直接blocker、批評への帰還、正典・provenance、監査closureへ
+   作業を限定し、10月に通常の設計・施工へ復帰する。
+6. Fable 5の次回最優先用途はAuthor benchmarkのblind帰還批評。house-style人間label、
+   w0009の6,000字／全文shadow比較と公開再評価、w0010「アーカイブ認識論の出口封鎖」、
+   9月上旬benchmarkの順で進める。
+7. w0009 shadow比較はJSON parseと判断情報の完全性を分離し、実publicationを変更せずに
+   6,000字抜粋と全文を比較する。結果後に既存`aleph publish`で一度だけ正規再評価する。
+8. corpus内の座標探索だけでなく探索演算子を変えるopen-ended operator searchと、
+   AI固有性がlog側に偏る場合のAuthor性能／iteration数の関係を10月以降の**探索仮説**として
+   記録する。これは新機構や結論の承認ではない。
+
+本項は期限付き方針と将来actionを記録する。新作、有償call、local inferenceは実行せず、
+`config/budgets.yaml`も8月1日まで変更しない。最新formal audit後の正典変更であるため、
+RepositorySnapshotは独立closure前に`NEEDS_AUDIT`を正直に表示する。
+
 ## 0.7.20-38 (2026-07-25) — Phase 6 audit path分類排他
 
 current-state独立再監査の残置R-9を自己完結tracer bulletとして施工する。同一artifact pathを

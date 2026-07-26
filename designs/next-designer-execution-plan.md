@@ -518,11 +518,27 @@ currency CURRENT、tree state HEAD、unexpected pathsなし。§6.0の未実施�
 Phase 6後へ明示延期され、残置P3は非blocking。2026-08-01公開上限review gateを維持したまま、
 追加の新作・local inference・有償callなしでPhase 6をformal完了する。
 
+### 6.4 Phase 6後 8–9月文学的帰還campaign
+
+2026-07-26、オーナーはFable 5横断診断を受け、
+`designs/post-phase6-aug-sep-literary-campaign.md`を期限付き運用方針として承認した。
+
+- 現行frontier Authorを9月上旬benchmarkまで維持する。
+- 生成、完成、公開を別頻度とし、「月N作」は完成数。完成月1–2、公開実績月0–1、
+  2026-08-01から公開上限4。
+- 8–9月はClaude Pro $20、ChatGPT Plus/Codex $20、従量API hard cap $45の最大月$85。
+  7月の$71 capと999公開上限を遡及変更せず、config変更は8月1日に行う。
+- 次の文学的runまで非blockingインフラを開始しない。安全、期限、正式監査finding、
+  次runの直接blockerだけを例外とする。AIDE²とcorpus拡張は当面休止。
+- house-style label、w0009入力長shadow比較と公開再評価、w0010、Author benchmark、
+  Fable 5帰還批評の順で進む。通常文学run 3–4件は目安で、benchmarkは別scope。
+- 10月にCodexが通常設計へ戻り、月$60基線、Author epoch、Critic頻度、
+  open-ended operator searchとAI固有性／Author性能の仮説を実測から審査する。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
-- 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、いったん4へ戻すか、
-  再帰的自己改善の観測に必要な新上限へ変更する設計審査を必須にする。4は再審査の
-  初期値であり、恒久的な最適値とは扱わない。
+- 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、承認済みの4へ戻す。
+  4は公開目標ではなくhard capで、8–9月の公開実績目安は月0–1とする。
 - `resume`は実装するか`run`のaliasにする。表示だけのcommandを残さない。
 - 二つのsite generatorは正規interfaceとlegacy adapterへ役割を明記する。
 

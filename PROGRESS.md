@@ -1,5 +1,20 @@
 # PROGRESS
 
+## 2026-07-26 — Phase 6後 8–9月文学的帰還campaign承認
+
+- Fable 5のowner-only横断診断を
+  `reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md`へ原文保存した。
+- オーナーはfrontier Authorをbenchmarkまで維持し、完成月1–2、公開実績月0–1、
+  2026-08-01の公開上限4復帰を承認した。
+- 8–9月はClaude Pro $20、ChatGPT Plus/Codex $20、従量API hard cap $45の最大月$85 campaign。
+  API capと公開上限は7月を遡及変更せず8月1日にconfigへ反映し、10月に月$60基線を再審査する。
+- 次の文学的runまで非blockingインフラを休止し、Codexは直接blocker・批評帰還・正典・
+  provenance・監査closureに限定する。AIDE²最適化とcorpus拡張は当面行わない。
+- 次はhouse-style label準備、w0009の6,000字／全文shadow比較、公開再評価、w0010、
+  9月上旬Author benchmark。通常run 3–4件は目安であってノルマではない。
+- open-ended operator searchとAI固有性／Author性能の関係は、10月以降に検証する探索仮説として
+  保持する。新作、有償call、local inference、config変更は本記録時点では行っていない。
+
 ## 2026-07-25 — Phase 6 formal完了
 
 - closing reserve・reader tokenizer identityとcurrent-state R-1〜R-9は全て独立正式監査PASS。
