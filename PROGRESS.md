@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-07-26 — Fable 5補遺とcampaign校正
+
+- 探索境界、潜在空間・隠れ層、AI固有性のreader依存性についてのFable 5／オーナー対話を
+  `reports/FABLE5_ADDENDUM_EXPLORATION_AI_NATIVE_20260726.md`へ原文保存した。
+- Author benchmark費用は月次API hard cap $45の内数と確定し、実施月の通常完成作品を最大1作
+  とした。benchmark両腕は詩学第1版・prompt・Critic・reader構成を固定する。
+- 一次情報照合により詩学cadenceは`0/3`、protected normal runではL8延期・非加算と確認。
+  Fable 5は「w0010で第2版発火」の予測を訂正した。この往復をCritic予測の最初の自己校正記録
+  として残した。
+- AI固有性評価にreader主体・モデル世代・blind条件・packet hash・入力範囲・品質との分離を
+  provenanceとして残す。読者間不一致は平均化しない。
+- Fable 5の第一振替先を棚全体の配列批評とし、隠れ層探索、operator inventory、
+  「一行の徴」の新計器は10月へ留保した。新作、有償call、local inference、config変更なし。
+
 ## 2026-07-26 — Phase 6後 8–9月文学的帰還campaign承認
 
 - Fable 5のowner-only横断診断を

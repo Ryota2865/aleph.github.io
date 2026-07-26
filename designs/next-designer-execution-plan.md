@@ -535,6 +535,16 @@ Phase 6後へ明示延期され、残置P3は非blocking。2026-08-01公開上�
 - 10月にCodexが通常設計へ戻り、月$60基線、Author epoch、Critic頻度、
   open-ended operator searchとAI固有性／Author性能の仮説を実測から審査する。
 
+2026-07-26のFable 5補遺と一次情報校正により、次を追加する。
+
+- benchmark費用上限$30は月次API hard cap $45の内数。実施月の通常完成作品は最大1作。
+- benchmarkは詩学第1版、prompt、Critic、reader構成を両腕で固定する。現行cadenceは
+  `0/3`でprotected normal runはL8を加算しないため、w0010で第2版が自動発火する前提を置かない。
+- AI固有性の評価はreader provenanceを記録し、読者間不一致を平均化しない。
+- benchmark不成立時のFable 5第一振替先はw0009を含む棚全体の配列批評。
+- 隠れ層探索、operator inventory、「一行の徴」の計器は10月へ留保し、既設
+  `transmute`＋制約実験を先に審査する。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、承認済みの4へ戻す。

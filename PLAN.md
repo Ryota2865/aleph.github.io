@@ -1,8 +1,8 @@
 # ALEPH — LLMによる文学表現のための自律制作システム 設計図
 
-**版**: 0.6（2026-07-07）＋ 0.7.20-39までの改訂（2026-07-08〜2026-07-26）
+**版**: 0.6（2026-07-07）＋ 0.7.20-40までの改訂（2026-07-08〜2026-07-26）
 **注**: 本文は 0.6 を基底とし、以後の設計変更はすべて [PLAN_CHANGELOG.md](PLAN_CHANGELOG.md) の
-0.7〜0.7.20-39 として差分管理されている。本文と CHANGELOG が矛盾する場合は **CHANGELOG が優先**。
+0.7〜0.7.20-40 として差分管理されている。本文と CHANGELOG が矛盾する場合は **CHANGELOG が優先**。
 主要改訂: harness規約ガード(0.7)、コーパス容量方針(0.7.8)、宛先と公開判断の分離(0.7.15)、
 self_definition の美学パラメータ化(0.7.16)、制約実験の正典昇格と作品単位の対の定義(0.7.19-1)。
 **施工**: Claude Code (Claude Opus 4.8) または Codex (GPT-5.5)
@@ -454,7 +454,10 @@ sol/codex型の定期全体走査を併用する。加えて2026-07-20以降、�
 - 予算が不足する場合も原文を抜粋せず、入力の完全性、頻度、対象網羅の順で優先する。
   専用月額は費用来歴を実測してからオーナーが校正する。
 - 2026年8–9月のFable 5手動批評は文学的帰還を優先し、次回の最優先用途をAuthor migration
-  benchmarkのblind帰還批評とする。AIDE²型shadow最適化は当面開始しない。
+  benchmarkのblind帰還批評とする。各評価にはreader主体・モデル世代、blind条件、
+  packet hash、本文単独／manifest込み、AI固有性と文学的品質の分離評価を残し、読者間の
+  不一致を平均化しない。benchmark不成立時は棚全体の配列批評へ振り替える。
+  AIDE²型shadow最適化は当面開始しない。
 
 ---
 
@@ -489,12 +492,15 @@ sol/codex型の定期全体走査を併用する。加えて2026-07-20以降、�
 - harness呼び出しは各CLIの非対話モード（`claude -p` 相当）をアダプタで包む。レイテンシが大きくlogprobsが取れないため、**執筆・批評など「重い知性・低い頻度」の役割**に充てる。logprobs系（§5.4）はすべてローカルで行う
 - budget.py は3系統を別々に計上する: local=GPU時間、harness=呼び出し回数/レート、API=USD
 - 2026年8–9月はAuthor migration benchmarkまで現行frontier Authorを維持し、通常文学run
-  3–4件程度を想定するがノルマ化しない。benchmarkは別scope。Codexは次runの直接blocker、
-  批評への帰還、正典・provenance、正式監査closureへ作業を限定する。
+  3–4件程度を想定するがノルマ化しない。benchmarkは別scopeだが、その上限$30は月次API
+  hard cap $45の内数とし、実施月の通常完成作品は最大1作。両腕では詩学第1版、prompt、
+  Critic、reader構成を固定する。Codexは次runの直接blocker、批評への帰還、正典・
+  provenance、正式監査closureへ作業を限定する。
 - Phase 6完了後、次の文学的runまで非blockingインフラ機構を既定で開始しない。例外は安全、
   期限、正式監査finding、次runの直接blocker。corpus拡張も当面開始しない。
 - 2026年10月にCodexが通常の設計・施工へ復帰し、作品・批評・benchmark実費から月$60基線、
-  Author epoch、Critic頻度を再審査する。
+  Author epoch、Critic頻度を再審査する。潜在空間・隠れ層探索、operator inventory、
+  「一行の徴」の計器は10月審査へ留保し、既設`transmute`＋制約実験を先に測る。
 
 ### 14.2 秘密情報の扱い（施工規約）
 

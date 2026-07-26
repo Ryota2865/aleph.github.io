@@ -7,6 +7,7 @@
 
 - `reports/FOR_FABLE5_POST_PHASE6_AUTHOR_CRITIC_BUDGET_20260725.md`
 - `reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md`
+- `reports/FABLE5_ADDENDUM_EXPLORATION_AI_NATIVE_20260726.md`
 - 2026-07-26のオーナー決定
 
 ## 1. 目的
@@ -28,6 +29,11 @@ Phase 5–6で整備した予算予約、終端、計器、formal audit、reposi
   帰還、正典・provenance、正式監査closureへ限定する。
 - **独立監査**: 有償runのmanifestと、そのrunに必要な実装は施工者と別の担当が監査する。
 
+AI固有性の評価は作品だけの一項述語とせず、`(作品, 読み手)`の関係として記録する。
+8–9月に三要因の大規模実験へ広げず、各評価packetにはreaderの主体・モデルと世代、
+blind条件、入力packet hash、本文単独／manifest込みの別、AI固有性と文学的品質を分けた
+評価を残す。読者間の不一致は平均化して消さず、観測結果として保持する。
+
 Phase 6完了後、次の文学的runまで、新しい非blockingインフラ機構を既定で開始しない。
 例外は安全、期限、正式監査finding、次runの直接blockerに限る。AIDE²型shadow最適化と
 corpus拡張は当面開始しない。
@@ -48,7 +54,8 @@ corpus拡張は当面開始しない。
 
 二か月で通常の有償文学runを3–4件程度想定するが、ノルマではない。SHELVEを正常終端、
 PUBLISHを例外とする比率を維持する。Author migration benchmarkは通常作品数に算入せず、
-独立したexperiment scopeと費用包絡を持つ。
+独立したexperiment scopeと予約を持つが、API支出は月次hard cap $45の**内数**とする。
+benchmark実施月の通常完成作品は最大1作に絞る。
 
 ## 4. 期限付き費用
 
@@ -65,6 +72,8 @@ PUBLISHを例外とする比率を維持する。Author migration benchmarkは�
 - Fable 5のClaude Pro限定クレジットはowner-only別枠として注記し、従量APIへ合算しない。
 - 従量APIは各runのmanifestで、provider/model、価格版、token上限、closing slotから
   worst-case費用を予約する。過去平均だけでadmitしない。
+- Author migration benchmarkの上限$30も従量API hard cap $45の内数であり、別会計で
+  月次上限を越えることを認めない。
 - 2026-07の`api.usd_per_month=71`と実績は遡及変更しない。
 - `config/budgets.yaml`のAPI cap 45と公開上限4への変更は2026-08-01に行う。
 - 2026年10月にサブスクリプション込み月$60基線を再審査する。Author benchmark、
@@ -93,13 +102,25 @@ PUBLISHを例外とする比率を維持する。Author migration benchmarkは�
 1. 承認済み最低線を満たすAuthor migration benchmarkを独立scopeで実施する。
 2. Fable 5へAuthor名を隠した全文脈packetを渡し、帰還批評を得る。
 3. 品質床、改稿応答、費用、完走、parse、家風分散からAuthor epochを判断する。
-4. benchmarkが間に合わない場合、残るFable 5機会は詩学第2版審査へ振り替える。
+4. benchmarkの両腕で詩学第1版、prompt、Critic、reader構成を固定し、identityとhashを
+   manifestへ記録する。両腕の間で詩学reflectionを行わない。
+5. benchmarkが間に合わない場合、残るFable 5機会はw0009を含む棚全体の配列批評へ
+   振り替える。これはw0001〜w0008本文の再読を含むCritic未判定範囲の解消を兼ねる。
+
+現行の`poetics/cadence_state.json`は第1版適用後の`0/3`である。さらにprotected normal runは
+L8詩学改訂をrun外へ延期しcadenceも加算しないため、w0010完成だけで第2版が発火する経路は
+ない。第2版reflectionを行う場合はw0010とは別のclosing操作として設計・監査し、本campaignの
+benchmark前提にはしない。
 
 ### 2026-10
 
 1. Codexが通常の設計・施工へ復帰する。
 2. 月$60基線、Author epoch、Critic頻度を実測から決める。
 3. 8–9月の作品と批評を入力に、open-ended operator searchを次期設計主題として審査する。
+4. 新機構を作る前に、既設の`transmute`と制約実験の組合せ、手続きを変異させる演算子の
+   目録、潜在空間・隠れ層の低密度領域探索の順で費用と識別力を審査する。
+5. 「一行の徴」はAI紋や奇抜さへ堕ちる危険を含むため、reader依存性と文学的品質を同時に
+   測る盲検protocolが成立する場合だけ研究候補とする。
 
 ## 6. w0009入力長shadow比較
 
@@ -141,7 +162,12 @@ Author性能より実験回数が重要になりうる仮説を支持する。�
 この二説は未決である。w0010で現Authorによる実験構造から作品への変換を観測し、
 Author migration benchmarkでは実験条件を固定してAuthorだけを変える。将来はAuthor modelと
 log／実験構造から本文へのtransduction条件を別々に操作し、どちらがAI固有性の本文露出を
-支配するか検証する。
+支配するか検証する。本文露出の判定はreaderにも依存するため、reader identityと世代を
+provenanceへ残し、読者間不一致を信号として扱う。
+
+Fable 5が当初示した「w0010で詩学第2版が発火しうる」という予測は、Codexが一次情報と
+照合して反証し、Fable 5自身が訂正した。これはCriticの予測を採点可能にし、誤りを消さず
+訂正として残す最初の自己校正記録として扱う。
 
 ## 8. 非目標
 
@@ -151,3 +177,4 @@ log／実験構造から本文へのtransduction条件を別々に操作し、�
 - Author benchmark前にlighter Authorへ本番移行しない。
 - 批評入力を費用のために要約・抜粋しない。
 - 新しい汎用実験DSL、budget framework、critic最適化loopを作らない。
+- 隠れ層探索、open-ended operator inventory、「一行の徴」の新計器を8–9月中に施工しない。

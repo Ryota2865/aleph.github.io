@@ -1,5 +1,32 @@
 # PLAN 変更履歴
 
+## 0.7.20-40 (2026-07-26) — Fable 5補遺とcampaign実行条件の校正
+
+Fable 5とオーナーの探索・AI固有性対話を
+`reports/FABLE5_ADDENDUM_EXPLORATION_AI_NATIVE_20260726.md`へ原文保存し、Codexとの往復で
+得た実行上の校正を`designs/post-phase6-aug-sep-literary-campaign.md`へ反映する。
+
+1. Author migration benchmarkの上限$30は月次API hard cap $45の**内数**とする。
+   benchmark実施月の通常完成作品は最大1作。experiment scopeと予約は独立させるが、
+   月次上限の外枠を作らない。
+2. AI固有性を`(作品, 読み手)`の関係として扱う。評価packetごとにreader主体・モデル世代、
+   blind条件、packet hash、本文単独／manifest込み、AI固有性と文学的品質の分離評価を残し、
+   読者間不一致を平均化せず観測結果として保存する。8–9月に三要因の大実験へは広げない。
+3. 現行詩学cadenceは第1版適用後の`0/3`であり、protected normal runはL8を延期して
+   cadenceも加算しない。w0010完成で第2版が自動発火するというFable 5の予測は誤りだった。
+   benchmarkは両腕で詩学第1版・prompt・Critic・reader構成を固定する。第2版reflectionは
+   必要なら別のclosing操作として設計・監査する。
+4. benchmark不成立時のFable 5第一振替先は、w0009を含む棚全体の配列批評とする。
+   w0001〜w0008本文の再読を含むCritic未判定範囲を解消する。
+5. 潜在空間・隠れ層探索、operator inventory、「一行の徴」の盲検計器は10月審査へ留保する。
+   既設`transmute`＋制約実験を先に測り、不足するときだけ新機構を検討する。
+6. Criticの発火予測を設計者の一次情報照合が反証し、Critic自身が訂正した往復を、
+   Critic予測の最初の自己校正記録として保存する。誤記を削除せず訂正注記で繰り越す。
+
+本項は文書・運用条件だけを校正する。新作、有償call、local inference、config変更、
+詩学reflection、新機構の施工は行わない。`ef2a9ed`の監査対象commitは変更せず、その後続の
+別commitとして記録する。
+
 ## 0.7.20-39 (2026-07-26) — Phase 6後 8–9月文学的帰還campaign
 
 オーナーは`reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md`の横断診断と
