@@ -1,5 +1,17 @@
 # PROGRESS
 
+## 2026-07-26 — house-style blind人間label packet準備
+
+- `fixation.house_style` v1の低負荷protocolに従い、既存採用稿から短い抜粋12組を選び、
+  人間annotator用の3択blind packetを作成した。候補選定者の予想labelは保存せず、
+  出典・work ID・選定理由を配布packetから隔離した。
+- 24抜粋が記録したsource範囲の連続部分であること、A/B orientation、source hash、
+  回答欄12件を機械照合した。Markdown原本と紙配布用PDFのhash、PDF生成経路を
+  sealed provenanceへ記録した。
+- 状態は`PREPARED / UNLABELED / OWNER LOCK REQUIRED`。二人目の独立した人間annotatorと、
+  提案合意床exact 10/12・不一致非強制裁定をオーナーがlockするまでannotationを開始しない。
+- 新作、local inference、有償API call、config・poetics・instrument status変更なし。
+
 ## 2026-07-26 — 8–9月文学的帰還campaign校正 正式監査PASS
 
 - 独立Claude Code（Opus 4.8）担当がcommit `3def8311e093333b0236d00ac38775c308db6925`、

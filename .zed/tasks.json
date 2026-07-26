@@ -1,0 +1,17 @@
+[
+  {
+    "label": "Markdown → PDF (Typst)",
+    "command": "pandoc",
+    "args": [
+      "$ZED_FILE",
+      "--from=gfm",
+      "--pdf-engine=typst",
+      "--variable=papersize:a4",
+      "--output",
+      "$ZED_DIRNAME/$ZED_STEM.pdf"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "current",
+    "reveal": "always"
+  }
+]
