@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "experiment_id": "exp-w0009-publication-input-shadow-v1",
+  "status": "preregistered_not_run",
+  "preregistered_on": "2026-07-30",
+  "canon": "designs/post-phase6-aug-sep-literary-campaign.md#6-w0009入力長shadow比較",
+  "design": "designs/w0009-publication-input-shadow-preregistration.md",
+  "baseline": {
+    "commit": "02f67c9b9aa45ac995acbc000e34b8806474cc82",
+    "tree": "578cac970e2dbcb769b16df192dc73ada76094f2",
+    "work_state": "SHELVE",
+    "checkpoint_sha256": "72849574114d89e82da09432553f63e7f96f3252f77aeaac02fd5f01e4d5de4e",
+    "decisions_sha256": "cb9a6b77cdeda5b68958e965ee6326b9fbca0a82f40127597440a95599067268",
+    "calls_sha256": "d89ca07d531a4ae321bae6d13050b6e6674c8835e0e382df5455f71aa451114c"
+  },
+  "stimulus": {
+    "selection": "maximum mean_score in works/w0009/reviews/trajectory.jsonl",
+    "selected_version": 2,
+    "selected_mean_score": 9.233333333333333,
+    "source": "works/w0009/drafts/v2.md",
+    "full_chars": 11139,
+    "full_utf8_bytes": 32903,
+    "full_sha256": "1b351e11fad55967c7f7f7821c1fc5e72e3092b15a61dcbbbe416e97c755649c",
+    "excerpt_rule": "text[:4000] + \"\\n……\\n\" + text[-2000:]",
+    "excerpt_chars": 6004,
+    "excerpt_utf8_bytes": 17752,
+    "excerpt_sha256": "117e23b7d006de3d17d1de24300863aac438e1dabb4d957df295ed2ef9f6e3ee",
+    "omitted_source_span_python_chars": [
+      4000,
+      9139
+    ],
+    "omitted_chars": 5139,
+    "omitted_sha256": "ebd4e077a7b2919a34bdf83d149b42e773e3fa407c05b40b517e2bb8a840a7f8",
+    "trajectory_sha256": "cf9b7b4194926b8524dbb5091fb68bd0b235fde622ef6a63fe0a58e96321177d"
+  },
+  "fixed_context": {
+    "audience": "LLM 0.15 / 人間 0.35 / 自分 0.5",
+    "shelf_summaries": [
+      "半呼吸",
+      "床の硬さ",
+      "灯のうしろ",
+      "折り目",
+      "暗い側"
+    ],
+    "shelf_join": "LF with no trailing LF",
+    "shelf_sha256": "5fd4e47da44efcb02c48c05d61a7fe7edff11b54d784e4e1fa5de326866c1c59",
+    "publication_gate_sha256": "ff26c168dafb0be5af70e7a4073fb7741e7c1999d4000fa49b37b6a97efd4a1c"
+  },
+  "model": {
+    "role": "author_primary",
+    "provider": "anthropic",
+    "model": "claude-fable-5",
+    "max_tokens": 16384,
+    "temperature": null,
+    "pricing_version": "config/models.yaml@sha256:c3388c01bbc7f89ce5e051f98add74c5c026777cd1e9b1e3e12c9f3593a7b9c1#roles.author_primary.pricing",
+    "input_usd_per_mtok": 10.0,
+    "output_usd_per_mtok": 50.0,
+    "provider_reconciliation": "best_effort_after_run"
+  },
+  "schema": {
+    "canonical_text": "{\"publish\":\"bool\",\"reason\":\"str\"}",
+    "sha256": "ba40bab68fc91e1f047273d8b8129f5b5622c9e608742582c89a2538a5914f1b",
+    "parser": "aleph.core.model_output.parse_model_output",
+    "fail_closed": true,
+    "unknown_fields_allowed_by_current_parser": true,
+    "production_prose_fallback": false
+  },
+  "blind": {
+    "seed_text": "w0009-publication-input-shadow-v1|2026-07-30",
+    "model_message_omits_arm_identity": true,
+    "independent_stateless_calls": true,
+    "analysis_mapping_hidden_until_both_raw_responses_fixed": true,
+    "order": [
+      "packet-db058b2776b4",
+      "packet-be6c78477dfd"
+    ]
+  },
+  "packets": [
+    {
+      "packet_id": "packet-db058b2776b4",
+      "body": "excerpt",
+      "intent_prompt_chars": 6379,
+      "intent_prompt_utf8_bytes": 18705,
+      "intent_prompt_sha256": "28e78a2b56463a0d27accdac102b8960acbb2412eabef93a119fdaa269f480ae"
+    },
+    {
+      "packet_id": "packet-be6c78477dfd",
+      "body": "full",
+      "intent_prompt_chars": 11514,
+      "intent_prompt_utf8_bytes": 33856,
+      "intent_prompt_sha256": "2802adbddc2964546be4a8f81874c34d7202385e013984bec4872ac0ef4617f6"
+    }
+  ],
+  "shelf_comparison": {
+    "conditional_on": "strict parse success and publish == true for that packet",
+    "prompt_chars": 116,
+    "prompt_utf8_bytes": 278,
+    "prompt_sha256": "f762ea9cdc54ac7aee3fbae26f7ecef8f98e2b645462d4c4a76b14cad902bf81",
+    "response_schema": "free_text",
+    "selection_endpoint": false,
+    "limitation": "the current stateless comparison prompt contains shelf titles but no work body"
+  },
+  "attempt_policy": {
+    "semantic_retries": 0,
+    "transport_retries": 0,
+    "attempts_per_slot": 1
+  },
+  "budget_reserve": {
+    "charged_within_monthly_api_cap": true,
+    "earliest_run_date": "2026-08-01",
+    "required_monthly_api_cap_usd": 45.0,
+    "slots": [
+      {
+        "slot": "excerpt_intent",
+        "input_token_ceiling": 24000,
+        "output_token_ceiling": 16384,
+        "max_usd": 1.0592
+      },
+      {
+        "slot": "full_intent",
+        "input_token_ceiling": 40000,
+        "output_token_ceiling": 16384,
+        "max_usd": 1.2192
+      },
+      {
+        "slot": "excerpt_shelf_comparison",
+        "input_token_ceiling": 4000,
+        "output_token_ceiling": 16384,
+        "max_usd": 0.8592
+      },
+      {
+        "slot": "full_shelf_comparison",
+        "input_token_ceiling": 4000,
+        "output_token_ceiling": 16384,
+        "max_usd": 0.8592
+      }
+    ],
+    "total_max_usd": 3.9968
+  },
+  "record": [
+    "raw response bytes and sha256",
+    "strict parser value, fragment, source_span, and warnings",
+    "PUBLISH, SHELVE, or PARSE_INCOMPLETE",
+    "middle_reference and decision_relevant with response and source evidence",
+    "shelf comparison or NOT_TRIGGERED",
+    "input tokens, output tokens, total tokens",
+    "declared cost, provider reconciliation, latency"
+  ],
+  "selection_rules": [
+    "both parse failures => INCONCLUSIVE_PARSE",
+    "exactly one parse success => select the parsed packet",
+    "both parse and decisions agree; full has decision-relevant middle reference => select full",
+    "both parse and decisions agree; otherwise => select excerpt",
+    "both parse and decisions differ; full has decision-relevant middle reference => select full",
+    "both parse and decisions differ; otherwise => INCONCLUSIVE_DECISION"
+  ],
+  "immutability": {
+    "must_not_change": [
+      "works/w0009/checkpoint.json",
+      "works/w0009/decisions.jsonl",
+      "works/w0009/calls.jsonl",
+      "works/w0009/drafts/",
+      "works/w0009/final/",
+      "public site",
+      "poetics/",
+      "house-style annotation results"
+    ],
+    "shadow_is_not_canonical_publication_decision": true
+  },
+  "run_gates": [
+    "2026-08-01 budget and publish-cap actions are applied",
+    "all preregistered identities reproduce",
+    "worst-case reserve of 3.9968 USD is admitted within the 45 USD monthly cap",
+    "runner implementation and tests are complete",
+    "independent Claude Code read-only audit returns PASS"
+  ]
+}

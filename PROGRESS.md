@@ -1,5 +1,20 @@
 # PROGRESS
 
+## 2026-07-30 — w0009 publication入力長shadow事前登録
+
+- campaign §6に従い、w0009採用稿の現行6,004文字構成と全文11,139文字を比較する
+  一組のshadowを事前登録した。本文、棚summary、現行prompt/schema、Author role、
+  価格宣言をhash固定した。
+- 主観測をstrict JSON parseと判断に関係する中盤参照に分離した。productionの文章fallbackは
+  parse失敗を隠すためshadowでは使わず、semantic/transport retryはいずれも0とした。
+- 条件付き棚比較は現行経路どおり記録するが、無状態promptに作品本文がないため入力長選択の
+  根拠には使わず、正規再評価前の直接blocker審査へ回す。
+- 最悪時4 slotを$3.9968として、8月API hard cap $45の内数で一括予約する。実行は
+  2026-08-01のbudget/publish cap反映、runner施工、独立Claude Code監査PASSの後に限る。
+- house-style annotationは先に完了したが別protocolであり、その回答・合意率・難度所感を
+  arm、prompt、採点、選択規則へ入力していない。新作、有償call、local inference、
+  公開再評価、config・poetics変更なし。
+
 ## 2026-07-30 — house-style blind人間annotation床未達
 
 - owner H01と独立人間annotator H02が、同一hashの12組packetを相談・出典調査・
