@@ -551,6 +551,17 @@ Formal closure（2026-07-26）: 独立Claude Code（Opus 4.8）がcommit `3def83
 compileall、diff checkを独立再現した。P0〜P3なし、**VERDICT: PASS**。
 0.7.20-40と8–9月campaign校正をformal完了する。
 
+実行状況（2026-07-30）:
+
+- house-style blind人間annotationは完了し、exact agreement `2/12`で事前床`10/12`未達。
+  両回答を裁定せず保存し、`fixation.house_style`はprovisionalを維持する。
+- w0009入力長shadowは
+  `designs/w0009-publication-input-shadow-preregistration.md`と機械可読manifestへ
+  事前登録し、commit `8a5bd48`で有償call前に固定した。
+- runnerは`designs/w0009-publication-shadow-runner.md`に従い施工中。独立Claude Code監査、
+  2026-08-01のAPI cap `$45`／公開上限`4`反映、worst-case `$3.9968` reserveが揃うまで
+  有償callを行わない。
+
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。
 - 2026-08-01に`publish.max_per_month=999`の期限切れを検出し、承認済みの4へ戻す。

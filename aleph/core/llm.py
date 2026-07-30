@@ -291,6 +291,9 @@ class Router:
             "logprobs": overrides.pop("logprobs", decl.get("logprobs", False)),
             "seed": overrides.pop("seed", None),
         }
+        transport_retries = overrides.pop("transport_retries", 2)
+        if type(transport_retries) is not int or transport_retries < 0:
+            raise ValueError("transport_retries must be a non-negative integer")
         kwargs.update(overrides)
 
         self.budget.precheck(
@@ -312,13 +315,13 @@ class Router:
         last_err: Exception | None = None
         with lock:
             resp = None
-            for attempt in range(3):
+            for attempt in range(transport_retries + 1):
                 try:
                     resp = provider.complete(model, messages, **kwargs)
                     break
                 except Exception as exc:  # リトライ（PLAN §2.1）
                     last_err = exc
-                    if attempt == 2:
+                    if attempt == transport_retries:
                         raise
                     time.sleep(min(2**attempt, 5))
         assert resp is not None  # ループは break か raise のいずれかで抜ける
@@ -350,7 +353,7 @@ class Router:
             "role": role,
             "provider": resp.provider,
             "model": resp.model,
-            "params": kwargs,
+            "params": {**kwargs, "transport_retries": transport_retries},
             "prompt_hash": sha256_text(prompt_text),
             "response_hash": response_hash,
             "usage": {

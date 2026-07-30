@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-07-30 — w0009 publication shadow runner施工
+
+- 事前登録3ファイルを単独commit `8a5bd48`として固定し、originへpushした。その後続差分で
+  manifest検証、prompt再構成、strict parse、raw保存、blind採点packet、費用・token・latency、
+  canonical非変更再照合を`PublicationShadow` moduleへ閉じた。
+- production Router adapterとfake test adapterを同じseamへ置いた。shadowはtransport retry 0、
+  既存callerは従来どおり2 retryを維持し、実値をcall logへ残す。
+- 4 slotのworst-case `$3.9968`をprotected closing batchとして一括予約し、未使用分をsettleする。
+  課金work identityは`w0009-publication-shadow`へ分離し、既存w0009の作品別累積額を汚染しない。
+- paid CLIはterminal `VERDICT: PASS`、candidate commit/tree、clean HEADを要求する。
+  2026-07-30時点のread-only verifyは日付、API cap 71、公開上限999の三blockerを正しく表示する。
+- focused fake故障注入は15件green。有償call、local inference、公開再評価、config・poetics変更、
+  中盤参照の採点は未実施。独立Claude Code監査待ち。
+
 ## 2026-07-30 — w0009 publication入力長shadow事前登録
 
 - campaign §6に従い、w0009採用稿の現行6,004文字構成と全文11,139文字を比較する
