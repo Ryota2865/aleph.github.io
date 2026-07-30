@@ -9,6 +9,7 @@ import argparse
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 from aleph.core.budget import BatchSpec, Budget
 from aleph.core.config import load_config
@@ -23,6 +24,18 @@ from aleph.meta.publication_shadow import (
 
 ROOT = Path(__file__).resolve().parents[1]
 SHADOW_WORK_ID = "w0009-publication-shadow"
+POST_AUDIT_ALLOWED_PATHS = frozenset(
+    {
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.en.md",
+        "README.md",
+        "config/budgets.yaml",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/W0009_PUBLICATION_SHADOW_RUNNER_AUDIT_20260730.md",
+    }
+)
 
 
 def _git(*args: str) -> str:
@@ -35,7 +48,7 @@ def _git(*args: str) -> str:
     ).stdout.strip()
 
 
-def verify_audit_gate(report: Path, candidate_commit: str) -> dict[str, str]:
+def verify_audit_gate(report: Path, candidate_commit: str) -> dict[str, Any]:
     report = Path(report)
     text = report.read_text(encoding="utf-8")
     nonempty = [line.strip() for line in text.splitlines() if line.strip()]
@@ -44,13 +57,34 @@ def verify_audit_gate(report: Path, candidate_commit: str) -> dict[str, str]:
     head = _git("rev-parse", "HEAD")
     commit = _git("rev-parse", candidate_commit)
     tree = _git("rev-parse", f"{commit}^{{tree}}")
-    if commit != head:
-        raise PublicationShadowError("audited candidate commit is not current HEAD")
     if _git("status", "--porcelain"):
         raise PublicationShadowError("paid execution requires a clean audited candidate")
     if commit not in text or tree not in text:
         raise PublicationShadowError("audit report does not bind the candidate commit and tree")
-    return {"candidate_commit": commit, "candidate_tree": tree, "audit_report": str(report)}
+    try:
+        _git("merge-base", "--is-ancestor", commit, head)
+    except subprocess.CalledProcessError as exc:
+        raise PublicationShadowError(
+            "current HEAD does not descend from the audited candidate"
+        ) from exc
+    changed = tuple(
+        path
+        for path in _git("diff", "--name-only", f"{commit}..{head}").splitlines()
+        if path
+    )
+    unexpected = sorted(set(changed) - POST_AUDIT_ALLOWED_PATHS)
+    if unexpected:
+        raise PublicationShadowError(
+            "post-audit changes are outside the execution allowlist: "
+            + ", ".join(unexpected)
+        )
+    return {
+        "candidate_commit": commit,
+        "candidate_tree": tree,
+        "current_head": head,
+        "post_audit_paths": list(changed),
+        "audit_report": str(report),
+    }
 
 
 class BudgetRouterAdapter:

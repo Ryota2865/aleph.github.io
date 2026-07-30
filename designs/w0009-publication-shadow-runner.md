@@ -93,12 +93,16 @@ uv run python scripts/run_w0009_publication_shadow.py run \
 
 - audit reportの最終非空行が厳密に`VERDICT: PASS`
 - report本文がcandidate commitとtreeを明記
-- candidate commitがcurrent HEAD
+- current HEADがcandidate commit自身またはその子孫
 - worktreeがclean
+- candidate後の差分が、formal closure文書、固定audit artifact
+  `reports/W0009_PUBLICATION_SHADOW_RUNNER_AUDIT_20260730.md`、
+  2026-08-01の`config/budgets.yaml`期限actionだけの厳密allowlist内
 - 事前登録identityが全一致
 - 日付、API cap、公開上限、予算reserveが成立
 
 いずれか一つでも不成立ならprovider call前に停止する。
+code、test、runner、manifest、作品にcandidate後の差分があれば、子孫commitでも拒否する。
 
 ## 7. 受入条件
 

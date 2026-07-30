@@ -11,8 +11,9 @@
   課金work identityは`w0009-publication-shadow`へ分離し、既存w0009の作品別累積額を汚染しない。
 - paid CLIはterminal `VERDICT: PASS`、candidate commit/tree、clean HEADを要求する。
   2026-07-30時点のread-only verifyは日付、API cap 71、公開上限999の三blockerを正しく表示する。
-- focused fake故障注入は15件green。有償call、local inference、公開再評価、config・poetics変更、
-  中盤参照の採点は未実施。独立Claude Code監査待ち。
+- focused fake故障注入は16件、全non-localは453 passed, 1 deselectedでgreen。
+  有償call、local inference、公開再評価、config・poetics変更、中盤参照の採点は未実施。
+  独立Claude Code監査待ち。
 
 ## 2026-07-30 — w0009 publication入力長shadow事前登録
 

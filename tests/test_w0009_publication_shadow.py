@@ -259,6 +259,7 @@ def test_budget_reservation_uses_separate_shadow_work_identity(tmp_path):
 
 def test_audit_gate_binds_clean_head_commit_tree_and_terminal_pass(tmp_path, monkeypatch):
     commit = "a" * 40
+    head = "c" * 40
     tree = "b" * 40
     report = tmp_path / "audit.md"
     report.write_text(
@@ -269,10 +270,16 @@ def test_audit_gate_binds_clean_head_commit_tree_and_terminal_pass(tmp_path, mon
     def fake_git(*args):
         if args == ("status", "--porcelain"):
             return ""
-        if args == ("rev-parse", "HEAD") or args == ("rev-parse", commit):
+        if args == ("rev-parse", "HEAD"):
+            return head
+        if args == ("rev-parse", commit):
             return commit
         if args == ("rev-parse", f"{commit}^{{tree}}"):
             return tree
+        if args == ("merge-base", "--is-ancestor", commit, head):
+            return ""
+        if args == ("diff", "--name-only", f"{commit}..{head}"):
+            return "config/budgets.yaml\nPROGRESS.md"
         raise AssertionError(args)
 
     monkeypatch.setattr(runner, "_git", fake_git)
@@ -281,6 +288,34 @@ def test_audit_gate_binds_clean_head_commit_tree_and_terminal_pass(tmp_path, mon
 
     assert evidence["candidate_commit"] == commit
     assert evidence["candidate_tree"] == tree
+    assert evidence["current_head"] == head
+
+
+def test_audit_gate_rejects_post_audit_code_change(tmp_path, monkeypatch):
+    commit = "a" * 40
+    head = "c" * 40
+    tree = "b" * 40
+    report = tmp_path / "audit.md"
+    report.write_text(
+        f"candidate commit: {commit}\ncandidate tree: {tree}\n\nVERDICT: PASS\n",
+        encoding="utf-8",
+    )
+
+    def fake_git(*args):
+        values = {
+            ("status", "--porcelain"): "",
+            ("rev-parse", "HEAD"): head,
+            ("rev-parse", commit): commit,
+            ("rev-parse", f"{commit}^{{tree}}"): tree,
+            ("merge-base", "--is-ancestor", commit, head): "",
+            ("diff", "--name-only", f"{commit}..{head}"): "aleph/core/llm.py",
+        }
+        return values[args]
+
+    monkeypatch.setattr(runner, "_git", fake_git)
+
+    with pytest.raises(PublicationShadowError, match="outside the execution allowlist"):
+        runner.verify_audit_gate(report, commit)
 
 
 def test_router_transport_retries_can_be_disabled(tmp_path):
