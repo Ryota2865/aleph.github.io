@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-07-30 — house-style blind人間annotation床未達
+
+- owner H01と独立人間annotator H02が、同一hashの12組packetを相談・出典調査・
+  sealed provenance閲覧なしで独立評価した。原回答PDFをhash同一で保存し、
+  24 labelすべての判読とメタデータを確認した。
+- exact agreementはP03・P12の2組、`2/12 = 16.7%`。事前固定した`10/12`の床に未達。
+  不一致10組は裁定せず、両回答を観測値として保存した。
+- 契約どおり`fixation.house_style` v1はprovisionalを維持する。合意床の引下げ、
+  同packetの回答修正・取り直し、自動判断への昇格、classifier trainingは行わない。
+- H01の事後所感として、文章難度、複雑なレトリック、時代文体、抽象課題への例示不足を
+  記録した。これは原因確定ではなく、将来の別packetで検証すべき観測として扱う。
+- 低合意の原因は本結果だけでは分解しない。新作、local inference、有償API call、
+  config・poetics変更なし。
+
 ## 2026-07-26 — house-style blind人間label packet準備
 
 - `fixation.house_style` v1の低負荷protocolに従い、既存採用稿から短い抜粋12組を選び、
