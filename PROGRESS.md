@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-07-31 — w0009 publication shadow runner正式監査PASS
+
+- 独立Claude Code担当がcommit `d4bc98b3220bda82fabe3c558de2e1111b899542`、tree
+  `ac280ff1ad9d3cc1deaaec148d7f62c10e37d2dd`をread-only正式監査した。
+- 事前登録の観測前凍結、strict fail-closed parse、intent先行と条件付き棚比較、retry 0、
+  worst-case `$3.9968` reserve、再実行拒否、evidence保存、blind性、canonical非変更、
+  paid gateを独立再構成し、focused **16 passed**、全non-local **453 passed, 1 deselected**、
+  compileall、diff checkを確認した。P0〜P2なし、`VERDICT: PASS`。
+- P3助言のidentity構造化field化とpost-audit allowlist狭域化は非blocking残余riskとして保持する。
+  audit artifactをsequence 16へ登録し、候補を
+  `audit-candidate/w0009-publication-shadow-runner-20260730` tagへ固定する。
+- runner施工はformal完了。有償callは行っていない。2026-08-01のAPI cap `$45`／公開上限`4`
+  反映後にread-only verify、reserve、paid executionへ進む。
+
 ## 2026-07-30 — w0009 publication shadow runner施工
 
 - 事前登録3ファイルを単独commit `8a5bd48`として固定し、originへpushした。その後続差分で

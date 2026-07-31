@@ -36,6 +36,16 @@ Fable 5とオーナーの探索・AI固有性対話を
 候補は`audit-candidate/post-phase6-literary-campaign-calibration-20260726` tagへ固定し、
 0.7.20-40をformal完了する。
 
+2026-07-31、同じ0.7.20-40のw0009 publication入力長shadow runnerを独立Claude Code担当が
+candidate commit `d4bc98b3220bda82fabe3c558de2e1111b899542`、tree
+`ac280ff1ad9d3cc1deaaec148d7f62c10e37d2dd`に対してread-only正式監査した。事前登録の
+観測前凍結、strict fail-closed parse、無状態のcall順、retry 0、closing reserve、再実行拒否、
+canonical非変更、paid gateを独立故障注入で照合し、P0〜P2なし、**VERDICT: PASS**。
+P3助言2件（identityの構造化field化、post-audit allowlistの将来の狭域化）は非blocking残余
+riskとして保持する。候補を
+`audit-candidate/w0009-publication-shadow-runner-20260730` tagへ固定し、runner施工を
+formal完了する。有償provider path、config変更、公開再評価はまだ実行しない。
+
 ## 0.7.20-39 (2026-07-26) — Phase 6後 8–9月文学的帰還campaign
 
 オーナーは`reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md`の横断診断と

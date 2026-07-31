@@ -558,9 +558,10 @@ compileall、diff checkを独立再現した。P0〜P3なし、**VERDICT: PASS**
 - w0009入力長shadowは
   `designs/w0009-publication-input-shadow-preregistration.md`と機械可読manifestへ
   事前登録し、commit `8a5bd48`で有償call前に固定した。
-- runnerは`designs/w0009-publication-shadow-runner.md`に従い施工中。独立Claude Code監査、
-  2026-08-01のAPI cap `$45`／公開上限`4`反映、worst-case `$3.9968` reserveが揃うまで
-  有償callを行わない。
+- runnerはcommit `d4bc98b`、tree `ac280ff`に対する独立Claude Code正式監査で
+  **VERDICT: PASS**となりformal完了した。P3助言2件は非blocking残余riskとして保持する。
+  2026-08-01のAPI cap `$45`／公開上限`4`反映、read-only verify、worst-case `$3.9968`
+  reserveが揃うまで有償callを行わない。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。

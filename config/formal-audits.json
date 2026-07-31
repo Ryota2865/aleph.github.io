@@ -256,6 +256,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/PHASE6_POST_CAMPAIGN_CALIBRATION_AUDIT_20260726.md"
       ]
+    },
+    {
+      "sequence": 16,
+      "path": "reports/W0009_PUBLICATION_SHADOW_RUNNER_AUDIT_20260730.md",
+      "recorded_on": "2026-07-31",
+      "target_changelog": "0.7.20-40",
+      "candidate_tree": "ac280ff1ad9d3cc1deaaec148d7f62c10e37d2dd",
+      "candidate_commit": "d4bc98b3220bda82fabe3c558de2e1111b899542",
+      "candidate_ref": "refs/tags/audit-candidate/w0009-publication-shadow-runner-20260730",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/W0009_PUBLICATION_SHADOW_RUNNER_AUDIT_20260730.md"
+      ]
     }
   ]
 }
