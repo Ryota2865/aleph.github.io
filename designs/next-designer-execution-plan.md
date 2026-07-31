@@ -566,8 +566,10 @@ compileall、diff checkを独立再現した。P0〜P3なし、**VERDICT: PASS**
   SHA-256 `340c5756…b070`へ固定した。`works/w0010`と作品結果は未作成。
 - w0010 execution bindingは`run_budget v2`を唯一の予算権威とし、experiment provenanceを
   call recordへ併記する最小seamとして施工した。L7 closing reserveはtitle、publication
-  intent、shelf comparison、final projectionから`$2.8608`と導出。独立Claude Code監査と
-  formal closureが完了するまでrunしない。
+  intent、shelf comparison、final projectionから`$2.8608`と導出。commit `2cdddcbe`、tree
+  `9d3682d8`に対する独立Claude Code監査はP0〜P2なし、`VERDICT: PASS`となりformal完了した。
+  P3の既存budget comment陳腐化は2026-08-01の期限actionへ繰り越す。w0010は同actionと
+  w0009 shadow／公開再評価が先行するまでrunしない。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。

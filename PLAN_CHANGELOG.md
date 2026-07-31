@@ -23,6 +23,13 @@ experiment provenanceと`run_budget v2`を同じnormal runへ束縛する。
 budget config、poeticsは変更しない。正式実行許可は独立Claude Code read-only監査PASS、
 formal closure、8月1日の期限action、w0009 shadow／公開再評価の先行を要する。
 
+独立Claude Code監査はcommit `2cdddcbe0ac2dbee4140c81ffd897b2b4cf218ff`、tree
+`9d3682d86ef18fe836b8c75b3be1d3d85d6b59e0`をread-onlyで検証し、P0〜P2なし、
+`VERDICT: PASS`と判定した。focusedは新規2ファイルの正確な集合で18件、全non-localは
+456 passed, 1 skipped, 1 deselected。P3としてfocused集合名の曖昧さと既存budget commentの
+陳腐化を残し、後者は2026-08-01のbudget期限actionで校正する。これによりexecution bindingは
+formal完了するが、有償実行許可には同期限actionとw0009 shadow／公開再評価の先行が引き続き必要。
+
 ## 0.7.20-40 (2026-07-26) — Fable 5補遺とcampaign実行条件の校正
 
 Fable 5とオーナーの探索・AI固有性対話を

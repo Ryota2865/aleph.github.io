@@ -1,6 +1,6 @@
 # PROGRESS
 
-## 2026-07-31 — w0010事前登録・closing execution binding施工
+## 2026-07-31 — w0010事前登録・closing execution binding正式監査PASS
 
 - 「アーカイブ認識論の出口封鎖」の実験契約を、結果・work生成・有償callより前にcommit
   `aaade52`、SHA-256 `340c5756…b070`へ固定した。w0009 paid gateを壊さないよう専用branchで
@@ -9,8 +9,15 @@
   `experiment_id`、arm、`charged_to=run:*`、reservation IDを同時保存する最小seamを施工した。
 - L7のtitle、publication intent、shelf comparison、final projectionを完全被覆し、現行
   author価格とtoken ceilingからclosing reserve `$2.8608`を導出した。run capは`$9`。
-- focused 18件がgreen。新作、`works/w0010`、有償call、local inference、config・poetics変更なし。
-  独立Claude Code正式監査待ちであり、w0010実行許可はまだ主張しない。
+- 独立Claude Code担当がcommit `2cdddcbe0ac2dbee4140c81ffd897b2b4cf218ff`、tree
+  `9d3682d86ef18fe836b8c75b3be1d3d85d6b59e0`をread-only監査し、base RED、予算権威の
+  単一化、provenance、closing reserve導出、既存経路の無回帰を確認した。P0〜P2なし、
+  `VERDICT: PASS`。focused新規2ファイル18件、全non-local 456 passed, 1 skipped,
+  1 deselected、compileall、diff checkがgreen。
+- P3はfocused集合名の曖昧さと既存`config/budgets.yaml`コメントの陳腐化。前者は本記録で
+  正確化し、後者は2026-08-01のbudget期限actionへ繰り越す。新作、`works/w0010`、有償call、
+  local inference、config・poetics変更なし。execution bindingはformal完了したが、w0010の
+  有償実行は8月1日の期限actionとw0009 shadow／公開再評価が先行するまで行わない。
 
 ## 2026-07-31 — w0009 publication shadow runner正式監査PASS
 
