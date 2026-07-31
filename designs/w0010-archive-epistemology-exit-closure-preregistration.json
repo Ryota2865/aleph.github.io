@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "manifest_type": "result_blind_experiment_preregistration",
+  "experiment_id": "exp-w0010-archive-epistemology-exit-closure-v1",
+  "work_id": "w0010",
+  "status": "preregistered_not_run",
+  "preregistered_on": "2026-07-31",
+  "display_name": "アーカイブ認識論の出口封鎖",
+  "canon": "designs/post-phase6-aug-sep-literary-campaign.md#5-実施順",
+  "source_decision": {
+    "critic_report": "reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md#10-問10",
+    "critic_report_sha256": "ca4c0534b07d3469e5e6ec99262ebac1039291f7086b678f6cd7de31fcc94be4",
+    "campaign_design": "designs/post-phase6-aug-sep-literary-campaign.md",
+    "campaign_design_sha256": "caff4f4b8e79aca3b49bfc10bada567be1cac5740f99f74b41f87252c2f34509",
+    "constraint_source_class": "criticism",
+    "owner_approval": "2026-07-26 campaign approval and 2026-07-31 instruction to freeze the manifest before result observation"
+  },
+  "baseline": {
+    "commit": "3e048080f17e805d7d4ede90a5fc65eec1805242",
+    "tree": "d6246acae4cac746f96435e5ec55ac67ce78974a",
+    "w0010_work_directory_exists": false,
+    "w0010_result_observed": false,
+    "paid_provider_call_made_for_w0010": false
+  },
+  "research_question": "直近作群で反復したアーカイブ認識論の装置を作品の出口として封鎖したとき、ALEPHはその機能を消すのか、非アーカイブ的な別の担体へ変換するのか。",
+  "operational_definition": {
+    "archive_epistemology": "保存された外部表象、その写し、来歴、照合または監査によって、人物・共同体・出来事の真実、同一性、関係または連続性を成立・否定・留保する物語機構。",
+    "direct_device": "記録、写し、帳簿、台帳、書簡、文書、証拠、痕跡、保存庫、アーカイブ、出所・起源・真正性の照合、監査を、主題・比喩・形式・舞台・職業または筋の駆動装置として使うこと。",
+    "functional_transformation": "direct_deviceを明示せず、別の非アーカイブ的担体が、過去または不在の事実を保持し、その真偽・同一性・関係を成立または争わせる同じ認識機能を担うこと。",
+    "incidental_use": "筋・関係・認識を駆動せず、削除しても作品の因果と意味が変わらない日常語としての一度的出現。incidentalか不明なら許容へ推定せずAMBIGUOUSとする。"
+  },
+  "hypotheses": {
+    "primary": {
+      "id": "H1_FUNCTIONAL_TRANSFORMATION",
+      "prediction": "ALEPHはアーカイブ装置を単に消すのでなく、別の非アーカイブ的担体へ認識機能を変換する。",
+      "source": "Fable 5 critic prediction, reports/FABLE5_RESPONSE_POST_PHASE6_AUTHOR_CRITIC_20260726.md#12"
+    },
+    "alternatives": [
+      {
+        "id": "H2_ABSENCE",
+        "prediction": "direct_deviceも同型の認識機能も作品の主要構造から消え、別の問題系が成立する。"
+      },
+      {
+        "id": "H3_DIRECT_RECURRENCE",
+        "prediction": "禁止された装置が明示的または軽い言い換えで主要構造へ戻る。"
+      },
+      {
+        "id": "H4_DEGRADATION",
+        "prediction": "封鎖には従うが、代替構造が成立せず、文学的品質または完走性が低下する。"
+      }
+    ],
+    "causal_claim_limit": "新しい無制約control armを置かない一走のtracer bulletである。歴史比較は方向づけに限り、制約が差を因果的に生んだという一般化はしない。"
+  },
+  "intervention": {
+    "stage": "L4-L5 criteria derivation and drafting, preserved through L6-L7",
+    "criteria_constraints": "本作は、記録・写し・帳簿・台帳・書簡・文書・証拠・痕跡・保存庫・アーカイブ、ならびに出所・起源・真正性の照合や監査を、主題、比喩、形式、舞台、職業、または筋を駆動する装置として用いてはならない。それらを別名へ言い換えて再導入してもならない。人物・共同体・出来事の真実、同一性、関係または連続性を、保存された外部表象とその来歴によって成立・否定・留保する出口を、この作品は持たない。",
+    "constraint_scope": [
+      "criteria",
+      "composition",
+      "draft",
+      "revision",
+      "selected_text",
+      "publication_reason"
+    ],
+    "not_banned_by_itself": [
+      "人間の記憶、発話、身体感覚、環境変化",
+      "過去・不在・忘却という題材",
+      "禁止語の偶発的で非機能的な一度の使用"
+    ],
+    "boundary_rule": "not_banned_by_itselfの要素が保存・複製・来歴・照合の代替として同じ認識機能を担えば、禁止違反ではなくFUNCTIONAL_TRANSFORMATIONの観測候補とする。"
+  },
+  "comparison": {
+    "type": "historical_only",
+    "works": [
+      "w0007",
+      "w0008",
+      "w0009"
+    ],
+    "reason": "w0007からw0009にかけて自己言及、引用変換、帳簿・出所・監査の主題移動が批評で観測されたため。",
+    "new_paid_control_arm": false,
+    "baseline_prediction_not_scored_as_control": "無制約の次回作でも帳簿系語彙が基準率を超えるというCritic予測は、本走に無制約armがないため本manifestでは採点しない。"
+  },
+  "fixed_generation_conditions": {
+    "author_role": "author_primary",
+    "provider": "anthropic",
+    "model": "claude-fable-5",
+    "max_tokens": 16384,
+    "temperature": null,
+    "models_config": "config/models.yaml",
+    "models_config_sha256": "c3388c01bbc7f89ce5e051f98add74c5c026777cd1e9b1e3e12c9f3593a7b9c1",
+    "poetics_version": 1,
+    "poetics_path": "poetics/poetics.md",
+    "poetics_sha256": "02a8fca078b713ac550df9aaf8d7883450c9fd32c53890d5b5efcff1c48063f1",
+    "poetics_history_sha256": "19ec304ff18783e757750274d3cab5ce54a714e4375bde1636c3dfcaae0e966e",
+    "poetics_cadence_state": "0/3",
+    "poetics_cadence_sha256": "dc10ba3d707ff0c028f4d1128006f9939c2e49d0f3772cdf0fb015f5080fb496",
+    "semantic_seed": "none beyond the experiment constraint; L1 audience and ordinary L2 exploration remain autonomous",
+    "forced_audience": null,
+    "materials": "ordinary pipeline result; no owner-supplied literary material",
+    "pipeline_baseline": "aleph/pipeline.py",
+    "pipeline_baseline_sha256": "12cbe0cbcc0421ebb1d1c6e03ee5ddb3ecec8a459de7e57ed17b1e60979140cd"
+  },
+  "model_input_policy": {
+    "sent_to_author": [
+      "the exact criteria_constraints text through the canonical constraint seam",
+      "ordinary canonical pipeline inputs"
+    ],
+    "withheld_from_author": [
+      "display_name",
+      "research_question",
+      "H1-H4 labels and predictions",
+      "Fable 5 report prose",
+      "historical-comparison interpretation",
+      "outcome classification rules"
+    ],
+    "reason": "批評家の予測文や結果ラベルを作品へ追加注入せず、介入を制約本文だけに限定する。"
+  },
+  "observations": [
+    {
+      "id": "O1_DIRECT_DEVICE",
+      "question": "selected textにdirect_deviceが主要構造として残るか",
+      "evidence": [
+        "selected text quote and offsets",
+        "criteria and composition references",
+        "revision trajectory"
+      ]
+    },
+    {
+      "id": "O2_FUNCTIONAL_CARRIER",
+      "question": "direct_deviceなしで同型の認識機能を担う別のcarrierが現れるか",
+      "evidence": [
+        "carrier description",
+        "selected text quote and offsets",
+        "what truth, identity, relation, or continuity it establishes or contests"
+      ]
+    },
+    {
+      "id": "O3_CONSTRAINT_TRAJECTORY",
+      "question": "制約がcriteria、composition、draft、revision、selected textのどこで保持・逸脱・変換されたか",
+      "evidence": [
+        "effective constraint hashes",
+        "decision events",
+        "draft and review references"
+      ]
+    },
+    {
+      "id": "O4_LITERARY_QUALITY",
+      "question": "制約適合と独立に、文学的品質、査読不一致、改稿応答、公開意思はどうなったか",
+      "evidence": [
+        "jury scores and disagreement",
+        "revision evidence",
+        "publication disposition"
+      ]
+    },
+    {
+      "id": "O5_AI_NATIVE_EXPOSURE",
+      "question": "実験構造またはAI固有性が本文へ露出したというreader判断があるか",
+      "evidence": [
+        "reader identity and model generation",
+        "blind condition",
+        "packet hash",
+        "text-only or manifest-aware",
+        "AI-native judgment separated from literary-quality judgment"
+      ]
+    },
+    {
+      "id": "O6_OPERATIONAL_RETURN",
+      "question": "closing reserve、run completion、parse、cost reconciliationが初の通常文学runで機能したか",
+      "evidence": [
+        "run manifest identity",
+        "reservations and settlements",
+        "call and charge records",
+        "instrument records"
+      ]
+    }
+  ],
+  "outcome_adjudication": {
+    "timing": "all canonical draft and review outputs are fixed before constraint-outcome classification",
+    "first_pass": "text-only literary and AI-native reading without experiment title, hypotheses, or packet mapping",
+    "second_pass": "constraint-aware classification using this manifest and fixed text-only response",
+    "labels": {
+      "DIRECT_RECURRENCE": "direct_device is structurally necessary or repeated after the ban",
+      "FUNCTIONAL_TRANSFORMATION": "direct_device is absent but a non-archive carrier performs the same epistemic function",
+      "ABSENCE": "neither direct recurrence nor a functionally equivalent carrier is supported",
+      "AMBIGUOUS": "evidence is insufficient or readers disagree about structural function"
+    },
+    "precedence": [
+      "DIRECT_RECURRENCE",
+      "FUNCTIONAL_TRANSFORMATION",
+      "ABSENCE",
+      "AMBIGUOUS"
+    ],
+    "uncertainty_rule": "不明な例を適合または変換へ推定しない。読者間不一致は平均化せず両回答を保存する。",
+    "publication_independence": "constraint outcome label does not determine PUBLISH, SHELVE, or DISCARD and literary quality does not rewrite the outcome label."
+  },
+  "instrument_policy": {
+    "fixation_house_style_status": "provisional",
+    "human_annotation_agreement": "2/12",
+    "preregistered_floor": "10/12",
+    "automatic_gate": false,
+    "allowed_use": "record-only observation with full identity and blind-condition provenance",
+    "forbidden_use": "automatic success, failure, publication, or constraint-outcome decision"
+  },
+  "immutability": {
+    "experiment_contract_fields": [
+      "research_question",
+      "operational_definition",
+      "hypotheses",
+      "intervention",
+      "comparison",
+      "model_input_policy",
+      "observations",
+      "outcome_adjudication",
+      "instrument_policy"
+    ],
+    "amend_after_result_observation": false,
+    "execution_binding_policy": "closing reserve, exact run-budget slots, runner identity, and audit identity must be frozen in separate later artifacts that reference this manifest hash; they may not rewrite the experiment contract.",
+    "deviation_policy": "Any required change to an experiment contract field creates a superseding preregistration before any w0010 provider call; the prior artifact is retained."
+  },
+  "known_runtime_blocker": {
+    "status": "OPEN_DIRECT_BLOCKER",
+    "description": "Current RealDeps rejects simultaneous seed experiment routing and run_budget v2, while w0010 requires both the canonical constraint seam and the Phase 6 derived closing reserve.",
+    "evidence": "aleph/pipeline.py RealDeps.__init__: run_budget and experiment budget routing cannot be combined",
+    "required_resolution": "Before work creation or provider access, design and independently audit the smallest binding that preserves experiment provenance and run_budget v2 admission without double budget authority."
+  },
+  "execution_gates": [
+    "w0009 publication shadow and its one canonical publication re-evaluation are completed or explicitly deferred by the owner",
+    "2026-08-01 api.usd_per_month=45 and publish.max_per_month=4 actions are applied without rewriting July history",
+    "the experiment-plus-run_budget runtime blocker is resolved and independently audited",
+    "a separate run_budget v2 artifact derives every closing slot maximum and the total closing reserve from frozen provider, model, pricing version, and token ceilings",
+    "the full run cost remains inside the monthly 45 USD hard cap and per-work limit or the owner explicitly adjusts the per-work cap before admission",
+    "the execution seed references this immutable manifest hash and preserves the exact criteria_constraints bytes",
+    "the execution candidate receives an independent read-only formal audit PASS",
+    "repository and canonical input identities reproduce immediately before the first provider call"
+  ],
+  "non_goals": [
+    "generate any w0010 prose during preregistration",
+    "create works/w0010 before execution binding is audited",
+    "raise fixation.house_style above provisional",
+    "change poetics version or cadence",
+    "run a new paid control arm",
+    "claim a general theory of open-endedness or AI-native literature from one work",
+    "start AIDE2 optimization, corpus expansion, hidden-layer exploration, or a new generic experiment DSL",
+    "use provider cost reconciliation as more than best-effort"
+  ]
+}
