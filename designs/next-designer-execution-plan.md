@@ -562,6 +562,12 @@ compileall、diff checkを独立再現した。P0〜P3なし、**VERDICT: PASS**
   **VERDICT: PASS**となりformal完了した。P3助言2件は非blocking残余riskとして保持する。
   2026-08-01のAPI cap `$45`／公開上限`4`反映、read-only verify、worst-case `$3.9968`
   reserveが揃うまで有償callを行わない。
+- w0010「アーカイブ認識論の出口封鎖」は、結果blind実験manifestをcommit `aaade52`、
+  SHA-256 `340c5756…b070`へ固定した。`works/w0010`と作品結果は未作成。
+- w0010 execution bindingは`run_budget v2`を唯一の予算権威とし、experiment provenanceを
+  call recordへ併記する最小seamとして施工した。L7 closing reserveはtitle、publication
+  intent、shelf comparison、final projectionから`$2.8608`と導出。独立Claude Code監査と
+  formal closureが完了するまでrunしない。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。

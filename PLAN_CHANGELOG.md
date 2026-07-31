@@ -1,5 +1,28 @@
 # PLAN 変更履歴
 
+## 0.7.20-41 (2026-07-31) — w0010実験とprotected normal-runの単一予算権威
+
+w0010「アーカイブ認識論の出口封鎖」の結果blind実験manifestをcommit `aaade52`、
+SHA-256 `340c5756…b070`へ固定した。実験契約は変更せず、次runの直接blockerとして
+experiment provenanceと`run_budget v2`を同じnormal runへ束縛する。
+
+1. `run_budget v2`があるconstraint experimentでは`run:*`を唯一の予算権威とする。
+   `experiment_id`とarmはcall provenanceへ残すが、同じAPI callへ`experiment:*` scopeを
+   重ねない。experiment-onlyとprotected-run-onlyの既存経路は維持する。
+2. L7最悪経路をtitle、publication intent、shelf comparisonのexternal 3 slotと、
+   deterministic final projectionに分ける。provider/model/価格版とtoken ceilingから
+   closing reserve **$2.8608**を導出し、作品cap `$9`、8月月次API hard cap `$45`の内数とする。
+3. player `$3.5000`、held-out `$2.6392`、closing `$2.8608`を事前admitする。前二者は
+   実行上限であり支出目標や全生成slot購入保証ではない。枯渇時は既存protected completionへ
+   従い、追加課金や黙った借用を行わない。
+4. house-styleは人間annotation床未達のためprovisionalを維持し、自動成功・公開判断へ使わない。
+   詩学第1版、frontier Author、実験介入、観測・分類規則を固定する。
+
+詳細は`designs/w0010-archive-epistemology-execution-binding.md`と
+`designs/w0010-run-budget-v2.json`。新作、`works/w0010`、有償call、local inference、
+budget config、poeticsは変更しない。正式実行許可は独立Claude Code read-only監査PASS、
+formal closure、8月1日の期限action、w0009 shadow／公開再評価の先行を要する。
+
 ## 0.7.20-40 (2026-07-26) — Fable 5補遺とcampaign実行条件の校正
 
 Fable 5とオーナーの探索・AI固有性対話を

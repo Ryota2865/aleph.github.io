@@ -613,13 +613,18 @@ class RealDeps:
         try:
             experiment = seed.get("experiment") if isinstance(seed, dict) else None
             if isinstance(experiment, dict) and experiment.get("id"):
-                if self._run_budget_plan is not None:
-                    raise ValueError("run_budget and experiment budget routing cannot be combined")
                 self._experiment_id = str(experiment["id"])
                 self._experiment_arm = str(seed.get("arm") or "main")
                 ablation = seed.get("material_ablation", {})
                 cap = experiment.get("budget_cap_usd", ablation.get("budget_cap_usd"))
-                if type(cap) in (int, float) and float(cap) > 0:
+                # A protected normal run has one budget authority: run_budget v2.  The
+                # experiment identity remains call provenance, but must not register a
+                # competing experiment scope over the same provider calls.
+                if (
+                    self._run_budget_plan is None
+                    and type(cap) in (int, float)
+                    and float(cap) > 0
+                ):
                     router.budget.register_scope_limit(
                         f"experiment:{self._experiment_id}", ledger="api", limit=float(cap)
                     )
@@ -1025,8 +1030,9 @@ class RealDeps:
                     f"{self._run_budget_plan.charged_to}:{self._phase}:{uuid.uuid4()}"
                 ),
                 "work_id": self._work_id,
+                "experiment_id": self._experiment_id,
                 "phase": self._phase,
-                "arm": "normal-run",
+                "arm": self._experiment_arm if self._experiment_id else "normal-run",
                 "charged_to": self._run_budget_plan.charged_to,
                 "reservation_id": reservation.id,
             }

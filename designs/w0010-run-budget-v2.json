@@ -1,0 +1,143 @@
+{
+  "version": 2,
+  "cap_amount": 9.0,
+  "pools": {
+    "player": 3.5,
+    "held_out": 2.6392,
+    "closing": 2.8608
+  },
+  "batches": [
+    {
+      "batch_id": "w0010-player-author",
+      "pool": "player",
+      "role": "author_primary",
+      "max_amount": 3.5,
+      "phases": [
+        "L1",
+        "L4-L5"
+      ],
+      "expected_slots": [
+        "intent",
+        "criteria",
+        "proposals",
+        "evolution",
+        "section-drafting",
+        "seam-smoothing"
+      ],
+      "input_manifest_hash": "340c5756715f076cf24a5031715617d50344429a6db72952435c92017364b070",
+      "semantic_retries": 0
+    },
+    {
+      "batch_id": "w0010-heldout-author",
+      "pool": "held_out",
+      "role": "author_primary",
+      "max_amount": 1.8,
+      "phases": [
+        "L6"
+      ],
+      "expected_slots": [
+        "revision-loop"
+      ],
+      "input_manifest_hash": "340c5756715f076cf24a5031715617d50344429a6db72952435c92017364b070",
+      "semantic_retries": 0
+    },
+    {
+      "batch_id": "w0010-heldout-jury",
+      "pool": "held_out",
+      "role": "critic_jury",
+      "max_amount": 0.8392,
+      "phases": [
+        "L6"
+      ],
+      "expected_slots": [
+        "jury-loop"
+      ],
+      "input_manifest_hash": "340c5756715f076cf24a5031715617d50344429a6db72952435c92017364b070",
+      "semantic_retries": 0
+    },
+    {
+      "batch_id": "w0010-closing-author",
+      "pool": "closing",
+      "role": "author_primary",
+      "max_amount": 2.8608,
+      "phases": [
+        "L7"
+      ],
+      "expected_slots": [
+        "title",
+        "publication-intent",
+        "shelf-comparison",
+        "final-projection"
+      ],
+      "input_manifest_hash": "340c5756715f076cf24a5031715617d50344429a6db72952435c92017364b070",
+      "semantic_retries": 0
+    }
+  ],
+  "closing_slots": [
+    {
+      "slot_id": "title",
+      "batch_id": "w0010-closing-author",
+      "kind": "external",
+      "provider": "anthropic",
+      "model": "claude-fable-5",
+      "pricing_version": "config/models.yaml@sha256:c3388c01bbc7f89ce5e051f98add74c5c026777cd1e9b1e3e12c9f3593a7b9c1#roles.author_primary.pricing",
+      "axes": [
+        {
+          "name": "input_tokens",
+          "unit_ceiling": 72000,
+          "usd_per_unit": 0.00001
+        },
+        {
+          "name": "output_tokens",
+          "unit_ceiling": 2048,
+          "usd_per_unit": 0.00005
+        }
+      ]
+    },
+    {
+      "slot_id": "publication-intent",
+      "batch_id": "w0010-closing-author",
+      "kind": "external",
+      "provider": "anthropic",
+      "model": "claude-fable-5",
+      "pricing_version": "config/models.yaml@sha256:c3388c01bbc7f89ce5e051f98add74c5c026777cd1e9b1e3e12c9f3593a7b9c1#roles.author_primary.pricing",
+      "axes": [
+        {
+          "name": "input_tokens",
+          "unit_ceiling": 32000,
+          "usd_per_unit": 0.00001
+        },
+        {
+          "name": "output_tokens",
+          "unit_ceiling": 16384,
+          "usd_per_unit": 0.00005
+        }
+      ]
+    },
+    {
+      "slot_id": "shelf-comparison",
+      "batch_id": "w0010-closing-author",
+      "kind": "external",
+      "provider": "anthropic",
+      "model": "claude-fable-5",
+      "pricing_version": "config/models.yaml@sha256:c3388c01bbc7f89ce5e051f98add74c5c026777cd1e9b1e3e12c9f3593a7b9c1#roles.author_primary.pricing",
+      "axes": [
+        {
+          "name": "input_tokens",
+          "unit_ceiling": 8000,
+          "usd_per_unit": 0.00001
+        },
+        {
+          "name": "output_tokens",
+          "unit_ceiling": 16384,
+          "usd_per_unit": 0.00005
+        }
+      ]
+    },
+    {
+      "slot_id": "final-projection",
+      "batch_id": "w0010-closing-author",
+      "kind": "deterministic"
+    }
+  ]
+}

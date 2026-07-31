@@ -1,5 +1,17 @@
 # PROGRESS
 
+## 2026-07-31 — w0010事前登録・closing execution binding施工
+
+- 「アーカイブ認識論の出口封鎖」の実験契約を、結果・work生成・有償callより前にcommit
+  `aaade52`、SHA-256 `340c5756…b070`へ固定した。w0009 paid gateを壊さないよう専用branchで
+  保持し、現行実行branchはcleanのまま維持した。
+- `run_budget v2`をconstraint experimentの唯一の予算権威とし、call recordには
+  `experiment_id`、arm、`charged_to=run:*`、reservation IDを同時保存する最小seamを施工した。
+- L7のtitle、publication intent、shelf comparison、final projectionを完全被覆し、現行
+  author価格とtoken ceilingからclosing reserve `$2.8608`を導出した。run capは`$9`。
+- focused 18件がgreen。新作、`works/w0010`、有償call、local inference、config・poetics変更なし。
+  独立Claude Code正式監査待ちであり、w0010実行許可はまだ主張しない。
+
 ## 2026-07-31 — w0009 publication shadow runner正式監査PASS
 
 - 独立Claude Code担当がcommit `d4bc98b3220bda82fabe3c558de2e1111b899542`、tree

@@ -72,10 +72,13 @@ def _manifest(*, closing=0.6):
     }
 
 
-def _real_deps(tmp_path, *, manifest=None):
+def _real_deps(tmp_path, *, manifest=None, experiment=None):
     config = load_config(ROOT)
     work = Work(tmp_path / "works", "w-run")
-    work.create({"run_budget": manifest or _manifest()})
+    seed = {"run_budget": manifest or _manifest()}
+    if experiment is not None:
+        seed["experiment"] = experiment
+    work.create(seed)
     budget = Budget(config, state_path=tmp_path / "budget.json")
     router = Router(config, CallLogger(work.calls), budget)
     deps = RealDeps(
@@ -211,6 +214,38 @@ def test_real_deps_routes_api_calls_to_the_phase_role_reservation(tmp_path):
     assert budget.reservation_remaining(closing_id) == pytest.approx(
         _manifest()["pools"]["closing"] - call["cost_usd"]
     )
+
+
+def test_constraint_experiment_keeps_provenance_under_single_run_budget_authority(tmp_path):
+    experiment = {
+        "id": "exp-w0010-archive-epistemology-exit-closure-v1",
+        "criteria_constraints": "archive exit closure",
+    }
+    work, budget, router, deps = _real_deps(tmp_path, experiment=experiment)
+    reservations = deps.begin_run_budget()
+
+    class Provider:
+        name = "fake"
+
+        def complete(self, model, messages, **kwargs):
+            return LLMResponse("ok", model, "fake", Usage(1, 1), 0.1)
+
+    router._provider_for_test = Provider()
+    deps._phase = "L7"
+    router.call(
+        "author_primary",
+        [Message("user", "close")],
+        **deps._call_overrides("author_primary"),
+        max_tokens=10,
+    )
+
+    call = json.loads(work.calls.read_text(encoding="utf-8"))
+    assert call["experiment_id"] == experiment["id"]
+    assert call["arm"] == "main"
+    assert call["charged_to"] == "run:w-run"
+    assert call["reservation_id"] == reservations["closing-author"].id
+    assert budget.scope_remaining(f"experiment:{experiment['id']}") is None
+    assert budget.scope_remaining("run:w-run") is not None
 
 
 def test_unregistered_api_phase_role_fails_before_provider_call(tmp_path):
