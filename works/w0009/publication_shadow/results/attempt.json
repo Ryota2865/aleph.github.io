@@ -1,0 +1,22 @@
+{
+  "attempts_per_slot": 1,
+  "execution_evidence": {
+    "audit_report": "reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md",
+    "candidate_commit": "760e97b503d7789ebd98bb5cbe52491c038081ca",
+    "candidate_tree": "eb7c4cdf32c6a97f99865052932afe2bd6d6468b",
+    "current_head": "1ccbfc9018f67626d7a2bc3681f92464bf4df14a",
+    "post_audit_paths": [
+      "PLAN_CHANGELOG.md",
+      "PROGRESS.md",
+      "README.en.md",
+      "README.md",
+      "config/formal-audits.json",
+      "designs/next-designer-execution-plan.md",
+      "reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md"
+    ]
+  },
+  "experiment_id": "exp-w0009-publication-input-shadow-v1",
+  "manifest_sha256": "c327aaf811e05433b1db76bf4ba3955a54e30470857bf12697d29053b07b2f32",
+  "reservation_id": "aea2f493-0553-4a7a-8b40-a08f65f98e68",
+  "started_at": "2026-08-01T13:33:51.218485+00:00"
+}
