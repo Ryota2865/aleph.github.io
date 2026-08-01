@@ -274,6 +274,24 @@
         "designs/next-designer-execution-plan.md",
         "reports/W0009_PUBLICATION_SHADOW_RUNNER_AUDIT_20260730.md"
       ]
+    },
+    {
+      "sequence": 17,
+      "path": "reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md",
+      "recorded_on": "2026-08-01",
+      "target_changelog": "0.7.20-42",
+      "candidate_tree": "eb7c4cdf32c6a97f99865052932afe2bd6d6468b",
+      "candidate_commit": "760e97b503d7789ebd98bb5cbe52491c038081ca",
+      "candidate_ref": "refs/tags/audit-candidate/w0009-publication-shadow-august-gate-20260801",
+      "closure_paths": [
+        "PLAN_CHANGELOG.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.en.md",
+        "config/formal-audits.json",
+        "designs/next-designer-execution-plan.md",
+        "reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md"
+      ]
     }
   ]
 }

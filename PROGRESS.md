@@ -1,5 +1,17 @@
 # PROGRESS
 
+## 2026-08-01 — w0009 August Gate focused再監査PASS
+
+- 同一Claude Code担当がcommit `760e97b503d7789ebd98bb5cbe52491c038081ca`、tree
+  `eb7c4cdf32c6a97f99865052932afe2bd6d6468b`をfocused read-only再監査した。
+- 45/4期限actionで露出した二つの月境界REDを`/tmp`で独立再現し、fixtureの7月値固定、
+  design invariantの具体的45/4 assert、固定report path一件だけのallowlistを確認した。
+- focused **65 passed**、全non-local **453 passed, 1 deselected**、compileall、diff check、
+  read-only verifyを再現し、P0〜P2なし、`VERDICT: PASS`。候補を
+  `audit-candidate/w0009-publication-shadow-august-gate-20260801` tagへ固定する。
+- P3のWindows Git Bash mode表示差と、休眠中の999向けJuly期限文言は非blocking残余riskとして
+  保持する。formal closure時点で有償call、shadow結果、blind採点、packet選択は未実施。
+
 ## 2026-08-01 — 8–9月campaign期限action
 
 - 承認済み期限actionとして、従量API月次hard capを`$71→$45`、公開上限を`999→4`へ変更した。

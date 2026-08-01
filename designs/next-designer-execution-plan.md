@@ -562,6 +562,10 @@ compileall、diff checkを独立再現した。P0〜P3なし、**VERDICT: PASS**
   **VERDICT: PASS**となりformal完了した。P3助言2件は非blocking残余riskとして保持する。
   2026-08-01のAPI cap `$45`／公開上限`4`反映、read-only verify、worst-case `$3.9968`
   reserveが揃うまで有償callを行わない。
+- 2026-08-01、45/4期限actionと月境界fixture修正をcommit `760e97b`、tree `eb7c4cd`に対して
+  同一Claude Code担当がfocused read-only再監査し、P0〜P2なし、**VERDICT: PASS**とした。
+  0.7.20-42をformal完了し、次はclean HEADでshadowを実行する。blind採点とpacket選択を
+  固定するまではFable 5への結果共有、公開再評価、w0010有償runへ進まない。
 
 - READMEの状態節をRepositorySnapshotから生成またはCI検証する。
 - PLAN冒頭のCHANGELOG範囲、公開作品数、詩学版、audit状態の陳腐化を検出する。

@@ -13,7 +13,7 @@ An autonomous production system for literary expression with LLMs. It searches f
 <!-- repository-snapshot:start -->
 - Works recorded: 9 (through w0009); terminal: 9.
 - Published works: 5 — w0004 半呼吸, w0005 床の硬さ, w0006 灯のうしろ, w0007 折り目, w0008 暗い側
-- Assurance: tests: NOT_RECORDED; latest recorded formal audit: PASS (reports/W0009_PUBLICATION_SHADOW_RUNNER_AUDIT_20260730.md); currency: NEEDS_AUDIT; artifacts retained: 39.
+- Assurance: tests: NOT_RECORDED; latest recorded formal audit: PASS (reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md); currency: CURRENT; artifacts retained: 40.
 - Design state: changelog 0.7.20-42; poetics v1.
 - Deadline: none recorded.
 <!-- repository-snapshot:end -->

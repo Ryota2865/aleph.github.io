@@ -28,6 +28,17 @@ W0009 shadow単独の最悪予約`$3.9968`は現残高内だが、W0010最大`$9
 `0.7.20-41`は別branchでformal完了したW0010 execution bindingに割当済みのため、本項は
 衝突を避けて`0.7.20-42`とする。CHANGELOGの物理配列順でなく数値版順が権威である。
 
+同一Claude Code担当がcandidate commit
+`760e97b503d7789ebd98bb5cbe52491c038081ca`、tree
+`eb7c4cdf32c6a97f99865052932afe2bd6d6468b`をfocused read-only再監査した。二つの月境界REDを
+`/tmp`で独立再現し、45/4期限action、fixtureの71/999明示固定、具体的等値assert、固定report
+pathだけのallowlist、費用算術、README表示を照合した。focused **65 passed**、全non-local
+**453 passed, 1 deselected**、compileall、diff checkを確認し、P0〜P2なし、
+**VERDICT: PASS**。P3二件（Windows Git Bashのmode表示差と、休眠中の999向けJuly期限文言）は
+非blocking残余riskとして保持する。候補を
+`audit-candidate/w0009-publication-shadow-august-gate-20260801` tagへ固定し、0.7.20-42を
+formal完了する。有償shadowはこのclosure後の別工程であり、まだ実行していない。
+
 ## 0.7.20-40 (2026-07-26) — Fable 5補遺とcampaign実行条件の校正
 
 Fable 5とオーナーの探索・AI固有性対話を
