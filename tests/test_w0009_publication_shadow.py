@@ -54,7 +54,9 @@ class FakeAdapter:
         return {"status": "settled", "charged": 0.002, "released": 3.9948}
 
 
-def _copy_preregistered_fixture(tmp_path: Path) -> PublicationShadow:
+def _copy_preregistered_fixture(
+    tmp_path: Path, *, restore_july_caps: bool = False
+) -> PublicationShadow:
     for relative in (
         "works/w0009/publication_shadow/preregistration.json",
         "works/w0009/drafts/v2.md",
@@ -76,6 +78,12 @@ def _copy_preregistered_fixture(tmp_path: Path) -> PublicationShadow:
         target = tmp_path / meta.relative_to(ROOT)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(meta.read_bytes())
+    if restore_july_caps:
+        config = tmp_path / "config/budgets.yaml"
+        text = config.read_text(encoding="utf-8")
+        text = text.replace("usd_per_month: 45.0", "usd_per_month: 71.0")
+        text = text.replace("max_per_month: 4", "max_per_month: 999")
+        config.write_text(text, encoding="utf-8")
     return PublicationShadow.open(tmp_path)
 
 
@@ -98,7 +106,7 @@ def test_preregistration_reconstructs_all_frozen_identities():
 
 
 def test_execution_is_blocked_until_date_and_cap_actions(tmp_path):
-    shadow = _copy_preregistered_fixture(tmp_path)
+    shadow = _copy_preregistered_fixture(tmp_path, restore_july_caps=True)
 
     assert shadow.execution_blockers(today=date(2026, 7, 30)) == (
         "earliest run date has not arrived",
@@ -279,7 +287,10 @@ def test_audit_gate_binds_clean_head_commit_tree_and_terminal_pass(tmp_path, mon
         if args == ("merge-base", "--is-ancestor", commit, head):
             return ""
         if args == ("diff", "--name-only", f"{commit}..{head}"):
-            return "config/budgets.yaml\nPROGRESS.md"
+            return (
+                "config/budgets.yaml\nPROGRESS.md\n"
+                "reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md"
+            )
         raise AssertionError(args)
 
     monkeypatch.setattr(runner, "_git", fake_git)

@@ -1,5 +1,33 @@
 # PLAN 変更履歴
 
+## 0.7.20-42 (2026-08-01) — campaign期限actionとshadow fixtureの月境界分離
+
+承認済み期限actionとして、`config/budgets.yaml`の従量API月次hard capを`71→45`、
+`publish.max_per_month`を`999→4`へ変更する。7月の設定・台帳・実績は遡及変更しない。
+監査P3で判明した「月上限44が最終防壁」という陳腐化commentも、現行の月次hard cap `$45`へ
+校正する。
+
+期限action後、二つの月境界REDを観測した。(a)
+`test_execution_is_blocked_until_date_and_cap_actions`がrepositoryの可変configをfixtureへ
+コピーし、7月30日の故障注入からcap blocker二件が消えたため、このfixtureだけ71/999を
+明示復元する。(b) `test_budget_declares_owner_decisions`が7月値71/999を恒久assertしていたため、
+8–9月の承認値45/4と期限履歴へ同期する。production、runner、manifest、中心assertは変更しない。
+既存監査candidate後のtest変更であるため、同一Claude Code担当のfocused read-only再監査PASS
+までpaid shadowを実行しない。
+
+再監査PASSをrunbookどおり新規artifactとして保存しつつclean paid gateを成立させるため、
+post-audit allowlistへ固定path
+`reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md`だけを追加する。汎用の
+`reports/`許可やcode/testのpost-audit変更許可には広げず、同pathを含むgate testを通す。
+
+オーナー報告による2026年7月の総費用は、サブスクリプションとAPIを合わせて`$89`
+（内訳未提示）。2026-08-01時点のprovider残高はOpenAI `$11.80`、Anthropic `$13.80`。
+残高はprovider明細とのbest-effort運用情報であり、repositoryのcall/charge台帳と混同しない。
+W0009 shadow単独の最悪予約`$3.9968`は現残高内だが、W0010最大`$9`までの連続包絡は残余
+`$0.8032`のため、W0009実費後に残高を再確認しW0010前の手動チャージを判断する。
+`0.7.20-41`は別branchでformal完了したW0010 execution bindingに割当済みのため、本項は
+衝突を避けて`0.7.20-42`とする。CHANGELOGの物理配列順でなく数値版順が権威である。
+
 ## 0.7.20-40 (2026-07-26) — Fable 5補遺とcampaign実行条件の校正
 
 Fable 5とオーナーの探索・AI固有性対話を

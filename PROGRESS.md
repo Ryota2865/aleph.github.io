@@ -1,5 +1,25 @@
 # PROGRESS
 
+## 2026-08-01 — 8–9月campaign期限action
+
+- 承認済み期限actionとして、従量API月次hard capを`$71→$45`、公開上限を`999→4`へ変更した。
+  7月の設定、台帳、実績は遡及変更せず、4は公開目標でなくhard capとする。
+- `config/budgets.yaml`の既存comment「月上限44が最終防壁」を、正式監査P3の記録どおり
+  現行の月次hard cap `$45`へ校正した。
+- オーナー報告による2026年7月総費用はサブスクリプションとAPI合計`$89`（内訳未提示）。
+  2026-08-01時点の残高はOpenAI `$11.80`、Anthropic `$13.80`。provider残高はbest-effortの
+  運用情報であり、call/charge台帳の実費と混同しない。
+- w0009 shadowの最悪予約はAnthropic `$3.9968`。単独実行には現残高で足りるが、その後の
+  w0010最大`$9`まで連続すると理論上の残余は`$0.8032`に留まる。w0009実費確定後に残高を
+  再確認し、w0010前は自動チャージの時間差を避けるため手動チャージを判断する。
+- 本項では有償callを行わない。設定反映後にw0009 runnerをread-only verifyし、全gateと
+  reserve成立を確認したところ`execution_blockers=[]`となった。
+- 同時に二つの月境界test REDを観測した。期限gate fixtureは7月値71/999を明示固定し、
+  design invariantは8–9月承認値45/4と期限履歴へ同期する。production、runner、manifest、
+  中心assertは不変。同一Claude Code担当のfocused再監査PASSまでpaid executionへ進まない。
+- 再監査PASS artifactを保存したclean HEADでもpaid gateを通せるよう、固定report path一件だけを
+  post-audit allowlistへ追加する。汎用reports許可、code/testのpost-audit変更許可は行わない。
+
 ## 2026-07-31 — w0009 publication shadow runner正式監査PASS
 
 - 独立Claude Code担当がcommit `d4bc98b3220bda82fabe3c558de2e1111b899542`、tree

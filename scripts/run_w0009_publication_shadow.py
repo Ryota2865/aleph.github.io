@@ -33,6 +33,7 @@ POST_AUDIT_ALLOWED_PATHS = frozenset(
         "config/budgets.yaml",
         "config/formal-audits.json",
         "designs/next-designer-execution-plan.md",
+        "reports/W0009_PUBLICATION_SHADOW_AUGUST_GATE_REAUDIT_20260801.md",
         "reports/W0009_PUBLICATION_SHADOW_RUNNER_AUDIT_20260730.md",
     }
 )
