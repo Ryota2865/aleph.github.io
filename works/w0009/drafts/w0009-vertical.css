@@ -1,0 +1,37 @@
+html,
+body {
+  -webkit-writing-mode: vertical-rl;
+  -epub-writing-mode: vertical-rl;
+  writing-mode: vertical-rl;
+}
+
+body {
+  font-family:
+    "Yu Mincho",
+    "Hiragino Mincho ProN",
+    "Noto Serif CJK JP",
+    serif;
+  font-size: 1em;
+  line-height: 1.9;
+  letter-spacing: 0.03em;
+  margin: 5%;
+}
+
+p {
+  margin: 0;
+  text-indent: 1em;
+}
+
+h1,
+h2,
+h3 {
+  font-family: inherit;
+  font-weight: normal;
+  line-height: 1.6;
+}
+
+code,
+pre {
+  writing-mode: horizontal-tb;
+  font-family: monospace;
+}
