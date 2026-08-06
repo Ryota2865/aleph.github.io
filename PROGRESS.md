@@ -1,5 +1,15 @@
 # PROGRESS
 
+## 2026-08-06 — ブックリスト座標系のオーナー全面採用と配線（0.7.20-43）
+
+- オーナーが設計査読の判定三件を全面採用（「すべて採用します」）。
+  PLAN_CHANGELOG 0.7.20-43 として記録した。
+- 配線: `designs/critic-role.md` §1.1 へ等級カタログの任意添付規則を追加
+  （適合・距離の評価基準化は禁止）。`designs/post-phase6-aug-sep-literary-campaign.md`
+  §5「2026-10」へ案3事前登録の審査項目を追記。
+  `designs/booklist-coordinate-catalog.md` を採用状態へ更新（§7 採用記録）。
+- 文書のみの変更。有償call・実装・config変更なし。作業ブランチをリモートへpush。
+
 ## 2026-08-06 — ブックリスト座標系伝書の受領と設計査読
 
 - オーナーが Chat（Fable 5）対話の伝書を格納。reports/ の命名規約に合わせ
