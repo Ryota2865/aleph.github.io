@@ -1,5 +1,23 @@
 # PROGRESS
 
+## 2026-08-06 — ブックリスト座標系伝書の受領と設計査読
+
+- オーナーが Chat（Fable 5）対話の伝書を格納。reports/ の命名規約に合わせ
+  `reports/FABLE5_CHAT_BOOKLIST_COORDINATE_SPACE_20260805.md` へ改名（内容不変）。
+- 設計アドバイザー（Claude Code / Fable 5）が査読し、
+  `designs/booklist-coordinate-catalog.md` を新設。判定要旨:
+  - 案1（L1 への文脈注入）= 保留。§14-6「外部の錨は既定で入れない」に抵触するため
+    既定注入は不可。著者要請時に提供できる資料棚としてのみ登録。
+  - 案2（査読基準の系譜宣言）= 向きを反転して採用推奨。poetics は自己生成正典なので
+    カタログを依拠先として与えず、観測点明記の外部観測として批評パケットの任意添付に
+    する（配線時は critic-role.md のパケット規則変更として設計者審査）。
+  - 案3（埋め込み空隙実験）= 事前登録草案を記録。実施は 0.7.20-40 第5項（潜在空間系
+    計器の10月留保）と §14.1（8–9月の非blocking新機構凍結）により 2026-10 審査へ。
+    カタログ距離の目的関数化は時期を問わず禁止（Goodhart / model-collapse）。
+  - 等級カタログ v0（tier1=21・観測点依存等級・関係線・開放枠）は設計文書内を正本と
+    し、機械可読版と PLAN 反映は採用決定後。
+- 正典（PLAN / poetics / config）変更なし、有償 call なし、実装なし。
+
 ## 2026-08-01 — w0009 August Gate focused再監査PASS
 
 - 同一Claude Code担当がcommit `760e97b503d7789ebd98bb5cbe52491c038081ca`、tree
