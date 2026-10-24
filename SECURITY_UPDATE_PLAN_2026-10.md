@@ -263,8 +263,83 @@ find ~ -path '*site-packages/*.pth' -newer /etc/hostname 2>/dev/null   # 10/21 �
 
 ---
 
+## 9. ローカル実測の監査所見（2026-10-24 05:11Z、ホスト DAIV、WSL2 Ubuntu 24.04.4）
+
+オーナーが WSL で `bash scripts/security_audit.sh --windows` を実行した出力に基づく。
+
+| 所見 | 判定 | 根拠と対応 |
+|---|---|---|
+| Node v24.13.0（nvm、PATH 既定） | **FAIL・最優先** | 24.22.1 未満。Brotli RCE と TLS 検証バイパスを含む 10 件が未修正。npm 11.6.2 と、グローバルの codex / opencode-ai / pi-coding-agent（いずれもコーディングエージェント）はこの Node 上で動く。`nvm install 24.22.1 --reinstall-packages-from=24.13.0` → `nvm alias default 24.22.1` → `nvm uninstall 24.13.0` |
+| Python: PATH と `.venv` が distro の 3.12.3-1ubuntu0.17 | **WARN（要判断）** | 版番号は Ubuntu が固定するので数字では判定できない。クラウド側の同パッケージの changelog には 10/1 の CPython CVE（19553 / 15310 / 82049 / 87910）が**まだ無い**。つまり Ubuntu は 3.12 系へ未配信。本リポジトリは `requires-python >= 3.12` で、3.13.17 ではクラウドで 423 件が緑だったので、**`.venv` を uv 管理の 3.13.17 に移す**のが確実: `uv python install 3.13` → `rm -rf .venv && uv venv --python 3.13 && uv sync --extra dev` → `uv run pytest -m 'not local' -q` |
+| uv 管理の Python 3.11.14 | WARN | 2026-10-01 の 3.11.17 未満。何が使っているか（`hermes` 等）を確認してから `uv python install 3.11` で更新、または不要なら `uv python uninstall 3.11.14` |
+| uv 0.9.26 | INFO | 旧い（クラウドは 0.11.32）。`uv self update` |
+| `zope.interface-6.1-nspkg.pth` | 誤検知 | Debian の名前空間パッケージ用フック。スクリプトを修正し許可リストに追加した |
+| brotli / Pillow / litellm | 検出なし | 3.12 環境に該当パッケージが無い。LiteLLM 侵害指標も無し |
+| PHP | 未導入 | WSL に PHP 無し。php2shell はこの機では対象外（Windows 側も PATH に無し） |
+| Claude Code 2.1.211（ネイティブ） | INFO | ランタイム同梱なので Node の影響は受けない。`claude update` で最新へ |
+| sshd が 0.0.0.0:22 / [::]:22 で待受 | **WARN（確認）** | llama-swap ではなく OpenSSH。WSL2 の既定 NAT では Windows ホストから到達でき、mirrored networking や portproxy を設定していれば LAN からも到達する。意図した運用なら `PasswordAuthentication no` と公開鍵のみを確認。不要なら `sudo systemctl disable --now ssh` |
+| apt 保留: python3-apport / python3-apt / python3-distupgrade / python3-netplan / python3-problem-report | 誤判定（FAIL→INFO） | インタプリタではなく distro ツール。通常の `sudo apt update && sudo apt upgrade` で一緒に当てる。スクリプトの正規表現を修正した |
+| Windows 側 node / python / php / claude | 検出なし | cmd.exe の PATH に無い。Windows 側の対象は無いと判断できる（winget 導入分があれば `winget list` で補完） |
+
+結論: この機の実害に直結する未修正は **Node 24.13.0 の 1 点**。次に Python を 3.13.17 へ寄せる。
+他は運用確認（sshd）と通常更新で足りる。
+
+## 10. 実行の委任と監査の分担
+
+実行部分は安価なモデル（別セッションまたは Codex）に委任し、監査を Claude（司令塔）が行う構成を採る。
+AGENTS.md の「tests-green と形式的判定を分ける」「監査対象をコミットまたは出力で特定する」原則をそのまま使う。
+
+### 10.1 実行ワーカーへの指示書（そのまま貼る）
+
+```
+あなたは ALEPH リポジトリ（~/llm_literature、WSL Ubuntu 24.04）のセキュリティ更新の実行担当です。
+設計や方針は決めません。SECURITY_UPDATE_PLAN_2026-10.md §9 の順に実行し、証跡を残します。
+
+制約:
+- sudo が必要なコマンドは実行せず、コマンド文字列だけ提示してオーナーに打ってもらう。
+- 稼働中の llama-swap / llama-server（port 8080/8081）を止めない・差し替えない。
+- 資格情報（gh トークン、~/.ssh、~/.claude）を表示・コピーしない。
+- PLAN.md、PLAN_CHANGELOG.md、tests/ を変更しない。.venv の再作成以外にリポジトリのファイルを変更しない。
+- 判断が要る分岐（3.11 を消すか、sshd を止めるか）は実行せず、確認事項として報告に書く。
+
+手順:
+0. 更新前の証跡: bash scripts/security_audit.sh --windows > state/security_before.txt; nvm ls; uv python list --only-installed; claude --version
+1. Node: nvm install 24.22.1 --reinstall-packages-from=24.13.0 && nvm alias default 24.22.1 && nvm uninstall 24.13.0
+   確認: node -v（v24.22.1）、npm -v、npm ls -g --depth=0（codex / opencode-ai / pi-coding-agent / corepack が残っている）
+2. uv: uv self update
+3. Python: uv python install 3.13 && rm -rf .venv && uv venv --python 3.13 && uv sync --extra dev
+   確認: .venv/bin/python -c 'import platform;print(platform.python_version())'（3.13.17 以上）
+4. 回帰: uv run pytest -m 'not local' -q 2>&1 | tail -3 を記録。main で既知の 2 件
+   （test_repository_snapshot の README スナップショット、test_wiring_inventory の aleph.explore.vault 期限）以外が失敗したら作業を止めて報告。
+5. Claude Code: claude update && claude --version
+6. 提示のみ（オーナーが実行）: sudo apt update && sudo apt upgrade
+   実行後にオーナーから結果をもらう。
+7. 更新後の証跡: bash scripts/security_audit.sh --windows > state/security_after.txt
+8. 報告: before/after の SUMMARY 行、各手順のコマンドと主要出力、確認事項（3.11 の用途、sshd の要否、
+   /etc/ssh/sshd_config の PasswordAuthentication 値）を箇条書きで返す。推測で埋めない。
+```
+
+### 10.2 監査手順（Claude が行う）
+
+監査対象は「ワーカーの報告」ではなく **`state/security_before.txt` / `state/security_after.txt` と
+`uv run pytest` の生出力**。報告はそれらを読む手引きとして扱う。
+
+1. after の SUMMARY が `failures=0`。残る WARN は §9 で予定したもの（3.11、sshd）に限ること。
+2. Node: after に `v24.22.1`（またはそれ以上）が PATH と nvm の両方で PASS。npm グローバルの 4 件が残存。
+3. Python: `.venv ->` の行が uv 管理の 3.13.17 以上で PASS。`uv.lock` に差分が無い（`git status --short` が .venv 以外空）。
+4. pytest: `passed` 数が 423 以上、`failed` が既知の 2 件のみ。
+5. 変更禁止領域（PLAN.md、PLAN_CHANGELOG.md、tests/、config/）に差分が無い。
+6. 確認事項への回答が揃ったら、3.11 と sshd の判断をオーナーに返す（監査者は決めない）。
+7. 合格なら §「実施記録」を更新してコミット。不合格なら差し戻し理由を証跡の行番号で示す。
+
 ## 実施記録
 
 | 日付 | 対象 | 更新前 | 更新後 | 確認方法 |
 |---|---|---|---|---|
-| （未実施） | | | | |
+| 2026-10-24 | Node.js (nvm, WSL) | v24.13.0 / npm 11.6.2 | （未実施） | `node -v`, security_audit.sh |
+| 2026-10-24 | Python `.venv` | distro 3.12.3-1ubuntu0.17 | （未実施） | `.venv/bin/python --version`, pytest |
+| 2026-10-24 | uv-managed Python 3.11 | 3.11.14 | （判断待ち） | `uv python list` |
+| 2026-10-24 | uv | 0.9.26 | （未実施） | `uv --version` |
+| 2026-10-24 | Claude Code (native, WSL) | 2.1.211 | （未実施） | `claude --version` |
+| 2026-10-24 | PHP | 未導入 | 対象外 | security_audit.sh |
+| 2026-10-24 | sshd 0.0.0.0:22 | 待受中 | （判断待ち） | `ss -ltn`, sshd_config |

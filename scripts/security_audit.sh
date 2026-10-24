@@ -77,8 +77,13 @@ check_python_version() {  # $1 = label, $2 = version like 3.13.17, $3 = optional
   if version_ge "$v" "$fix"; then
     pass "$label: $v (>= $fix$note)"
   elif [[ -n "$path" ]] && dpkg -S "$path" >/dev/null 2>&1; then
-    local pkg; pkg=$(dpkg -S "$path" 2>/dev/null | head -n1 | cut -d: -f1)
-    warn "$label: $v < $fix but it is the distro package $pkg ($(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null)); Ubuntu backports fixes without changing the version: rely on 'apt pending' below and USN notices"
+    local pkg pkgv; pkg=$(dpkg -S "$path" 2>/dev/null | head -n1 | cut -d: -f1)
+    pkgv=$(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null)
+    if zgrep -qE 'CVE-2026-(19553|15310|82049|87910)' /usr/share/doc/"$pkg"/changelog.Debian.gz 2>/dev/null; then
+      pass "$label: $v is distro package $pkg $pkgv whose changelog carries the 2026-10-01 CPython CVE fixes (tarfile CVE-2026-114583 still pending)"
+    else
+      warn "$label: $v < $fix and distro package $pkg $pkgv does not yet mention the 2026-10-01 CPython CVEs; Ubuntu backports without bumping the version, so watch USN notices and 'apt pending' below"
+    fi
   else
     fail "$label: $v < $fix"
   fi
@@ -139,7 +144,7 @@ EOF
         fi ;;
       pth)
         case "$(basename "$val")" in
-          distutils-precedence.pth|_virtualenv.pth|uno.pth|easy-install.pth|*editable*.pth|__editable__*|*.egg-link) ;;
+          distutils-precedence.pth|_virtualenv.pth|uno.pth|easy-install.pth|*editable*.pth|__editable__*|*.egg-link|*-nspkg.pth|protobuf-*.pth|google_*.pth) ;;
           *) warn "unexpected .pth hook (review contents): $val" ;;
         esac ;;
     esac
@@ -180,13 +185,15 @@ for d in "$HOME/.pyenv/versions"/*/; do
   vdir=$(basename "$d")
   [[ "$vdir" =~ ^3\.[0-9]+\.[0-9]+$ ]] && check_python_version "pyenv $vdir" "$vdir"
 done
+venv_real=""
 if [[ -x .venv/bin/python ]]; then
-  v=$(.venv/bin/python -c 'import platform;print(platform.python_version())' 2>/dev/null) && check_python_version "repo .venv" "$v"
+  venv_real=$(readlink -f .venv/bin/python)
+  v=$(.venv/bin/python -c 'import platform;print(platform.python_version())' 2>/dev/null) && check_python_version "repo .venv -> $venv_real" "$v" "$venv_real"
 fi
 
 section "Python packages (brotli / pillow / litellm / .pth hooks)"
 for real in "${!seen_py[@]}"; do check_python_packages "$real"; done
-[[ -x .venv/bin/python ]] && check_python_packages "$(readlink -f .venv/bin/python)"
+[[ -n "$venv_real" && -z "${seen_py[$venv_real]:-}" ]] && check_python_packages "$venv_real"
 for t in "$HOME/.local/share/uv/tools"/*/bin/python; do [[ -x "$t" ]] && check_python_packages "$t"; done
 if compgen -G "/tmp/.pc_once_*" >/dev/null || [[ -e /tmp/remote_code_loader.lock ]]; then
   fail "LiteLLM 1.107.0 indicator present in /tmp (.pc_once_* or remote_code_loader.lock)"
@@ -258,7 +265,14 @@ fi
 section "network exposure"
 if command -v ss >/dev/null 2>&1; then
   exposed=$(ss -ltnH 2>/dev/null | awk '$4 ~ /^(0\.0\.0\.0|\*|\[::\]):/ {print $4}' | tr '\n' ' ')
-  if [[ -n "$exposed" ]]; then warn "listening on all interfaces: $exposed (llama-swap/llama-server should bind 127.0.0.1)"; else pass "no service listens on 0.0.0.0/:: in WSL"; fi
+  if [[ -n "$exposed" ]]; then
+    warn "listening on all interfaces: $exposed (llama-swap/llama-server should bind 127.0.0.1)"
+    if grep -Eq ':22( |$)' <<<"$exposed"; then
+      info "sshd on :22 is reachable from the Windows host (and from the LAN with WSL mirrored networking or portproxy): confirm PasswordAuthentication no in /etc/ssh/sshd_config"
+    fi
+  else
+    pass "no service listens on 0.0.0.0/:: in WSL"
+  fi
   if ss -ltnH 2>/dev/null | grep -Eq ':(8080|8081)\b'; then info "local inference ports 8080/8081 in use (verify bind address above)"; fi
 else
   info "ss not available; skip listener check"
@@ -267,8 +281,11 @@ fi
 # ---------------------------------------------------------------------------
 section "apt pending security updates"
 if command -v apt >/dev/null 2>&1; then
-  pend=$(apt list --upgradable 2>/dev/null | grep -iE '^(php|python3|nodejs|libnode|openssl|libssl|brotli|libbrotli|curl|libcurl|zlib)' | cut -d/ -f1 | tr '\n' ' ')
-  if [[ -n "$pend" ]]; then fail "apt upgrades pending for: $pend (run sudo apt update && sudo apt upgrade)"; else pass "no pending apt upgrades for php/python/node/openssl/brotli/curl (apt cache may be stale: run sudo apt update first)"; fi
+  upg=$(apt list --upgradable 2>/dev/null | cut -d/ -f1)
+  pend=$(grep -E '^(php[0-9.]*(-[a-z0-9]+)?|python3(\.[0-9]+)?(-minimal|-stdlib|-venv|-dev)?|libpython3[0-9.]*(-minimal|-stdlib)?|nodejs|libnode[0-9]*|openssl|libssl[0-9]*|brotli|libbrotli[0-9]*|curl|libcurl[0-9a-z-]*|zlib1g.*)$' <<<"$upg" | tr '\n' ' ')
+  other=$(grep -E '^python3-' <<<"$upg" | tr '\n' ' ')
+  if [[ -n "$pend" ]]; then fail "apt runtime upgrades pending for: $pend (run sudo apt update && sudo apt upgrade)"; else pass "no pending apt upgrades for php/python/node/openssl/brotli/curl (apt cache may be stale: run sudo apt update first)"; fi
+  [[ -n "$other" ]] && info "other pending python3-* packages (distro tooling, not the interpreter): $other"
 fi
 
 # ---------------------------------------------------------------------------
