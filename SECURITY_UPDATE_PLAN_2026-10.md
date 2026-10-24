@@ -341,13 +341,14 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 |---|---|---|
 | 1. after の SUMMARY が failures=0、残 WARN は予定内 | **合格** | 07:20Z: `failures=0 warnings=6`。残 WARN は distro python3.12（3 行）と 3.11 系（3 行）のみ。sshd の WARN は消えた |
 | 2. Node が PATH と nvm の両方で v24.22.1 以上、npm グローバル残存 | **合格** | `PATH node … v24.22.1`、`nvm v24.22.1`、npm 11.19.1、グローバル pi-coding-agent / codex / corepack / npm / opencode-ai。v24.13.0 は nvm 一覧から消えている |
-| 3. `.venv` が uv 管理の 3.13.17 以上、`uv.lock` に差分なし | **版は合格、差分は未確認** | `repo .venv -> …/cpython-3.13.17-…/python3.13: 3.13.17`。`git status --short` の証跡が無い（doctor.sh が 06:45Z に「worktree: has local changes」を出している） |
+| 3. `.venv` が uv 管理の 3.13.17 以上、`uv.lock` に差分なし | **合格** | `repo .venv -> …/cpython-3.13.17-…/python3.13: 3.13.17`。`git status --short` は本計画書の変更と未追跡 `reports/patch_001.txt` のみで、`uv.lock` は無変更 |
 | 4. pytest が 423 以上 passed、失敗は既知 2 件のみ | **合格** | `2 failed, 424 passed, 1 deselected`。失敗は test_repository_snapshot と test_wiring_inventory（期限 2026-09-30）で、更新前と同一 |
-| 5. 禁止領域（PLAN.md、PLAN_CHANGELOG.md、tests/、config/）に差分なし | **未確認** | 同上。`git status --short && git diff --stat` の提出で閉じる |
+| 5. 禁止領域（PLAN.md、PLAN_CHANGELOG.md、tests/、config/）に差分なし | **合格** | 同上。禁止領域に差分なし。ただしワーカーは指示書に反して本計画書をローカルで編集した（+163/-6）。内容は司令塔が取り込みを判断する |
 | 6. 確認事項の回答 | **合格** | 3.11: Hermes（`~/.hermes/hermes-agent/venv`）が使用。3.11.17 へ更新済、3.11.14 は venv.old の予備として保持。sshd: `sshd -T` で `passwordauthentication yes` が判明し、オーナーが `systemctl disable --now ssh.socket ssh.service` を実行、`ss -ltn` で待受消失を確認 |
 
-**総合: 条件付き合格。** 実害に関わる項目（Node、Python、sshd）はすべて証跡で閉じた。残るのは
-リポジトリ差分の確認（条件 3・5）のみで、`git status --short` と `git diff --stat` の 2 行で閉じる。
+**総合: 合格（2026-10-24 確定）。** 6 条件すべてを証跡で閉じた。手続き上の逸脱が 1 件: ワーカーが
+指示書の「リポジトリのファイルを変更しない」に反して本計画書をローカル編集した。差分は司令塔が
+パッチとして受け取り、採用部分だけを取り込む（§10.4）。
 
 監査所見（追加）:
 
@@ -363,6 +364,21 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
   これを指すので、Ubuntu の USN が出たら `apt upgrade` で追従する。本リポジトリは `.venv` の 3.13.17 で動くので影響しない。
 - スクリプト側: 3.11.17 以上を PASS にする判定を追加した（Hermes が 3.11 系を使い続けるため）。
 
+### 10.4 ローカル編集の回収手順
+
+ローカルの作業ツリーには本計画書の未コミット編集（+163/-6）と未追跡 `reports/patch_001.txt` がある。
+リモートには司令塔のコミットが 3 件積まれているため、そのまま `git pull` すると衝突する。次の順で回収する。
+
+```bash
+mkdir -p state && git diff SECURITY_UPDATE_PLAN_2026-10.md > state/plan_local_edits.patch
+mv reports/patch_001.txt state/        # 貼り付けログは reports/ に置かない（reports/ は批評・実験の正の置き場）
+git checkout -- SECURITY_UPDATE_PLAN_2026-10.md
+git pull --ff-only origin claude/loving-bardeen-a8gcsp
+```
+
+`state/plan_local_edits.patch` を司令塔に渡す。司令塔が内容を読み、採用部分を本計画書に取り込んでコミットする。
+ワーカーの実行は今後も「`.venv` と証跡ファイル以外は変更しない」を守る。
+
 ## 実施記録
 
 | 日付 | 対象 | 更新前 | 更新後 | 確認方法 |
@@ -376,4 +392,4 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 | 2026-10-24 | Ubuntu apt | 24.04.4、python3-* 5 件保留 | 24.04.5、保留なし | security_after.txt |
 | 2026-10-24 | PHP | 未導入 | 対象外 | security_audit.sh |
 | 2026-10-24 | sshd 0.0.0.0:22 | 待受中、passwordauthentication yes | ssh.socket / ssh.service 無効化、待受なし | security_pr3_ssh.txt、ss -ltn |
-| （未） | リポジトリ差分（uv.lock・禁止領域） | — | 未確認 | `git status --short && git diff --stat` |
+| 2026-10-24 | リポジトリ差分（uv.lock・禁止領域） | — | 差分なし（変更は本計画書のローカル編集と未追跡 reports/patch_001.txt のみ） | `git status --short && git diff --stat` |
