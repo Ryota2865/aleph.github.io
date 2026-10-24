@@ -332,14 +332,48 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 6. 確認事項への回答が揃ったら、3.11 と sshd の判断をオーナーに返す（監査者は決めない）。
 7. 合格なら §「実施記録」を更新してコミット。不合格なら差し戻し理由を証跡の行番号で示す。
 
+### 10.3 監査結果（2026-10-24、監査者: Claude 司令塔）
+
+監査対象: オーナー提出の `security_before.txt`（05:11Z）、`security_after.txt`（06:45Z / 06:59Z / 07:20Z の 3 回分）、
+`security_after_ssh_disabled.txt`（07:20Z）、`security_pytest_pr3.txt`、`security_pr3_ssh.txt`。
+
+| §10.2 条件 | 判定 | 証跡 |
+|---|---|---|
+| 1. after の SUMMARY が failures=0、残 WARN は予定内 | **合格** | 07:20Z: `failures=0 warnings=6`。残 WARN は distro python3.12（3 行）と 3.11 系（3 行）のみ。sshd の WARN は消えた |
+| 2. Node が PATH と nvm の両方で v24.22.1 以上、npm グローバル残存 | **合格** | `PATH node … v24.22.1`、`nvm v24.22.1`、npm 11.19.1、グローバル pi-coding-agent / codex / corepack / npm / opencode-ai。v24.13.0 は nvm 一覧から消えている |
+| 3. `.venv` が uv 管理の 3.13.17 以上、`uv.lock` に差分なし | **版は合格、差分は未確認** | `repo .venv -> …/cpython-3.13.17-…/python3.13: 3.13.17`。`git status --short` の証跡が無い（doctor.sh が 06:45Z に「worktree: has local changes」を出している） |
+| 4. pytest が 423 以上 passed、失敗は既知 2 件のみ | **合格** | `2 failed, 424 passed, 1 deselected`。失敗は test_repository_snapshot と test_wiring_inventory（期限 2026-09-30）で、更新前と同一 |
+| 5. 禁止領域（PLAN.md、PLAN_CHANGELOG.md、tests/、config/）に差分なし | **未確認** | 同上。`git status --short && git diff --stat` の提出で閉じる |
+| 6. 確認事項の回答 | **合格** | 3.11: Hermes（`~/.hermes/hermes-agent/venv`）が使用。3.11.17 へ更新済、3.11.14 は venv.old の予備として保持。sshd: `sshd -T` で `passwordauthentication yes` が判明し、オーナーが `systemctl disable --now ssh.socket ssh.service` を実行、`ss -ltn` で待受消失を確認 |
+
+**総合: 条件付き合格。** 実害に関わる項目（Node、Python、sshd）はすべて証跡で閉じた。残るのは
+リポジトリ差分の確認（条件 3・5）のみで、`git status --short` と `git diff --stat` の 2 行で閉じる。
+
+監査所見（追加）:
+
+- ワーカーは指示書の範囲（`.venv` のみ）を越えて Hermes のランタイムも更新した（Python 3.11.14→3.11.17、
+  Pillow 13.0.0、GPU 推論の前後確認あり）。計画 §4 の方向と一致し、証跡も揃っているので受け入れる。
+  ただし **venv.old と 3.11.14 には更新前の Pillow 等が残る**。有効化しなければ無害だが、1〜2 週間の
+  動作確認後に `rm -rf ~/.hermes/hermes-agent/venv.old && uv python uninstall 3.11.14` で片づける。
+- sshd は `passwordauthentication yes` だった。停止は妥当。将来 WSL への SSH が要るなら
+  `PasswordAuthentication no` と `AuthenticationMethods publickey` を入れてから有効化する。
+- Windows 側は cmd.exe の PATH に対象が無いことまでしか見ていない。`winget list` を一度流して
+  Node / Python / PHP の同梱が無いことを確認すれば閉じる（ワーカー報告の「未監査」項目）。
+- distro python3.12（3.12.3-1ubuntu0.17）は 10/1 の CPython CVE 未配信のまま。PATH の `python3` が
+  これを指すので、Ubuntu の USN が出たら `apt upgrade` で追従する。本リポジトリは `.venv` の 3.13.17 で動くので影響しない。
+- スクリプト側: 3.11.17 以上を PASS にする判定を追加した（Hermes が 3.11 系を使い続けるため）。
+
 ## 実施記録
 
 | 日付 | 対象 | 更新前 | 更新後 | 確認方法 |
 |---|---|---|---|---|
-| 2026-10-24 | Node.js (nvm, WSL) | v24.13.0 / npm 11.6.2 | （未実施） | `node -v`, security_audit.sh |
-| 2026-10-24 | Python `.venv` | distro 3.12.3-1ubuntu0.17 | （未実施） | `.venv/bin/python --version`, pytest |
-| 2026-10-24 | uv-managed Python 3.11 | 3.11.14 | （判断待ち） | `uv python list` |
-| 2026-10-24 | uv | 0.9.26 | （未実施） | `uv --version` |
-| 2026-10-24 | Claude Code (native, WSL) | 2.1.211 | （未実施） | `claude --version` |
+| 2026-10-24 | Node.js (nvm, WSL) | v24.13.0 / npm 11.6.2 | v24.22.1 / npm 11.19.1、v24.13.0 削除 | security_after.txt 07:20Z |
+| 2026-10-24 | Python `.venv` | distro 3.12.3-1ubuntu0.17 | uv 管理 3.13.17 | security_after.txt、pytest 424 passed |
+| 2026-10-24 | uv-managed Python 3.11（Hermes） | 3.11.14 | 3.11.17（3.11.14 は venv.old 用に保持） | security_after.txt |
+| 2026-10-24 | Hermes venv Pillow | （未記録） | 13.0.0 | ワーカー報告（uv pip check 互換 OK） |
+| 2026-10-24 | uv | 0.9.26 | 0.13.5 | security_after.txt |
+| 2026-10-24 | Claude Code (native, WSL) | 2.1.211 | 2.1.310 | security_after.txt |
+| 2026-10-24 | Ubuntu apt | 24.04.4、python3-* 5 件保留 | 24.04.5、保留なし | security_after.txt |
 | 2026-10-24 | PHP | 未導入 | 対象外 | security_audit.sh |
-| 2026-10-24 | sshd 0.0.0.0:22 | 待受中 | （判断待ち） | `ss -ltn`, sshd_config |
+| 2026-10-24 | sshd 0.0.0.0:22 | 待受中、passwordauthentication yes | ssh.socket / ssh.service 無効化、待受なし | security_pr3_ssh.txt、ss -ltn |
+| （未） | リポジトリ差分（uv.lock・禁止領域） | — | 未確認 | `git status --short && git diff --stat` |

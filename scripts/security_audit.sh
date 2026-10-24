@@ -69,7 +69,8 @@ check_python_version() {  # $1 = label, $2 = version like 3.13.17, $3 = optional
     3.13.*) fix=$PY_FIX_313 ;;
     3.14.*) fix=$PY_FIX_314 ;;
     3.15.*) pass "$label: $v (current line; confirm >= 3.15.1)"; return ;;
-    3.10.*|3.11.*) warn "$label: $v (3.10 is end-of-life; 3.11 ends 2027-10; prefer >= 3.12 for this repo)"; return ;;
+    3.11.*) if version_ge "$v" "3.11.17"; then pass "$label: $v (>= 3.11.17; the 3.11 line ends 2027-10, this repo needs >= 3.12)"; else fail "$label: $v < 3.11.17"; fi; return ;;
+    3.10.*) warn "$label: $v (3.10 is end-of-life after 3.10.22; move to a supported line)"; return ;;
     *) warn "$label: $v (unrecognised line)"; return ;;
   esac
   local note=""
