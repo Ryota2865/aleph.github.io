@@ -299,7 +299,8 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 - sudo が必要なコマンドは実行せず、コマンド文字列だけ提示してオーナーに打ってもらう。
 - 稼働中の llama-swap / llama-server（port 8080/8081）を止めない・差し替えない。
 - 資格情報（gh トークン、~/.ssh、~/.claude）を表示・コピーしない。
-- PLAN.md、PLAN_CHANGELOG.md、tests/ を変更しない。.venv の再作成以外にリポジトリのファイルを変更しない。
+- PLAN.md、PLAN_CHANGELOG.md、tests/、config/、uv.lock を変更しない。リポジトリのファイルで書いてよいのは
+  本計画書の「実施記録」節（§4.7 のとおり日付付きで追記）と state/ 配下の証跡だけ。
 - 判断が要る分岐（3.11 を消すか、sshd を止めるか）は実行せず、確認事項として報告に書く。
 
 手順:
@@ -343,41 +344,41 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 | 2. Node が PATH と nvm の両方で v24.22.1 以上、npm グローバル残存 | **合格** | `PATH node … v24.22.1`、`nvm v24.22.1`、npm 11.19.1、グローバル pi-coding-agent / codex / corepack / npm / opencode-ai。v24.13.0 は nvm 一覧から消えている |
 | 3. `.venv` が uv 管理の 3.13.17 以上、`uv.lock` に差分なし | **合格** | `repo .venv -> …/cpython-3.13.17-…/python3.13: 3.13.17`。`git status --short` は本計画書の変更と未追跡 `reports/patch_001.txt` のみで、`uv.lock` は無変更 |
 | 4. pytest が 423 以上 passed、失敗は既知 2 件のみ | **合格** | `2 failed, 424 passed, 1 deselected`。失敗は test_repository_snapshot と test_wiring_inventory（期限 2026-09-30）で、更新前と同一 |
-| 5. 禁止領域（PLAN.md、PLAN_CHANGELOG.md、tests/、config/）に差分なし | **合格** | 同上。禁止領域に差分なし。ただしワーカーは指示書に反して本計画書をローカルで編集した（+163/-6）。内容は司令塔が取り込みを判断する |
+| 5. 禁止領域（PLAN.md、PLAN_CHANGELOG.md、tests/、config/）に差分なし | **合格** | 同上。禁止領域に差分なし。本計画書のローカル編集（+163/-6）は §4.7 に沿った実施記録の追記で、付録 A として取り込んだ |
 | 6. 確認事項の回答 | **合格** | 3.11: Hermes（`~/.hermes/hermes-agent/venv`）が使用。3.11.17 へ更新済、3.11.14 は venv.old の予備として保持。sshd: `sshd -T` で `passwordauthentication yes` が判明し、オーナーが `systemctl disable --now ssh.socket ssh.service` を実行、`ss -ltn` で待受消失を確認 |
 
-**総合: 合格（2026-10-24 確定）。** 6 条件すべてを証跡で閉じた。手続き上の逸脱が 1 件: ワーカーが
-指示書の「リポジトリのファイルを変更しない」に反して本計画書をローカル編集した。差分は司令塔が
-パッチとして受け取り、採用部分だけを取り込む（§10.4）。
+**総合: 合格（2026-10-24 確定）。** 6 条件すべてを証跡で閉じた。
+
+訂正（2026-10-24）: 当初「ワーカーが指示書に反して本計画書を編集した」「Hermes の更新は指示書の範囲外」と
+記したが、どちらも誤り。計画書の実施記録への追記は §4.7 が求めるものであり、矛盾していたのは §10.1 の
+指示書（「リポジトリのファイルを変更しない」）のほうだった（§10.1 を修正済み）。Hermes と vLLM の更新は
+オーナーが別途指示したもので、ワーカーのログ（付録 A）は各変更の前に明示許可を取った経過を記録している。
+ワーカーの作業に手続き上の問題はなかった。
 
 監査所見（追加）:
 
-- ワーカーは指示書の範囲（`.venv` のみ）を越えて Hermes のランタイムも更新した（Python 3.11.14→3.11.17、
-  Pillow 13.0.0、GPU 推論の前後確認あり）。計画 §4 の方向と一致し、証跡も揃っているので受け入れる。
-  ただし **venv.old と 3.11.14 には更新前の Pillow 等が残る**。有効化しなければ無害だが、1〜2 週間の
-  動作確認後に `rm -rf ~/.hermes/hermes-agent/venv.old && uv python uninstall 3.11.14` で片づける。
+- Hermes（Python 3.11.14→3.11.17、Pillow 12.2.0→13.0.0、Hermes 本体 0.16.0 は据え置き）と vLLM 環境
+  （Pillow 12.1.0→13.0.0）の更新はオーナー指示によるもので、GPU 推論の前後確認、`uv pip check`、画像処理
+  テスト 265 件 PASS の証跡がある。ただし **venv.old、`/tmp/aleph-*-20261024/`、3.11.14 には更新前の
+  Pillow 等が残る**。有効化しなければ無害だが、1〜2 週間の動作確認後に
+  `rm -rf ~/.hermes/hermes-agent/venv.old && uv python uninstall 3.11.14` で片づける（`/tmp` は再起動で消える）。
+- **Hermes リポジトリ側の変更 3 ファイル（`pyproject.toml`、`uv.lock`、`tools/lazy_deps.py`）が未コミット。**
+  Hermes のリポジトリでコミットしないと、次の `uv sync` や checkout で Pillow 12.2.0 へ戻る。
 - sshd は `passwordauthentication yes` だった。停止は妥当。将来 WSL への SSH が要るなら
   `PasswordAuthentication no` と `AuthenticationMethods publickey` を入れてから有効化する。
-- Windows 側は cmd.exe の PATH に対象が無いことまでしか見ていない。`winget list` を一度流して
-  Node / Python / PHP の同梱が無いことを確認すれば閉じる（ワーカー報告の「未監査」項目）。
+- Windows 側: オーナー提出の `winget list`（2026-10-24）に Node.js / Python / PHP は無い。10 月のランタイム
+  修正は Windows 側には該当しない。閉じる。代わりに更新が溜まっているものがある: Docker Desktop 4.56.0
+  （最新 4.96.3）、WSL 2.6.1（2.7.14）、Git 2.55.0.2（2.56.0.2）、Edge 155（156）、VC++ 再頒布パッケージ。
+  Docker Desktop と WSL はセキュリティ修正を含む系統なので `winget upgrade Docker.DockerDesktop` と
+  `wsl --update` を先に、残りは `winget upgrade --all` で当てる。
 - distro python3.12（3.12.3-1ubuntu0.17）は 10/1 の CPython CVE 未配信のまま。PATH の `python3` が
   これを指すので、Ubuntu の USN が出たら `apt upgrade` で追従する。本リポジトリは `.venv` の 3.13.17 で動くので影響しない。
 - スクリプト側: 3.11.17 以上を PASS にする判定を追加した（Hermes が 3.11 系を使い続けるため）。
 
-### 10.4 ローカル編集の回収手順
+### 10.4 ローカル編集の回収（完了）
 
-ローカルの作業ツリーには本計画書の未コミット編集（+163/-6）と未追跡 `reports/patch_001.txt` がある。
-リモートには司令塔のコミットが 3 件積まれているため、そのまま `git pull` すると衝突する。次の順で回収する。
-
-```bash
-mkdir -p state && git diff SECURITY_UPDATE_PLAN_2026-10.md > state/plan_local_edits.patch
-mv reports/patch_001.txt state/        # 貼り付けログは reports/ に置かない（reports/ は批評・実験の正の置き場）
-git checkout -- SECURITY_UPDATE_PLAN_2026-10.md
-git pull --ff-only origin claude/loving-bardeen-a8gcsp
-```
-
-`state/plan_local_edits.patch` を司令塔に渡す。司令塔が内容を読み、採用部分を本計画書に取り込んでコミットする。
-ワーカーの実行は今後も「`.venv` と証跡ファイル以外は変更しない」を守る。
+ワーカーの実施記録はローカルで `git diff` としてパッチ化され、司令塔が付録 A として原文のまま取り込んだ。
+以後、ワーカーは実施記録を直接コミットしてよい（§10.1 の修正後の指示書に従う）。
 
 ## 実施記録
 
@@ -392,4 +393,171 @@ git pull --ff-only origin claude/loving-bardeen-a8gcsp
 | 2026-10-24 | Ubuntu apt | 24.04.4、python3-* 5 件保留 | 24.04.5、保留なし | security_after.txt |
 | 2026-10-24 | PHP | 未導入 | 対象外 | security_audit.sh |
 | 2026-10-24 | sshd 0.0.0.0:22 | 待受中、passwordauthentication yes | ssh.socket / ssh.service 無効化、待受なし | security_pr3_ssh.txt、ss -ltn |
-| 2026-10-24 | リポジトリ差分（uv.lock・禁止領域） | — | 差分なし（変更は本計画書のローカル編集と未追跡 reports/patch_001.txt のみ） | `git status --short && git diff --stat` |
+| 2026-10-24 | vLLM venv Pillow（オーナー指示） | 12.1.0 | 13.0.0 | ワーカー報告（uv pip check 145 件互換） |
+| 2026-10-24 | Hermes repo（pyproject / uv.lock / tools/lazy_deps.py） | Pillow 12.2.0 固定 | 13.0.0 へ同期、**未コミット** | Hermes 側 `git status` |
+| 2026-10-24 | Windows（winget list） | — | Node / Python / PHP なし。Docker Desktop 4.56.0、WSL 2.6.1、Git 2.55 に更新あり | WingetList.txt |
+| 2026-10-24 | リポジトリ差分（uv.lock・禁止領域） | — | 差分なし（本計画書の実施記録追記と未追跡 reports/patch_001.txt のみ） | `git status --short && git diff --stat` |
+
+---
+
+## 付録 A: ワーカー実施ログ（2026-10-24、原文）
+
+実行ワーカー（別セッション）が本計画書の実施記録に追記した経過記録。ローカルの `git diff` から司令塔が
+原文のまま移した。時系列は上から下。監査（§10.3）はこのログではなく生出力（state/）を対象とした。
+
+### 2026-10-24 ローカル適用（途中経過）
+
+入力はオーナーが実機で実行した `reports/patch_001.txt`。この入力ファイルは一時資料で、
+オーナーが後日削除予定。本記録時点では保持している。
+
+| 対象 | 更新前 | 更新後 | 確認方法 |
+|---|---|---|---|
+| WSL nvm Node | 24.13.0 / npm 11.6.2 | 24.22.1 / npm 11.19.1 | 公式配布checksum一致、default alias変更、主要CLI版表示 |
+| uv | 0.9.26 | 0.13.5 | `uv self update` / `uv --version` |
+| uv Python | 3.11.14 | 3.11.17と3.13.17を追加 | `uv python list --only-installed`。旧3.11.14は保持 |
+| ALEPH `.venv` | distro Python 3.12.3 | managed Python 3.13.17 | `uv sync --frozen --all-extras --python 3.13.17`、19依存の整合性確認 |
+| Claude Code native | 2.1.211 | 2.1.310 | `claude update` / `claude --version` |
+
+- ALEPH更新前venvは `/tmp/aleph-security-20261024/venv-before` に退避した。
+  `/tmp` は永続バックアップではない。`uv.lock` と設計正典は変更していない。
+- 非localテストは更新前・更新後とも **424 passed, 2 failed, 1 deselected**。
+  失敗はREADME snapshot不一致と、`aleph.explore.vault` の配線猶予の2026-09-30失効。
+  更新による追加失敗は観測していないが、全件greenの完了条件は未達。
+- npmグローバルは既存版を移行し、Codex 0.142.5、Pi 0.80.3、OpenCode 1.14.29の版表示を確認。
+  corepackは移行時に0.34.5から0.36.0へ変更。npmは一部install script未許可の警告を出した。
+  各CLIの実タスク・モデル呼出しは未検証。
+- Ubuntuのzope namespace `.pth` は内容を静的確認し、`dpkg -V python3-zope.interface` は差分なし。
+  ALEPH、uv tool、system、user-local、Hermesと列挙した他venvの対象パッケージmetadataを
+  Pythonのsite読込を無効にして確認。LiteLLMの該当metadataと既知`/tmp`指標は見つからなかった。
+  過去の導入履歴・Docker・機械全体の非侵害を証明するものではない。
+- **保留**: apt更新はsudoパスワードが必要でオーナーへ実行依頼済み。
+  旧Node削除は自動承認レビューが拒否したため保持し、明示許可を確認中。
+- **追加発見・未変更**: HermesはPython 3.11.14とPillow 12.2.0を使用し、
+  `pyproject.toml`でもPillow 12.2.0を固定。依存契約を含む対応の許可を確認中。
+  vLLM `models/vllm/gptoss/.venv` はPillow 12.1.0を使用。13.0.0へのdry-runは
+  Pillowだけの変更だったが、別プロジェクト変更として自動承認レビューが拒否し、許可確認中。
+- Windows PATH上にNode/PHP/Claude/pyは見つからず、pythonはWindowsAppsのaliasのみ。
+  アプリ同梱ランタイムやWindows全体の更新状況は未検証。
+- 推論サーバー、SSH待受、GPU設定は変更していない。更新後の全体監査と完了判定は保留。
+
+### 2026-10-24 追加適用・確認結果（上記途中経過の更新）
+
+- オーナーが `sudo apt update && sudo apt upgrade` を実行完了。
+  実機で `dpkg --audit` は出力なし、監査対象パッケージの保留更新なしを確認した。
+  Python補助パッケージは更新済み。OS表示はUbuntu 24.04.5 LTS、CUDA toolkitは13.4.3-1。
+  `cloud-init` と `tmux` は更新候補として残っている（事前simulationでは段階配信対象）。
+  `/var/run/reboot-required` は存在しなかった。OS Pythonは引き続き
+  3.12.3-1ubuntu0.17であり、全CVEのバックポート適用を個別に証明したものではない。
+- オーナーの明示許可後、旧Node 24.13.0を削除。既定Nodeは24.22.1。
+- オーナーの明示許可後、vLLM環境のPillowのみ12.1.0から13.0.0へ更新。
+  `uv pip check` は145パッケージ互換、site読込無効でのPNG書込・読込もPASS。
+  vLLMモデルの推論動作は試していない。
+- オーナー決定: **Hermesは別作業**。Pillow 12.2.0とPython 3.11.14を保持する。
+  旧Python 3.11.14はHermes venvの参照先なので削除しない。
+- 更新後の `bash scripts/security_audit.sh --windows` は
+  **failures=0 warnings=8**（2026-10-24 06:27 UTC / 15:27 JST）。
+  WARNにはdistro Pythonのバックポート判定保留、3.11系の一般警告、旧3.11.14、
+  zope namespace `.pth`、SSHの全interface待受が含まれる。
+- このスクリプトはHermesやvLLMのvenvを網羅しない。したがってFAIL 0件でも機械全体の
+  修正完了・非侵害を意味しない。Hermes残件、Windowsアプリ同梱ランタイム未調査、
+  更新前後で同じ非localテスト2件失敗は残る。セキュリティスクリプト自体は未変更。
+- `reports/patch_001.txt` は削除せず保持。設計・コード・lockは未変更、commit/pushは未実施。
+
+### 2026-10-24 Hermes限定セキュリティ更新（追加承認後）
+
+オーナーの追加承認により、Hermes本体0.16.0は据え置き、実行Pythonを3.11.14から
+3.11.17へ、Pillowを12.2.0から13.0.0へ変更した。Hermes側の`pyproject.toml`と
+`uv.lock`を整合させ、lock内のパッケージ版変更はPillowのみと確認した。
+新uvによるlock形式revisionは3から5へ変わった。
+
+- 画像処理の実検証で`tools/lazy_deps.py`の旧Pillow固定が自動ダウングレードを起こすことを
+  確認したため、同箇所も13.0.0へ同期した。更新後テストを通して旧版へ戻らないことを確認。
+- 既存環境は`~/.hermes/hermes-agent/venv.old`へ退避し、さらに
+  `/tmp/aleph-hermes-security-20261024/venv-before`にも保存した。
+  旧Python/Pillowは退避物として残る。通常CLIが利用する`venv`は修正版。
+- 更新前のテストは宣言済み`pytest-timeout==2.4.0`の欠落で起動不可だった。
+  同テスト依存を補った更新前環境で画像関連168件PASS。
+  更新後は公式`scripts/run_tests.sh`による画像処理・遅延依存6ファイル、
+  **265 tests passed, 0 failed**。Hermes全テストsuiteを実行したものではない。
+- 更新後の206インストール済みパッケージは整合性チェックPASS。
+  更新前環境（テスト依存補完後）との版比較ではPillowのみが変わった。
+- RTX 3090、空きport 8081を確認し、既存CUDA 12.9版llama-serverと
+  Qwen3.6-27B（ctx=64000、KV=q4_0）で更新前後に短い推論を実行し、ともに`OK.`を返した。
+  更新後Hermes Python/OpenAI SDK経由でも成功。自分で起動したサーバーのみ終了した。
+  長時間run・Gemma profileは未検証。CUDA、llama.cpp、モデル設定は変更していない。
+- ALEPHの最終`uv run --frozen pytest -m 'not local' -q`は
+  **2 failed, 424 passed, 1 deselected in 8.76s**。更新前からのREADME snapshot不一致と
+  配線猶予失効の2件がそのまま残り、今回の追加失敗はない。
+- Hermes側変更は`pyproject.toml`、`uv.lock`、`tools/lazy_deps.py`の3ファイル。
+  両repositoryのdiff checkは正常。commit/pushはしていない。
+
+### 2026-10-24 PR #3追加指示の統合・再検証
+
+- PR最新commit `e09418478b17c5e937cb34d484d0aba1664e843b`へfast-forwardし、
+  §9・§10と監査判定修正を取り込んだ。ローカル実施記録86行を欠落なく保持した。
+  取込前の文書・before/after証跡は`state/security_pr3_integration/`へ退避した。
+  上表の未実施欄は既存の実測記録に合わせて更新した。§9は初回実測時点の評価であり、
+  後から判明したHermes/vLLMのPillowやWindows同梱runtimeの未確認を否定するものではない。
+- 新版スクリプトの実機再監査は **failures=0 warnings=7**。
+  生出力は`state/security_after_pr3.txt`。旧8件からの減少1件はnamespace `.pth`の
+  許可リスト変更による。残るWARNはdistro Pythonの判定保留3件、3.11系3件、SSH待受1件。
+  distro PythonもWARNに残るので、§10.2の「3.11とsshdに限る」を厳密には満たさない。
+  changelogのCVE語彙だけで未修正・修正済みを断定せず、USN/個別バックポートの確認は残件。
+- NodeはPATH/nvm双方PASS、ALEPH `.venv ->` は3.13.17でPASS。
+  npmのcodex / opencode-ai / pi-coding-agent / corepackは残存。
+- pytestを再実行して生出力を`state/security_pytest_pr3.txt`へ保存。
+  **2 failed, 424 passed, 1 deselected in 8.70s**。
+  失敗はREADME snapshot不一致と配線猶予失効の既知2件のみ。
+- `sshd -T -C user=ryota_tanaka,host=localhost,addr=127.0.0.1`は一般ユーザーで
+  host keyへ到達できず失敗し、`sudo -n`もパスワードが必要だった。
+  `PasswordAuthentication`の実効値は未確認。読める設定の明示行は
+  `Include /etc/ssh/sshd_config.d/*.conf`と`KbdInteractiveAuthentication no`。
+  生結果は`state/security_pr3_ssh.txt`。オーナーへsudoによる設定確認のみを依頼した。
+  SSHの停止・認証方式変更は行っていない。
+- `PLAN.md`、`PLAN_CHANGELOG.md`、`tests/`、`config/`、ALEPHの`uv.lock`に差分なし。
+  shell構文・diff checkは正常。追加のruntime更新、正式監査PASS判定、新規commit/pushはしていない。
+
+### 2026-10-24 SSH実効設定の追加確認（オーナー提供）
+
+オーナーのsudo実行は最初に`Missing privilege separation directory: /run/sshd`で停止。
+実行時ディレクトリを作成する手順を案内し、その後オーナーから以下の実効設定を受領した。
+`user=ryota_tanaka,host=localhost,addr=127.0.0.1`の確認結果として記録する。
+
+```text
+permitrootlogin without-password
+pubkeyauthentication yes
+passwordauthentication yes
+kbdinteractiveauthentication no
+authenticationmethods any
+```
+
+この条件ではパスワード認証が有効であり、§9の公開鍵のみという確認条件は未達。
+rootの`without-password`はパスワード認証を禁止する指定で、一般ユーザーの
+`passwordauthentication yes`を無効にはしない。別接続元やrootユーザーのMatch条件、
+稼働daemonへの反映状況は別途確認が必要。原文を`state/security_pr3_ssh.txt`と
+`state/security_after.txt`へ追記し、以前の「実効値未確認」はこの条件に限り解消した。
+SSHの用途と鍵ログインの可否をオーナーへ確認し、停止・認証方式変更はまだ行っていない。
+
+### 2026-10-24 SSH停止のオーナー承認・実行待ち
+
+オーナーはSSHを現在使用しておらず、削除してよいと明示承認した。
+SSHクライアントを保持し、SSHサーバーのsocket/service停止と自動起動無効化で対応する。
+読み取り確認では`ssh.service`はinactive/disabled、`ssh.socket`はactive/enabledで、
+IPv4/IPv6の全interfaceで22番を待ち受けていた。serviceだけでは待受を解消できない。
+`sudo -n true`はパスワード必須で失敗したため、停止は未実施。
+オーナーへ`sudo systemctl disable --now ssh.socket ssh.service`を依頼する。
+
+### 2026-10-24 SSHサーバー停止・最終確認
+
+オーナーが`sudo systemctl disable --now ssh.socket ssh.service`を実行。
+途中にtriggering unitの警告が出たが、独立した実機確認では`ssh.service`・`ssh.socket`とも
+**inactive / disabled**。`ss -ltn 'sport = :22'`は見出しのみで、22番待受はない。
+SSHクライアントとサーバーパッケージは保持し、サーバー停止と自動起動無効化で対応した。
+設定値のPasswordAuthenticationは変更していない。SSHの用途判断・停止に関する残件は解消。
+
+停止後の標準監査は **failures=0 warnings=6**。
+生出力は`state/security_after_ssh_disabled.txt`、状態確認は`state/security_pr3_ssh.txt`。
+`state/security_after.txt`へも過去の出力を保持して追記した。
+残る警告はdistro Python判定保留と3.11系であり、旧退避環境・Windows同梱runtimeの
+未確認と既知pytest失敗2件も、これまでどおり残件として扱う。
+SSH停止に伴うコード変更はないためpytestは再実行していない。commit/pushは未実施。
