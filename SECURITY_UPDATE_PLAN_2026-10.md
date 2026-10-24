@@ -397,7 +397,8 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 | 2026-10-24 | Hermes repo（pyproject / uv.lock / tools/lazy_deps.py） | Pillow 12.2.0 固定 | 13.0.0 へ同期、コミット済み（オーナー報告） | Hermes 側 `git log` |
 | 2026-10-24 | Windows（winget list） | — | Node / Python / PHP なし | WingetList.txt |
 | 2026-10-24 | Windows Docker Desktop | 4.56.0 | 4.96.3 | WingetList_002.txt |
-| 2026-10-24 | Windows WSL | 2.6.1 | 3.0.3（メジャー更新。`wsl --shutdown` 後に doctor.sh と推論確認） | WingetList_002.txt |
+| 2026-10-24 | Windows WSL | 2.6.1 | 3.0.3（メジャー更新） | WingetList_002.txt |
+| 2026-10-24 | WSL 3.0.3 後の推論スタック確認 | — | doctor.sh 全 PASS（RTX 3090 可視）、start_local_stack → verify_local_stack、`test_local_swap PASSED` | オーナー報告 |
 | 2026-10-24 | Windows Git / VC++ 再頒布 / Terminal / その他 | Git 2.55.0.2 ほか | Git 2.56.0.2、VC++ 14.51、Terminal 1.25 ほか 9 件 | WingetList_002.txt |
 | 2026-10-24 | Windows Edge | 155.0.4283.62 | 未更新（winget は導入方式の違いでブロック。Edge 自身の更新機能で当てる） | WingetList_002.txt |
 | 2026-10-24 | リポジトリ差分（uv.lock・禁止領域） | — | 差分なし（本計画書の実施記録追記と未追跡 reports/patch_001.txt のみ） | `git status --short && git diff --stat` |
