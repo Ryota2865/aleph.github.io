@@ -21,15 +21,15 @@ ALEPHには十分な骨格がある。重要なのは骨格をさらに複雑に
 
 ## セキュリティ更新（ランタイムの棚卸し）
 
-ローカル機の Python / Node.js / npm / PHP / Claude Code を修正版と突き合わせる:
+ローカル機のセキュリティ更新（Python / Node.js / npm / PHP / Brotli / Claude Code の棚卸し、計画、
+証跡、監査）は専用の非公開リポジトリ `Ryota2865/llm_security`（WSL では `~/llm_security`）で管理する。
+2026-10 の初回対応は本リポジトリで行い、2026-10-25 に移設した（履歴は git log に残る）。
 
 ```bash
-bash scripts/security_audit.sh --windows   # 読み取り専用。FAIL が 0 になるまで対応
+bash ~/llm_security/scripts/security_audit.sh --windows   # 読み取り専用。FAIL が 0 になるまで対応
 ```
 
-対応手順と判断は `SECURITY_UPDATE_PLAN_2026-10.md`（2026年10月の一斉リリース対応）。
-修正版の番号が更新されたらスクリプト冒頭の定数を更新する。クラウドの Claude Code セッションからは
-ローカル機に届かないため、この手順は WSL 上のセッションで実行する。
+クラウドの Claude Code セッションからはローカル機に届かないため、実行は WSL 上のセッションで行う。
 
 ## 批評を公開ページに追加する（file convention + 再ビルド）
 
