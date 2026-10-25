@@ -196,6 +196,21 @@ section "Python packages (brotli / pillow / litellm / .pth hooks)"
 for real in "${!seen_py[@]}"; do check_python_packages "$real"; done
 [[ -n "$venv_real" && -z "${seen_py[$venv_real]:-}" ]] && check_python_packages "$venv_real"
 for t in "$HOME/.local/share/uv/tools"/*/bin/python; do [[ -x "$t" ]] && check_python_packages "$t"; done
+# every other virtualenv under $HOME (agent venvs such as ~/.hermes, model venvs, project venvs)
+declare -A seen_venv=()
+while IFS= read -r cfg; do
+  vdir=$(dirname "$cfg")
+  py="$vdir/bin/python"
+  [[ -x "$py" ]] || continue
+  real=$(readlink -f "$py")
+  case "$vdir" in
+    */.local/share/uv/tools/*|"$PWD/.venv") continue ;;     # already covered above
+  esac
+  [[ -n "${seen_venv[$vdir]:-}" ]] && continue
+  seen_venv[$vdir]=1
+  case "$vdir" in *venv.old*|*/venv-before*|*backup*) info "skipping retired venv $vdir (delete it when no longer needed)"; continue ;; esac
+  check_python_packages "$py"
+done < <(find "$HOME" -maxdepth 7 -name pyvenv.cfg -not -path '*/node_modules/*' -not -path '*/.cache/*' 2>/dev/null | sort)
 if compgen -G "/tmp/.pc_once_*" >/dev/null || [[ -e /tmp/remote_code_loader.lock ]]; then
   fail "LiteLLM 1.107.0 indicator present in /tmp (.pc_once_* or remote_code_loader.lock)"
 else
@@ -263,6 +278,26 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+section "Brotli decoder (CVE-2026-111497, Node2Shell / HTTP2Shell)"
+# Ubuntu noble's brotli package was still "Needs evaluation" on 2026-10-23; the version string stays 1.1.0.
+if dpkg -s libbrotli1 >/dev/null 2>&1; then
+  bv=$(dpkg-query -W -f='${Version}' libbrotli1 2>/dev/null)
+  if zgrep -qE 'CVE-2026-111497' /usr/share/doc/libbrotli1/changelog.Debian.gz 2>/dev/null; then
+    pass "apt libbrotli1 $bv: changelog carries the CVE-2026-111497 fix"
+  else
+    warn "apt libbrotli1 $bv: no CVE-2026-111497 fix yet (Ubuntu tracker: Needs evaluation). Exposed consumers: curl --compressed, any program linking libbrotlidec. Re-check USN notices"
+  fi
+fi
+if command -v curl >/dev/null 2>&1; then
+  if curl --version 2>/dev/null | grep -qi 'brotli'; then
+    info "curl $(curl --version | head -n1 | awk '{print $2}') is built with brotli: avoid --compressed against untrusted hosts until libbrotli1 is fixed"
+  else
+    pass "curl is built without brotli"
+  fi
+fi
+# Python copies are reported per interpreter in the packages section above.
+
+# ---------------------------------------------------------------------------
 section "network exposure"
 if command -v ss >/dev/null 2>&1; then
   exposed=$(ss -ltnH 2>/dev/null | awk '$4 ~ /^(0\.0\.0\.0|\*|\[::\]):/ {print $4}' | tr '\n' ' ')
@@ -305,6 +340,12 @@ if [[ "$windows" -eq 1 ]]; then
     [[ -n "$wphp" ]] && check_php_version "Windows php" "$wphp" || info "Windows php: not on PATH"
     wc=$(winq 'claude --version')
     [[ -n "$wc" ]] && info "Windows claude: $wc" || info "Windows claude: not on PATH"
+    wg=$(winq 'git --version')
+    if [[ -n "$wg" ]]; then
+      wcurl=$(winq 'curl.exe --version' | head -n1)
+      info "Windows git: $wg (Git for Windows bundles curl + brotli 1.2.0 as of 2.56; watch its release notes for a Brotli 1.2.1 rebuild)"
+      [[ -n "$wcurl" ]] && info "Windows curl.exe: $wcurl"
+    fi
   else
     warn "cmd.exe not reachable at $cmd (WSL interop disabled?)"
   fi
