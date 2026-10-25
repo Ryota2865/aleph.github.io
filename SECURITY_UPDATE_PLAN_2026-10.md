@@ -380,6 +380,69 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 ワーカーの実施記録はローカルで `git diff` としてパッチ化され、司令塔が付録 A として原文のまま取り込んだ。
 以後、ワーカーは実施記録を直接コミットしてよい（§10.1 の修正後の指示書に従う）。
 
+## 11. 追加調査: HTTP2Shell（CVE-2026-111497、2026-10-25）
+
+### 11.1 何が変わったか
+
+新しい CVE ではない。Node.js の 10/21 リリースで「Node2Shell」と呼ばれた Brotli デコーダの境界外書き込み
+（Google Brotli 1.0.3〜1.2.0、CVSS4 9.2）が、Node 以外の **Brotli C ライブラリを組み込む全ソフト**に及ぶことが
+10/23 以降に整理され、「HTTP2Shell」の名で広まった。根本の修正は Brotli 1.0.10 / 1.1.1 / 1.2.1（10/21）。
+修正コミットは 2 月から存在したが、10 月までリリースされていなかった。
+
+悪用の前提: 攻撃者が **細工した Brotli 圧縮データを復号させる**こと。経路は 2 種類ある。
+
+- サーバ側: `Content-Encoding: br` のリクエスト本文を復号する API（Express 5 / body-parser 2.x など）。未認証 RCE。
+- クライアント側: 悪意あるサーバや中間者が `Content-Encoding: br` の応答を返し、HTTP クライアントが復号する
+  （ブラウザ、curl `--compressed`、Python の requests / urllib3 / httpx / aiohttp は **Brotli パッケージが
+  入っているだけで自動的に使う**、Node の `fetch()`）。
+
+2026-10-24 時点で野外悪用の報告は無く、CISA KEV 未掲載。
+
+### 11.2 この機への影響（実測と推定）
+
+| 対象 | 状態 | 判定 |
+|---|---|---|
+| Node 24.22.1（WSL） | 修正済み | 閉じている |
+| Claude Code 2.1.310（ネイティブ、Bun ベース） | Bun の修正は 1.4.4。Claude Code が同梱する Bun の版は未公開 | **未確認**。`claude update` を継続。Claude Code は外部 URL の取得を行うので、Anthropic の告知を待つ |
+| ALEPH `.venv`（3.13.17） | `uv.lock` に Brotli / brotlicffi 無し | 影響なし |
+| Hermes venv（3.11.17、206 パッケージ） | Brotli の有無を未確認。**Hermes は Web を取得するエージェント**なので、入っていれば現実的な露出経路 | **要確認**（§11.3） |
+| vLLM venv | 同上 | 要確認 |
+| Ubuntu libbrotli1 1.1.0-2build2 | Ubuntu のトラッカーは 10/23 時点で「Needs evaluation」、修正版なし。Debian は bookworm / trixie に修正済み | **未修正**。curl 8.5.0 は brotli 付きビルドなので `curl --compressed` を信頼できないホストに使わない |
+| Git for Windows 2.56.0.2 | 同梱 curl が Brotli 1.2.0 を含む（一次情報は個人検証記事 1 件）。git は HTTP 取得時に全圧縮方式を受け入れるので、悪意あるリモートからの clone / fetch が経路になり得る | **要注視**。Git for Windows の次回リリースで追従 |
+| Chrome 156 / Edge 156 / Firefox 158 | 「Chromium と Firefox は修正済み」とする集約サイトがあるが、ベンダー告知の版番号は未確認 | 自動更新を有効のまま維持。確認できたら追記 |
+| Claude Desktop / ChatGPT Desktop / Docker Desktop（Electron 系） | Electron 45.0.0 / 44.9.3 は Node 24.22.0 同梱で未修正という報告。各アプリが修正版 Electron を取り込むまで時間差がある | 自動更新を待つ。ローカル API を公開していないので直接の経路は小さい |
+| uv 0.13.5 | Rust 製で Google の C 実装を使わない | 影響なし |
+
+### 11.3 実施手順（§10.1 の指示書と同じ制約で）
+
+```bash
+# 1) 全 venv の Brotli 棚卸し（security_audit.sh が ~ 以下の pyvenv.cfg を列挙するようになった）
+bash scripts/security_audit.sh --windows
+# 2) Brotli / brotlicffi が 1.2.1 未満の venv があれば、その venv で
+uv pip install --python <venv>/bin/python 'Brotli>=1.2.1' 'brotlicffi>=1.2.1.0'   # 入っているほうだけ
+#    Hermes は pyproject / uv.lock で固定されている可能性があるので、§10.3 と同じく Hermes 側 repo で lock を更新してコミット
+# 3) システム側は Ubuntu の USN 待ち。出たら
+sudo apt update && sudo apt upgrade            # libbrotli1 の changelog に CVE-2026-111497 が載れば PASS に変わる
+# 4) Windows: Git for Windows の更新を winget で追う。ブラウザは自動更新を確認
+winget upgrade Git.Git
+```
+
+完了判定: `security_audit.sh` の Brotli 節と Python パッケージ節に FAIL が無く、libbrotli1 の WARN が消えたら閉じる。
+
+### 11.4 出典
+
+- Ubuntu CVE-2026-111497（brotli / nodejs とも Needs evaluation、2026-10-23 更新）: https://ubuntu.com/security/CVE-2026-111497
+- Debian tracker: https://security-tracker.debian.org/tracker/CVE-2026-111497
+- Bun advisory GHSA-663w-cv8g-jj2p: https://github.com/oven-sh/bun/security/advisories/GHSA-663w-cv8g-jj2p
+- Aikido（Node2Shell → HTTP2Shell、Python クライアントの自動利用）: https://www.aikido.dev/blog/python-packages-vulnerable-node2shell-brotli-cve-2026-111497
+- Cycode（影響パッケージの走査結果）: https://cycode.com/blog/node2shell-cve-2026-111497/
+- Strobes（影響アプリ一覧、未修正の同梱コピー）: https://strobes.co/blog/http2shell-brotli-rce-cve-2026-111497/
+- lilting.ch（Python / curl / Git for Windows の実検証、個人記事）: https://lilting.ch/en/articles/brotli-cve-2026-111497-python-curl-git
+- WebProNews（修正が 2 月から未リリースだった経緯）: https://www.webpronews.com/brotli-cve-2026-111497-openai-node-python-envoy-patches
+- Qualys: https://blog.qualys.com/product-tech/2026/10/23/node-js-patches-brotli-remote-code-execution-flaw-find-vulnerable-runtimes-before-attackers-do
+
+JPCERT/CC と IPA の HTTP2Shell に関する注意喚起は 10/25 時点で見つからなかった。
+
 ## 実施記録
 
 | 日付 | 対象 | 更新前 | 更新後 | 確認方法 |
@@ -400,6 +463,7 @@ AGENTS.md の「tests-green と形式的判定を分ける」「監査対象を�
 | 2026-10-24 | Windows WSL | 2.6.1 | 3.0.3（メジャー更新） | WingetList_002.txt |
 | 2026-10-24 | WSL 3.0.3 後の推論スタック確認 | — | doctor.sh 全 PASS（RTX 3090 可視）、start_local_stack → verify_local_stack、`test_local_swap PASSED` | オーナー報告 |
 | 2026-10-24 | Windows Git / VC++ 再頒布 / Terminal / その他 | Git 2.55.0.2 ほか | Git 2.56.0.2、VC++ 14.51、Terminal 1.25 ほか 9 件 | WingetList_002.txt |
+| 2026-10-25 | HTTP2Shell（CVE-2026-111497）追加調査 | — | §11。Hermes / vLLM venv の Brotli、libbrotli1、Git for Windows が未確認・未修正 | security_audit.sh（venv 列挙と Brotli 節を追加） |
 | 2026-10-24 | Windows Edge | 155.0.4283.62 | 156 へ更新済み（Edge 自身の更新機能。winget は導入方式の違いでブロック） | オーナー報告 |
 | 2026-10-24 | リポジトリ差分（uv.lock・禁止領域） | — | 差分なし（本計画書の実施記録追記と未追跡 reports/patch_001.txt のみ） | `git status --short && git diff --stat` |
 
